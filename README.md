@@ -88,7 +88,7 @@
         - id
         - user_id
         - date
-        - content
+        - text
         - created_at
         - updated_at
     - [ ] mood_ratings
