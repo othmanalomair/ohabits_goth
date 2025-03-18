@@ -42,6 +42,35 @@ func Server() {
 	r.HandleFunc("/api/habits/{date}", getHandler).Methods("GET")
 	r.HandleFunc("/api/habits/{date}", postHandler).Methods("POST")
 
+	// Workout
+	r.HandleFunc("/api/workout", getHandler).Methods("GET")
+	r.HandleFunc("/api/wokrout/{id}", getHandler).Methods("GET")
+	r.HandleFunc("/api/wokrout/{id}", postHandler).Methods("POST")
+	r.HandleFunc("/api/workout/{id}", deleteHandler).Methods("DELETE")
+
+	r.HandleFunc("/api/workout/{date}", getHandler).Methods("GET")
+	r.HandleFunc("/api/workout/{date}", postHandler).Methods("POST")
+
+	// Todo
+	r.HandleFunc("/api/todo/{date}", getHandler).Methods("GET")
+	r.HandleFunc("/api/todo/{date}", postHandler).Methods("POST")
+
+	// Note
+	r.HandleFunc("/api/note/{date}", getHandler).Methods("GET")
+	r.HandleFunc("/api/note/{date}", postHandler).Methods("POST")
+	r.HandleFunc("/api/note/{date}", deleteHandler).Methods("DELETE")
+
+	// Rate
+	r.HandleFunc("/api/rate/{date}", getHandler).Methods("GET")
+	r.HandleFunc("/api/rate/{date}", postHandler).Methods("POST")
+
+	// View mode
+	r.HandleFunc("/api/view/{month}", getHandler).Methods("GET")
+
+	// User
+	r.HandleFunc("/api/profile/{id}", getHandler).Methods("GET")
+	r.HandleFunc("/api/profile/{id}", postHandler).Methods("POST")
+
 	fmt.Println("Server is running on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))
 
