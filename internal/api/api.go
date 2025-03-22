@@ -22,7 +22,64 @@ func GetHabits(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("Get request for %v", habits)})
+		json.NewEncoder(w).Encode(struct {
+			Habits []db.Habit `json:"habits"`
+		}{
+			Habits: habits,
+		})
+	}
+}
+
+func PostHabits(w http.ResponseWriter, r *http.Request) {
+	var habit db.Habit
+	err := json.NewDecoder(r.Body).Decode(&habit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = db.CreateHabit(db.DB, habit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(habit)
+}
+
+func PutHabits(w http.ResponseWriter, r *http.Request) {
+	var habit db.Habit
+	err := json.NewDecoder(r.Body).Decode(&habit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = db.UpdateHabit(db.DB, habit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(habit)
+}
+
+func DeleteHabit(w http.ResponseWriter, r *http.Request) {
+	var habit db.Habit
+	err := json.NewDecoder(r.Body).Decode(&habit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = db.DeleteHabit(db.DB, habit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("habit deleted")})
+}
+
+func GetHabitsCompleted(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	// If there is no params show error message
+	if len(params) == 0 {
+		json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("date is required")})
 	}
 	// If there is a date param, get habits for that date
 	if date, ok := params["date"]; ok {
@@ -31,7 +88,40 @@ func GetHabits(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("Get request for %v", habits)})
+		json.NewEncoder(w).Encode(struct {
+			Habits []db.HabitCompletion `json:"habits"`
+		}{
+			Habits: habits,
+		})
 	}
+}
 
+func PostHabitCompleted(w http.ResponseWriter, r *http.Request) {
+	var habitCompletion db.HabitCompletion
+	err := json.NewDecoder(r.Body).Decode(&habitCompletion)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = db.CreateHabitCompletion(db.DB, habitCompletion, habitCompletion.Date)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(habitCompletion)
+}
+
+func PutHabitCompleted(w http.ResponseWriter, r *http.Request) {
+	var habitCompletion db.HabitCompletion
+	err := json.NewDecoder(r.Body).Decode(&habitCompletion)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = db.UpdateHabitCompletion(db.DB, habitCompletion)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(habitCompletion)
 }

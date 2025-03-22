@@ -1,0 +1,36 @@
+curl -X POST http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "184800fa-5e84-4717-8d46-189cd4113e19",
+    "name": "Test Habit",
+    "scheduled_days": ["Monday", "Wednesday", "Friday"]
+    }'
+
+curl -X PUT http://localhost:8080/api/habits/d12781a8-9567-4063-a09b-790caeac8f98 \
+-H "Content-Type: application/json" \
+-d '{
+    "id": "d12781a8-9567-4063-a09b-790caeac8f98",
+    "name": "Updated Test Habit",
+    "scheduled_days": ["Monday", "Wednesday", "Friday"]
+    }'
+
+curl -X DELETE http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-d '{
+    "id": "eaf1d1f9-4af0-497a-96e1-36f3ddc5b045"
+    }'
+
+curl -X POST http://localhost:8080/api/habits_completed \
+-H "Content-Type: application/json" \
+-d '{
+    "date": "2025-03-22T00:00:00Z",
+    "habit_id": "d12781a8-9567-4063-a09b-790caeac8f98",
+    "user_id": "184800fa-5e84-4717-8d46-189cd4113e19"
+    }'
+
+curl -X PUT http://localhost:8080/api/habits_completed \
+-H "Content-Type: application/json" \
+-d '{
+    "id": "eb0c3f0e-73e3-4f5d-9aaa-f94101e428d6",
+    "completed": true
+    }'

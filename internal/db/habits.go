@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -25,6 +26,31 @@ func GetAllHabits(db *pgxpool.Pool) ([]Habit, error) {
 		habits = append(habits, habit)
 	}
 	return habits, nil
+}
+
+func CreateHabit(db *pgxpool.Pool, habit Habit) error {
+	// Create a habit in the postgres database
+	_, err := db.Exec(context.Background(), `
+		INSERT INTO habits (user_id, name, scheduled_days)
+		VALUES ($1, $2, $3)
+		`, habit.UserID, habit.Name, habit.ScheduledDays)
+	return err
+}
+
+func UpdateHabit(db *pgxpool.Pool, habit Habit) error {
+	// Update a habit in the postgres database
+	_, err := db.Exec(context.Background(), `
+		UPDATE habits SET name = $2, scheduled_days = $3 WHERE id = $1
+		`, habit.ID, habit.Name, habit.ScheduledDays)
+	return err
+}
+
+func DeleteHabit(db *pgxpool.Pool, habit Habit) error {
+	// Delete a habit in the postgres database
+	_, err := db.Exec(context.Background(), `
+		DELETE FROM habits WHERE id = $1
+		`, habit.ID)
+	return err
 }
 
 func GetHabitsCompletedByDate(db *pgxpool.Pool, date string) ([]HabitCompletion, error) {
@@ -51,4 +77,21 @@ func GetHabitsCompletedByDate(db *pgxpool.Pool, date string) ([]HabitCompletion,
 		habits = append(habits, habit)
 	}
 	return habits, nil
+}
+
+func CreateHabitCompletion(db *pgxpool.Pool, habitCompletion HabitCompletion, date time.Time) error {
+	// Create a habit completion in the postgres database
+	_, err := db.Exec(context.Background(), `
+		INSERT INTO habits_completions (habit_id, user_id, completed, date)
+		VALUES ($1, $2, $3, $4)
+		`, habitCompletion.HabitID, habitCompletion.UserID, false, date)
+	return err
+}
+
+func UpdateHabitCompletion(db *pgxpool.Pool, habitCompletion HabitCompletion) error {
+	// Update a habit completion in the postgres database
+	_, err := db.Exec(context.Background(), `
+		UPDATE habits_completions SET completed = $1 WHERE id = $2
+		`, habitCompletion.Completed, habitCompletion.ID)
+	return err
 }

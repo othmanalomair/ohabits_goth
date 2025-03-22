@@ -3,14 +3,16 @@
 ## Back-end
 
 **API**
+
+    - [ ] Authentication
     - [ ] Habits :-
-        - [ ] GET /api/habits
-        - [ ] POST /api/habits/{id}
-        - [ ] DELETE /api/habits/{id}
-
-        - [ ] GET /api/habits/{date}
-        - [ ] POST /api/habits/{date}
-
+        - [x] GET /api/habits
+        - [x] POST /api/habits
+        - [x] PUT /api/habits
+        - [x] DELETE /api/habits
+        - [x] GET /api/habits_completed/{date}
+        - [x] POST /api/habits_completed
+        - [x] PUT /api/habits_completed
     - [ ] Workout :-
         - [ ] GET /api/workout
         - [ ] GET /api/workout/{id}
@@ -128,6 +130,3 @@ ohabits_goth/
 │── Makefile           # Automation tasks (build, run, lint, etc.)
 │── README.md
 ```
-
-
-

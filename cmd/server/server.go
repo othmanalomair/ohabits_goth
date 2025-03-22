@@ -35,13 +35,15 @@ func Server() {
 
 	r := mux.NewRouter()
 
-	// Habits ( thinking about the id and date maybe use one and leave the other )
+	// Habits (i need to fix the date in /api/habits_completed so it can accept (2025-03-22) insted of (2025-03-22T00:00:00Z) )
 	r.HandleFunc("/api/habits", api.GetHabits).Methods("GET")
-	r.HandleFunc("/api/habits/{id}", postHandler).Methods("POST")
-	r.HandleFunc("/api/habits/{id}", deleteHandler).Methods("DELETE")
+	r.HandleFunc("/api/habits", api.PostHabits).Methods("POST")
+	r.HandleFunc("/api/habits", api.PutHabits).Methods("PUT")
+	r.HandleFunc("/api/habits", api.DeleteHabit).Methods("DELETE")
 
-	r.HandleFunc("/api/habits/{date}", api.GetHabits).Methods("GET")
-	r.HandleFunc("/api/habits/{date}", postHandler).Methods("POST")
+	r.HandleFunc("/api/habits_completed/{date}", api.GetHabitsCompleted).Methods("GET")
+	r.HandleFunc("/api/habits_completed", api.PostHabitCompleted).Methods("POST")
+	r.HandleFunc("/api/habits_completed", api.PutHabitCompleted).Methods("PUT")
 
 	// Workout
 	r.HandleFunc("/api/workout", getHandler).Methods("GET")
