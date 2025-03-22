@@ -18,7 +18,7 @@ type User struct {
 }
 
 // Habit entity
-type Habits struct {
+type Habit struct {
 	ID            uuid.UUID       `json:"id"`
 	UserID        uuid.UUID       `json:"user_id"`
 	Name          string          `json:"name"`
@@ -27,9 +27,10 @@ type Habits struct {
 	UpdatedAt     time.Time       `json:"updated_at"`
 }
 
-type HabitsCopletions struct {
+type HabitCompletion struct {
 	ID        uuid.UUID `json:"id"`
 	HabitID   uuid.UUID `json:"habit_id"`
+	HabitName string    `json:"habit_name"`
 	UserID    uuid.UUID `json:"user_id"`
 	Completed bool      `json:"completed"`
 	Date      time.Time `json:"date"`

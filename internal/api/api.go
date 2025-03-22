@@ -25,5 +25,13 @@ func GetHabits(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("Get request for %v", habits)})
 	}
 	// If there is a date param, get habits for that date
+	if date, ok := params["date"]; ok {
+		habits, err := db.GetHabitsCompletedByDate(db.DB, date)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("Get request for %v", habits)})
+	}
 
 }

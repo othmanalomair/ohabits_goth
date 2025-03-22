@@ -40,7 +40,7 @@ func Server() {
 	r.HandleFunc("/api/habits/{id}", postHandler).Methods("POST")
 	r.HandleFunc("/api/habits/{id}", deleteHandler).Methods("DELETE")
 
-	r.HandleFunc("/api/habits/{date}", getHandler).Methods("GET")
+	r.HandleFunc("/api/habits/{date}", api.GetHabits).Methods("GET")
 	r.HandleFunc("/api/habits/{date}", postHandler).Methods("POST")
 
 	// Workout
