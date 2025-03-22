@@ -2,12 +2,13 @@ package db
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"time"
 )
 
 // User entity
 type User struct {
-	ID          int       `json:"id"`
+	ID          uuid.UUID `json:"id"`
 	Password    string    `json:"password"`
 	DisplayName string    `json:"display_name"`
 	AvatarURL   string    `json:"avatar_url"`
@@ -17,8 +18,8 @@ type User struct {
 
 // Habit entity
 type Habits struct {
-	ID            int             `json:"id"`
-	UserID        int             `json:"user_id"`
+	ID            uuid.UUID       `json:"id"`
+	UserID        uuid.UUID       `json:"user_id"`
 	Name          string          `json:"name"`
 	ScheduledDays json.RawMessage `json:"scheduled_days"`
 	CreatedAt     time.Time       `json:"created_at"`
@@ -26,9 +27,9 @@ type Habits struct {
 }
 
 type HabitsCopletions struct {
-	ID        int       `json:"id"`
-	HabitID   int       `json:"habit_id"`
-	UserID    int       `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
+	HabitID   uuid.UUID `json:"habit_id"`
+	UserID    uuid.UUID `json:"user_id"`
 	Completed bool      `json:"completed"`
 	Date      time.Time `json:"date"`
 	CreatedAt time.Time `json:"created_at"`
@@ -37,8 +38,8 @@ type HabitsCopletions struct {
 
 // Workout entity
 type Workout struct {
-	ID        int             `json:"id"`
-	UserID    int             `json:"user_id"`
+	ID        uuid.UUID       `json:"id"`
+	UserID    uuid.UUID       `json:"user_id"`
 	Name      string          `json:"name"`
 	Day       string          `json:"day"`
 	Exercises json.RawMessage `json:"exercises"`
@@ -47,9 +48,9 @@ type Workout struct {
 }
 
 type WorkoutLog struct {
-	ID                 int             `json:"id"`
-	UserID             int             `json:"user_id"`
-	WorkoutID          int             `json:"workout_id"`
+	ID                 uuid.UUID       `json:"id"`
+	UserID             uuid.UUID       `json:"user_id"`
+	WorkoutID          uuid.UUID       `json:"workout_id"`
 	CompletedExercises json.RawMessage `json:"completed_exercises"`
 	Cardio             json.RawMessage `json:"cardio"`
 	Weight             float64         `json:"weight"`
@@ -61,8 +62,8 @@ type WorkoutLog struct {
 
 // Todo's entity
 type Todos struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
 	Text      string    `json:"text"`
 	Completed bool      `json:"completed"`
 	Date      time.Time `json:"date"`
@@ -72,8 +73,8 @@ type Todos struct {
 
 // Notes entity
 type Notes struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
 	Date      time.Time `json:"date"`
 	Text      string    `json:"text"`
 	CreatedAt time.Time `json:"created_at"`
@@ -82,8 +83,8 @@ type Notes struct {
 
 // Mood ratings entity
 type MoodRating struct {
-	ID        int       `json:"id"`
-	UserID    int       `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
 	Rating    int       `json:"rating"`
 	Date      time.Time `json:"date"`
 	CreatedAt time.Time `json:"created_at"`
