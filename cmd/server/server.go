@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"ohabits.com/internal/api"
 )
 
 type Response struct {
@@ -35,7 +36,7 @@ func Server() {
 	r := mux.NewRouter()
 
 	// Habits ( thinking about the id and date maybe use one and leave the other )
-	r.HandleFunc("/api/habits", getHandler).Methods("GET")
+	r.HandleFunc("/api/habits", api.GetHabits).Methods("GET")
 	r.HandleFunc("/api/habits/{id}", postHandler).Methods("POST")
 	r.HandleFunc("/api/habits/{id}", deleteHandler).Methods("DELETE")
 
