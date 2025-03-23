@@ -5,7 +5,7 @@
 **API**
 
     - [ ] Authentication
-    - [ ] Habits :-
+    - [x] Habits :-
         - [x] GET /api/habits
         - [x] POST /api/habits
         - [x] PUT /api/habits

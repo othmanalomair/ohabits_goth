@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"ohabits.com/internal/api"
+	"ohabits.com/internal/util"
 )
 
 type Response struct {
@@ -35,15 +36,24 @@ func Server() {
 
 	r := mux.NewRouter()
 
-	// Habits (i need to fix the date in /api/habits_completed so it can accept (2025-03-22) insted of (2025-03-22T00:00:00Z) )
-	r.HandleFunc("/api/habits", api.GetHabits).Methods("GET")
-	r.HandleFunc("/api/habits", api.PostHabits).Methods("POST")
-	r.HandleFunc("/api/habits", api.PutHabits).Methods("PUT")
-	r.HandleFunc("/api/habits", api.DeleteHabit).Methods("DELETE")
+	// Login & Register (No Auth)
+	r.HandleFunc("/api/register", api.Register).Methods("POST")
+	r.HandleFunc("/api/login", api.Login).Methods("POST")
 
-	r.HandleFunc("/api/habits_completed/{date}", api.GetHabitsCompleted).Methods("GET")
-	r.HandleFunc("/api/habits_completed", api.PostHabitCompleted).Methods("POST")
-	r.HandleFunc("/api/habits_completed", api.PutHabitCompleted).Methods("PUT")
+	// Protected Routes (Auth)
+	protected := r.PathPrefix("/api").Subrouter()
+	protected.Use(util.AuthMiddleware)
+
+	// Habits (i need to fix the date in /api/habits_completed so it can accept (2025-03-22) insted of (2025-03-22T00:00:00Z) )
+	protected.HandleFunc("/habits", api.GetHabits).Methods("GET")
+	protected.HandleFunc("/habits", api.PostHabits).Methods("POST")
+	protected.HandleFunc("/habits", api.PutHabits).Methods("PUT")
+	protected.HandleFunc("/habits", api.DeleteHabit).Methods("DELETE")
+
+	protected.HandleFunc("/habits_completed/{date}", api.GetHabitsCompleted).Methods("GET")
+	protected.HandleFunc("/habits_completed", api.PostHabitCompleted).Methods("POST")
+	protected.HandleFunc("/habits_completed", api.PutHabitCompleted).Methods("PUT")
+
 
 	// Workout
 	r.HandleFunc("/api/workout", getHandler).Methods("GET")

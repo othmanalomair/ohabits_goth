@@ -34,3 +34,12 @@ curl -X PUT http://localhost:8080/api/habits_completed \
     "id": "eb0c3f0e-73e3-4f5d-9aaa-f94101e428d6",
     "completed": true
     }'
+
+
+curl -X POST http://localhost:8080/register \
+-H "Content-Type: application/json" \
+-d '{
+    "email": "test@example.com",
+    "password": "password",
+    "display_name": "Test User"
+    }'

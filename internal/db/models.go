@@ -10,6 +10,7 @@ import (
 // User entity
 type User struct {
 	ID          uuid.UUID `json:"id"`
+	Email       string    `json:"email"`
 	Password    string    `json:"password"`
 	DisplayName string    `json:"display_name"`
 	AvatarURL   string    `json:"avatar_url"`
