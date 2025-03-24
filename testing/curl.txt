@@ -36,10 +36,130 @@ curl -X PUT http://localhost:8080/api/habits_completed \
     }'
 
 
-curl -X POST http://localhost:8080/register \
+curl -X POST http://localhost:8080/api/register \
 -H "Content-Type: application/json" \
 -d '{
     "email": "test@example.com",
     "password": "password",
     "display_name": "Test User"
     }'
+
+curl -X POST http://localhost:8080/api/login \
+-H "Content-Type: application/json" \
+-d '{
+    "email": "test@example.com",
+    "password": "password"
+    }'
+
+
+curl -X GET http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE"
+
+curl -X POST http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE" \
+-d '{
+    "name": "New Habit",
+    "scheduled_days": ["Monday", "Wednesday", "Friday"]
+    }'
+
+curl -X PUT http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE" \
+-d '{
+    "id": "cb507a16-e627-4aa4-8de6-f2ad802a3840",
+    "name": "Updated Habit",
+    "scheduled_days": ["Monday", "Wednesday", "Friday"]
+    }'
+
+curl -X DELETE http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE" \
+-d '{
+    "id": "cb507a16-e627-4aa4-8de6-f2ad802a3840"
+    }'
+
+curl -X GET http://localhost:8080/api/workout \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE"
+
+curl -X POST http://localhost:8080/api/workout \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE" \
+-d '{
+  "name": "New Workout",
+  "day": "Monday",
+  "exercises": [
+    {
+      "name": "Lat Pulldown (Wide Grip)",
+      "sets": [
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 }
+      ]
+    },
+    {
+      "name": "Lat Pulldown (Close Grip)",
+      "sets": [
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 }
+      ]
+    },
+    {
+      "name": "Wide-Grip Rows",
+      "sets": [
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 }
+      ]
+    },
+    {
+      "name": "Back Extension",
+      "sets": [
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 },
+        { "reps": 12, "weight": 0 }
+      ]
+    }
+  ]
+}'
+
+
+curl -X GET http://localhost:8080/api/workout/01c0de4c-68eb-4ee0-a703-dd34f598c551 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE"
+
+
+curl -X PUT http://localhost:8080/api/workout/01c0de4c-68eb-4ee0-a703-dd34f598c551 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE" \
+-d '{
+  "name": "New Workout",
+  "day": "Monday",
+  "exercises": []
+}'
+
+
+curl -X DELETE http://localhost:8080/api/workout/01c0de4c-68eb-4ee0-a703-dd34f598c551 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE"
+
+
+curl -X POST http://localhost:8080/api/workout_logs/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE" \
+-d '{
+    "name": "Push",
+    "completed_exercises": [],
+    "cardio": [],
+    "weight": 90
+}'
+
+curl -X GET http://localhost:8080/api/workout_logs/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE"

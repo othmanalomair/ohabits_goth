@@ -4,6 +4,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- User entity
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
     password TEXT NOT NULL,
     display_name TEXT NOT NULL,
     avatar_url TEXT,
@@ -45,12 +46,11 @@ CREATE TABLE workouts (
 CREATE TABLE workout_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    workout_id UUID REFERENCES workouts(id) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT '',
     completed_exercises JSONB NOT NULL,
     cardio JSONB NOT NULL,
     weight FLOAT NOT NULL,
     date DATE NOT NULL,
-    note TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );

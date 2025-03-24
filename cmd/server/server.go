@@ -54,35 +54,35 @@ func Server() {
 	protected.HandleFunc("/habits_completed", api.PostHabitCompleted).Methods("POST")
 	protected.HandleFunc("/habits_completed", api.PutHabitCompleted).Methods("PUT")
 
+	// Workout ( need to add the monthley view )
+	protected.HandleFunc("/workout", api.GetWorkouts).Methods("GET")
+	protected.HandleFunc("/workout/{id}", api.GetWorkouts).Methods("GET")
+	protected.HandleFunc("/workout", api.PostWorkout).Methods("POST")
+	protected.HandleFunc("/workout/{id}", api.PutWorkout).Methods("PUT")
+	protected.HandleFunc("/workout/{id}", api.DeleteWorkout).Methods("DELETE")
 
-	// Workout
-	r.HandleFunc("/api/workout", getHandler).Methods("GET")
-	r.HandleFunc("/api/wokrout/{id}", getHandler).Methods("GET")
-	r.HandleFunc("/api/wokrout/{id}", postHandler).Methods("POST")
-	r.HandleFunc("/api/workout/{id}", deleteHandler).Methods("DELETE")
-
-	r.HandleFunc("/api/workout/{date}", getHandler).Methods("GET")
-	r.HandleFunc("/api/workout/{date}", postHandler).Methods("POST")
+	protected.HandleFunc("/workout_logs/{date}", api.GetWorkoutLog).Methods("GET")
+	protected.HandleFunc("/workout_logs/{date}", api.PostWorkoutLog).Methods("POST")
 
 	// Todo
-	r.HandleFunc("/api/todo/{date}", getHandler).Methods("GET")
-	r.HandleFunc("/api/todo/{date}", postHandler).Methods("POST")
+	protected.HandleFunc("/todo/{date}", getHandler).Methods("GET")
+	protected.HandleFunc("/todo/{date}", postHandler).Methods("POST")
 
 	// Note
-	r.HandleFunc("/api/note/{date}", getHandler).Methods("GET")
-	r.HandleFunc("/api/note/{date}", postHandler).Methods("POST")
-	r.HandleFunc("/api/note/{date}", deleteHandler).Methods("DELETE")
+	protected.HandleFunc("/note/{date}", getHandler).Methods("GET")
+	protected.HandleFunc("/note/{date}", postHandler).Methods("POST")
+	protected.HandleFunc("/note/{date}", deleteHandler).Methods("DELETE")
 
 	// Rate
-	r.HandleFunc("/api/rate/{date}", getHandler).Methods("GET")
-	r.HandleFunc("/api/rate/{date}", postHandler).Methods("POST")
+	protected.HandleFunc("/rate/{date}", getHandler).Methods("GET")
+	protected.HandleFunc("/rate/{date}", postHandler).Methods("POST")
 
 	// View mode
-	r.HandleFunc("/api/view/{month}", getHandler).Methods("GET")
+	protected.HandleFunc("/view/{month}", getHandler).Methods("GET")
 
 	// User
-	r.HandleFunc("/api/profile/{id}", getHandler).Methods("GET")
-	r.HandleFunc("/api/profile/{id}", postHandler).Methods("POST")
+	protected.HandleFunc("/profile/{id}", getHandler).Methods("GET")
+	protected.HandleFunc("/profile/{id}", postHandler).Methods("POST")
 
 	fmt.Println("Server is running on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))

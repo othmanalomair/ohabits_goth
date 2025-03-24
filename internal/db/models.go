@@ -53,12 +53,11 @@ type Workout struct {
 type WorkoutLog struct {
 	ID                 uuid.UUID       `json:"id"`
 	UserID             uuid.UUID       `json:"user_id"`
-	WorkoutID          uuid.UUID       `json:"workout_id"`
+	Name               string          `json:"name"`
 	CompletedExercises json.RawMessage `json:"completed_exercises"`
 	Cardio             json.RawMessage `json:"cardio"`
 	Weight             float64         `json:"weight"`
 	Date               time.Time       `json:"date"`
-	Note               string          `json:"note"`
 	CreatedAt          time.Time       `json:"created_at"`
 	UpdatedAt          time.Time       `json:"updated_at"`
 }
