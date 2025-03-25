@@ -65,26 +65,28 @@ func Server() {
 	protected.HandleFunc("/workout_logs/{date}", api.PostWorkoutLog).Methods("POST")
 
 	// Todo
-	protected.HandleFunc("/todo/{date}", api.GetTodos).Methods("GET")
+	protected.HandleFunc("/todo/{date}", api.GetTodosByDate).Methods("GET")
 	protected.HandleFunc("/todo", api.PostTodo).Methods("POST")
 	protected.HandleFunc("/todo/{id}", api.PutTodo).Methods("PUT")
 	protected.HandleFunc("/todo/{id]", api.DeleteTodo).Methods("DELETE")
 
 	// Note
-	protected.HandleFunc("/note/{date}", getHandler).Methods("GET")
-	protected.HandleFunc("/note/{date}", postHandler).Methods("POST")
-	protected.HandleFunc("/note/{date}", deleteHandler).Methods("DELETE")
+	protected.HandleFunc("/note/{date}", api.GetNoteByDate).Methods("GET")
+	protected.HandleFunc("/note", api.PostNote).Methods("POST")
+	protected.HandleFunc("/note/{id}", api.PutNote).Methods("PUT")
+	protected.HandleFunc("/note/{id}", api.DeleteNote).Methods("DELETE")
 
 	// Rate
-	protected.HandleFunc("/rate/{date}", getHandler).Methods("GET")
-	protected.HandleFunc("/rate/{date}", postHandler).Methods("POST")
+	protected.HandleFunc("/rate/{date}", api.GetRate).Methods("GET")
+	protected.HandleFunc("/rate", api.PostRate).Methods("POST")
+	protected.HandleFunc("/rate/{id}", api.PutRate).Methods("PUT")
 
 	// View mode
 	protected.HandleFunc("/view/{month}", getHandler).Methods("GET")
 
 	// User
-	protected.HandleFunc("/profile/{id}", getHandler).Methods("GET")
-	protected.HandleFunc("/profile/{id}", postHandler).Methods("POST")
+	protected.HandleFunc("/user", api.GetUser).Methods("GET")
+	protected.HandleFunc("/user", api.PutUser).Methods("PUT")
 
 	fmt.Println("Server is running on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))

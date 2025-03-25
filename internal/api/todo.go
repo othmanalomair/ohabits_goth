@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func GetTodos(w http.ResponseWriter, r *http.Request) {
+func GetTodosByDate(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from request context
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {

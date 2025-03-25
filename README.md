@@ -32,20 +32,20 @@
   - [x] `DELETE /api/todo/{id}`
 
 - **Note**
-  - [ ] `GET /api/note/{date}`
-  - [ ] `POST /api/note/{date}`
-  - [ ] `DELETE /api/note/{date}`
+  - [x] `GET /api/note/{date}`
+  - [x] `POST /api/note/{date}`
+  - [x] `DELETE /api/note/{date}`
 
 - **Rate**
-  - [ ] `GET /api/rate/{date}`
-  - [ ] `POST /api/rate/{date}`
+  - [x] `GET /api/rate/{date}`
+  - [x] `POST /api/rate/{date}`
 
 - **View Mode**
   - [ ] `GET /api/view/{month}`
 
 - **User**
-  - [ ] `GET /api/profile/{id}`
-  - [ ] `POST /api/profile/{id}`
+  - [x] `GET /api/profile/{id}`
+  - [x] `POST /api/profile/{id}`
 
 ### SQL Schema
 

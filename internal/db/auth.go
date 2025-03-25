@@ -71,7 +71,7 @@ func Register(ctx context.Context, db *pgxpool.Pool, email, password, displayNam
 func GenerateToken(userID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID.String(),
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"exp":     time.Now().Add(30 * 24 * time.Hour).Unix(), // Token lasts for 30 days
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(jwtSecret))

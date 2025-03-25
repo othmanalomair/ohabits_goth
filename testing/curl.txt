@@ -200,3 +200,66 @@ curl -X POST http://localhost:8080/api/habits \
     "name": "New Habit",
     "scheduled_days": ["Monday", "Wednesday", "Friday"]
 }'
+
+
+curl -X POST http://localhost:8080/api/note \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "text": "Testing the note function",
+    "date": "2025-03-25"
+}'
+
+
+curl -X GET http://localhost:8080/api/note/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+curl -X PUT http://localhost:8080/api/note/c195f0c9-8c82-499e-b041-e2d436a0ecdb \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "text": "Updated note"
+}'
+
+curl -X DELETE http://localhost:8080/api/note/c195f0c9-8c82-499e-b041-e2d436a0ecdb \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+
+curl -X POST http://localhost:8080/api/rate \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs" \
+-d '{
+    "date": "2025-03-25",
+    "rating": 5
+}'
+
+curl -X GET http://localhost:8080/api/rate/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs"
+
+curl -X GET http://localhost:8080/api/rate/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+curl -X PUT http://localhost:8080/api/rate/1a82cacd-7f89-4935-aa27-afc58dc9b700 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "rating": 4
+}'
+
+
+curl -X GET http://localhost:8080/api/user \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+curl -X PUT http://localhost:8080/api/user \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "email": "most3mr@live.com",
+    "display_name": "Othman Alomai",
+    "avatar_url": "https://example.com/avatar.jpg"
+}'
