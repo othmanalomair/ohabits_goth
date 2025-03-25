@@ -15,7 +15,7 @@ func GetTodosByDate(db *pgxpool.Pool, todoDate string, userID uuid.UUID) ([]Todo
 		FROM todos
 		WHERE date = $1 AND user_id = $2
 		ORDER BY created_at DESC
-		`)
+		`, todoDate, userID)
 	if err != nil {
 		return nil, err
 	}

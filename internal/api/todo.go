@@ -20,18 +20,25 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
-	dateStr, ok := params["date"]
-	if !ok {
+	// If there is no params show error message
+	if len(params) == 0 {
 		http.Error(w, "Missing date parameter", http.StatusBadRequest)
 		return
 	}
 
-	todos, err := db.GetTodosByDate(db.DB, dateStr, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if date, ok := params["date"]; ok {
+		todos, err := db.GetTodosByDate(db.DB, date, userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(struct {
+			Todos []db.Todos `json:"todos"`
+		}{
+			Todos: todos,
+		})
+
 	}
-	json.NewEncoder(w).Encode(todos)
 }
 
 func PostTodo(w http.ResponseWriter, r *http.Request) {
