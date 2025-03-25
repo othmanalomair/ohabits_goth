@@ -65,8 +65,10 @@ func Server() {
 	protected.HandleFunc("/workout_logs/{date}", api.PostWorkoutLog).Methods("POST")
 
 	// Todo
-	protected.HandleFunc("/todo/{date}", getHandler).Methods("GET")
-	protected.HandleFunc("/todo/{date}", postHandler).Methods("POST")
+	protected.HandleFunc("/todo/{date}", api.GetTodos).Methods("GET")
+	protected.HandleFunc("/todo", api.PostTodo).Methods("POST")
+	protected.HandleFunc("/todo/{id}", api.PutTodo).Methods("PUT")
+	protected.HandleFunc("/todo/{id]", api.DeleteTodo).Methods("DELETE")
 
 	// Note
 	protected.HandleFunc("/note/{date}", getHandler).Methods("GET")

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -80,12 +79,12 @@ func GetHabitsCompletedByDate(db *pgxpool.Pool, date string, userID uuid.UUID) (
 	return habits, nil
 }
 
-func CreateHabitCompletion(db *pgxpool.Pool, habitCompletion HabitCompletion, date time.Time, userID uuid.UUID) error {
+func CreateHabitCompletion(db *pgxpool.Pool, habitCompletion HabitCompletion, userID uuid.UUID) error {
 	// Create a habit completion in the postgres database
 	_, err := db.Exec(context.Background(), `
 		INSERT INTO habits_completions (habit_id, user_id, completed, date)
 		VALUES ($1, $2, $3, $4)
-		`, habitCompletion.HabitID, userID, false, date)
+		`, habitCompletion.HabitID, userID, false, habitCompletion.Date)
 	return err
 }
 

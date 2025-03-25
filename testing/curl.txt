@@ -163,3 +163,40 @@ curl -X POST http://localhost:8080/api/workout_logs/2025-03-25 \
 curl -X GET http://localhost:8080/api/workout_logs/2025-03-25 \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI4NDc4MzAsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.SXsGiL0FiRgzeSQTsrUN0aurPF7_GNlevVlYyCypxTE"
+
+
+curl -X POST http://localhost:8080/api/todo \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "text": "New Todo",
+    "date": "2025-03-25"
+}'
+
+curl -X GET http://localhost:8080/api/todo/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+curl -X GET http://localhost:8080/api/todo/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+curl -X GET http://localhost:8080/api/habits_completed/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc"
+
+curl -X POST http://localhost:8080/api/habits_completed \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "date": "2025-03-25",
+    "habit_id": "c0cdd478-a03a-4350-a461-ef322daba0f8"
+}'
+
+curl -X POST http://localhost:8080/api/habits \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5MzQ3NDcsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.C2b59p0EhjxKgBpQ1-fVhaJ9zGvkEjVYGhW2BA9EiZc" \
+-d '{
+    "name": "New Habit",
+    "scheduled_days": ["Monday", "Wednesday", "Friday"]
+}'

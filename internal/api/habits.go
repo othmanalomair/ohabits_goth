@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -132,13 +133,31 @@ func PostHabitCompleted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var habitCompletion db.HabitCompletion
-	err := json.NewDecoder(r.Body).Decode(&habitCompletion)
+	// Use a temporary struct to capture input as string
+	type temp struct {
+		HabitID uuid.UUID `json:"habit_id"`
+		Date    string    `json:"date"`
+	}
+
+	var tempDate temp
+	err := json.NewDecoder(r.Body).Decode(&tempDate)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = db.CreateHabitCompletion(db.DB, habitCompletion, habitCompletion.Date, userID)
+
+	parsedDate, err := time.Parse("2006-01-02", tempDate.Date)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	habitCompletion := db.HabitCompletion{
+		HabitID: tempDate.HabitID,
+		Date:    parsedDate,
+	}
+
+	err = db.CreateHabitCompletion(db.DB, habitCompletion, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
