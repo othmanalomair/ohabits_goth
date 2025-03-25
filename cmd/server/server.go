@@ -82,7 +82,7 @@ func Server() {
 	protected.HandleFunc("/rate/{id}", api.PutRate).Methods("PUT")
 
 	// View mode
-	protected.HandleFunc("/view/{month}", getHandler).Methods("GET")
+	protected.HandleFunc("/view/{month}", api.GetView).Methods("GET")
 
 	// User
 	protected.HandleFunc("/user", api.GetUser).Methods("GET")
