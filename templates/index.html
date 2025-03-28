@@ -1,0 +1,84 @@
+{{ define "content" }}
+<!-- Date Header -->
+<div class="date-header">
+    <h1>Tuesday</h1>
+    <p>Mar 25 / 2025</p>
+</div>
+
+<!-- Example: You could insert a calendar here if needed -->
+<!-- <div class="calendar card">
+<p>Calendar goes here...</p>
+</div> -->
+
+<!-- Two-column grid on desktop, single column on mobile -->
+<div class="grid-container">
+    <!-- Left Column -->
+    <div>
+        <!-- Habits Section -->
+        <!-- This div will be updated with the habits table -->
+        <div
+            id="habitsTable"
+            hx-get="/habits_completions"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            <!-- The habits table will load here automatically via htmx -->
+            Loading habits…
+        </div>
+        <!-- Tasks Section -->
+        <div class="card tasks">
+            <h2>Tasks for 25/03/2025</h2>
+            <form>
+                <input type="text" placeholder="Add a new task" />
+                <button type="submit">Add</button>
+            </form>
+            <!-- Existing tasks can be listed here -->
+            <ul>
+                <li>Example task 1</li>
+                <li>Example task 2</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div>
+        <!-- Notes Section -->
+        <div class="card notes">
+            <h2>Notes for 25/03/2025</h2>
+            <textarea placeholder="Write your note here..."></textarea>
+            <button>Save Note</button>
+        </div>
+
+        <!-- Mood Section -->
+        <div class="card">
+            <h2>Mood for 25/03/2025</h2>
+            <div class="mood">
+                <!-- Example of numeric mood options -->
+                <!-- You could use radio inputs or a slider -->
+                <label><input type="radio" name="mood" value="0" />0</label>
+                <label><input type="radio" name="mood" value="1" />1</label>
+                <label><input type="radio" name="mood" value="2" />2</label>
+                <label><input type="radio" name="mood" value="3" />3</label>
+                <label><input type="radio" name="mood" value="4" />4</label>
+                <label><input type="radio" name="mood" value="5" />5</label>
+                <label><input type="radio" name="mood" value="6" />6</label>
+                <label><input type="radio" name="mood" value="7" />7</label>
+                <label><input type="radio" name="mood" value="8" />8</label>
+                <label><input type="radio" name="mood" value="9" />9</label>
+                <label><input type="radio" name="mood" value="10" />10</label>
+            </div>
+        </div>
+
+        <!-- Workout Section -->
+        <div class="card workout">
+            <h2>Workout for 25/03/2025</h2>
+            <h3>Legs</h3>
+            <button>Add Exercise</button>
+            <div class="exercise-group">
+                <input type="text" placeholder="Cardio name" />
+            </div>
+            <button>Save Workout</button>
+        </div>
+    </div>
+</div>
+{{ end }}

@@ -1,0 +1,31 @@
+{{ define "base.html" }}
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>{{ block "title" . }}Habits Dashboard{{ end }}</title>
+        <link rel="stylesheet" href="/static/css/style.css" />
+        <script src="/static/js/htmx.min.js"></script>
+    </head>
+    <body>
+        <header>
+            <button class="menu-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="logo">Ohabits</div>
+            <div class="profile">
+                <img
+                    class="avatar-img"
+                    src="https://kmwmklklyusmjtnlxmkk.supabase.co/storage/v1/object/public/avatars/avatars/a71661ad-6144-43ae-b4b5-ac4a08fa16f2.jpg"
+                    alt="User Profile"
+                />
+
+                <span>Othman Alomair</span>
+            </div>
+        </header>
+        <main>{{ block "content" . }}{{ end }}</main>
+    </body>
+</html>
+{{ end }}

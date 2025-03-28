@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"ohabits.com/internal/api"
+	"ohabits.com/internal/handlers"
 	"ohabits.com/internal/util"
 )
 
@@ -35,6 +36,8 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 func Server() {
 
 	r := mux.NewRouter()
+
+	// API routes (JSON)
 
 	// Login & Register (No Auth)
 	r.HandleFunc("/api/register", api.Register).Methods("POST")
@@ -87,6 +90,13 @@ func Server() {
 	// User
 	protected.HandleFunc("/user", api.GetUser).Methods("GET")
 	protected.HandleFunc("/user", api.PutUser).Methods("PUT")
+
+	// Frontend routes (HTML)
+	r.HandleFunc("/", handlers.IndexHandler).Methods("GET")
+	r.HandleFunc("/habits_completions", handlers.HabitsCompletedByDate).Methods("GET")
+
+	// Serve static files (css, js, etc.)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	fmt.Println("Server is running on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))
