@@ -165,13 +165,13 @@ func GetWorkoutLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logDate, err := time.Parse("2006-01-02", dateStr)
-	if err != nil {
-		http.Error(w, "Invalid date format (expected YYYY-MM-DD)", http.StatusBadRequest)
-		return
-	}
+	// logDate, err := time.Parse("2006-01-02", dateStr)
+	// if err != nil {
+	// 	http.Error(w, "Invalid date format (expected YYYY-MM-DD)", http.StatusBadRequest)
+	// 	return
+	// }
 
-	log, err := db.GetWorkoutLogByDate(db.DB, logDate, userID)
+	log, err := db.GetWorkoutLogByDate(db.DB, dateStr, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

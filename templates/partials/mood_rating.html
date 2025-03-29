@@ -1,0 +1,62 @@
+{{ define "mood_rating"}}
+<div class="card">
+    <h2>How is your day</h2>
+    <div class="mood">
+        <label
+            ><input
+                type="radio"
+                name="mood"
+                value="1"
+                {{if
+                eq
+                .
+                1}}checked{{end}}
+            />😞</label
+        >
+        <label
+            ><input
+                type="radio"
+                name="mood"
+                value="2"
+                {{if
+                eq
+                .
+                2}}checked{{end}}
+            />🙁</label
+        >
+        <label
+            ><input
+                type="radio"
+                name="mood"
+                value="3"
+                {{if
+                eq
+                .
+                3}}checked{{end}}
+            />😐</label
+        >
+        <label
+            ><input
+                type="radio"
+                name="mood"
+                value="4"
+                {{if
+                eq
+                .
+                4}}checked{{end}}
+            />🙂</label
+        >
+        <label
+            ><input
+                type="radio"
+                name="mood"
+                value="5"
+                {{if
+                eq
+                .
+                5}}checked{{end}}
+            />😄</label
+        >
+    </div>
+</div>
+{{ end }}

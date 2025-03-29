@@ -1,9 +1,9 @@
 {{ define "habits_completion" }}
 <div class="card">
     <h2>Habits</h2>
-    <div class="habits-list">
+    <div class="list">
         {{ range .Habits }}
-        <div class="habit-item">{{ .HabitName }}</div>
+        <div class="list-item">{{ .HabitName }}</div>
         {{ end }}
     </div>
 </div>

@@ -1,0 +1,15 @@
+{{ define "todos" }}
+<div class="card todos">
+    <h2>Today's Tasks</h2>
+    <!-- Existing tasks will be listed here -->
+    <div class="list">
+        {{ range .Todos }}
+        <div class="list-item">{{ .Text }}</div>
+        {{ end }}
+    </div>
+    <form>
+        <input type="text" placeholder="Add a new task" />
+        <button type="submit">Add</button>
+    </form>
+</div>
+{{ end}}

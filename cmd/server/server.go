@@ -94,6 +94,11 @@ func Server() {
 	// Frontend routes (HTML)
 	r.HandleFunc("/", handlers.IndexHandler).Methods("GET")
 	r.HandleFunc("/habits_completions", handlers.HabitsCompletedByDate).Methods("GET")
+	r.HandleFunc("/todos", handlers.Todos).Methods("GET")
+	r.HandleFunc("/notes", handlers.Notes).Methods("GET")
+	r.HandleFunc("/mood_rating", handlers.Mood).Methods("GET")
+	r.HandleFunc("/workout_loging", handlers.WorkoutLoging).Methods("GET")
+	r.HandleFunc("/workout", handlers.GetWorkoutExercises).Methods("GET")
 
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

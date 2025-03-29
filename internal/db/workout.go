@@ -82,7 +82,7 @@ func DeleteWorkout(db *pgxpool.Pool, workoutID uuid.UUID, userID uuid.UUID) erro
 	return nil
 }
 
-func GetWorkoutLogByDate(db *pgxpool.Pool, logDate time.Time, userID uuid.UUID) (WorkoutLog, error) {
+func GetWorkoutLogByDate(db *pgxpool.Pool, logDate string, userID uuid.UUID) (WorkoutLog, error) {
 	var log WorkoutLog
 
 	err := db.QueryRow(

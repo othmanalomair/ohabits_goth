@@ -272,3 +272,122 @@ curl -X GET http://localhost:8080/api/view/2025-03 \
 curl -X GET http://localhost:8080/api/habits_completed/2025-03-25 \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs"
+
+curl -X GET http://localhost:8080/api/notes/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs"
+
+curl -X GET http://localhost:8080/api/notes/2025-03-25 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs"
+
+curl -X POST http://localhost:8080/api/todo \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs" \
+-d '{
+    "text": "hamood",
+    "date": "2025-03-25"
+}'
+
+
+curl -X GET http://localhost:8080/api/workout \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs"
+
+
+curl -X DELETE http://localhost:8080/api/workout/dcb0399b-3caa-4de6-985a-337bc877758f \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs"
+
+b7ba10d1-f8af-4d9a-b1d1-c32855312775
+dcb0399b-3caa-4de6-985a-337bc877758f
+
+
+
+curl -X POST http://localhost:8080/api/workout \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs" \
+  -d '{
+  "name": "Pull",
+  "day": "Monday",
+  "exercises": [
+    {
+      "order": 1,
+      "name": "Lat Pulldown (Wide Grip)"
+    },
+    {
+      "order": 2,
+      "name": "Lat Pulldown (Close Grip)"
+    },
+    {
+      "order": 3,
+      "name": "Wide-Grip Rows"
+    },
+    {
+      "order": 4,
+      "name": "Back Extension"
+    }
+  ]
+}'
+
+
+curl -X POST http://localhost:8080/api/workout \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs" \
+  -d '{
+  "name": "Push",
+  "day": "Wednesday",
+  "exercises": [
+    {
+      "order": 1,
+      "name": "Bench Press"
+    },
+    {
+      "order": 2,
+      "name": "Incline Dumbbell Press"
+    },
+    {
+      "order": 3,
+      "name": "Overhead Press"
+    },
+    {
+      "order": 4,
+      "name": "Triceps Dips"
+    }
+  ]
+}'
+
+curl -X POST http://localhost:8080/api/workout \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs" \
+  -d '{
+  "name": "Legs",
+  "day": "Friday",
+  "exercises": [
+    {
+      "order": 1,
+      "name": "Squats"
+    },
+    {
+      "order": 2,
+      "name": "Leg Press"
+    },
+    {
+      "order": 3,
+      "name": "Lunges"
+    },
+    {
+      "order": 4,
+      "name": "Hamstring Curls"
+    }
+  ]
+}'
+
+curl -X POST http://localhost:8080/api/workout \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDU1MTY0MjQsInVzZXJfaWQiOiJmZGY1NDVmNy1lNjE1LTQ3MDktYTFjYS00ZTZmMTFjZDZhNzYifQ.1tgSh6QxIZCFGL2tUlBkf2EAlyZBaAOIlO0jkytF5Zs" \
+  -d '{
+  "name": "Rest Day",
+  "day": "Sunday",
+  "exercises": []
+}'

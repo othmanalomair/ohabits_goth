@@ -1,0 +1,26 @@
+{{ define "workout_loging"}}
+<div class="card workout">
+    <h2>Workout</h2>
+    <select
+        name="workout"
+        hx-get="/workout"
+        hx-include="this"
+        hx-target="#exercise-show"
+        hx-trigger="change"
+    >
+        {{ range .Workout }}
+        <option value="{{ .ID }}">{{ .Name }}</option>
+        {{ end }}
+    </select>
+    <div id="exercise-show" class="exercise-show">
+        <!-- This content will be replaced with the selected workout's exercises -->
+        <div class="exercise-item">Select a workout to see exercises</div>
+    </div>
+    <div class="exercise-group">
+        <input type="text" placeholder="Weight" />
+        <input type="text" placeholder="Cardio name" />
+        <input type="text" placeholder="Duration" />
+        <input class="submiting" type="submit" value="Save Workout" />
+    </div>
+</div>
+{{ end }}

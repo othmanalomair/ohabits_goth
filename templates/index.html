@@ -25,59 +25,36 @@
             <!-- The habits table will load here automatically via htmx -->
             Loading habits…
         </div>
-        <!-- Tasks Section -->
-        <div class="card tasks">
-            <h2>Tasks for 25/03/2025</h2>
-            <form>
-                <input type="text" placeholder="Add a new task" />
-                <button type="submit">Add</button>
-            </form>
-            <!-- Existing tasks can be listed here -->
-            <ul>
-                <li>Example task 1</li>
-                <li>Example task 2</li>
-            </ul>
+        <!-- Todos Section -->
+        <div id="todos" hx-get="/todos" hx-trigger="load" hx-swap="innerHTML">
+            Loading todos…
         </div>
     </div>
 
     <!-- Right Column -->
     <div>
         <!-- Notes Section -->
-        <div class="card notes">
-            <h2>Notes for 25/03/2025</h2>
-            <textarea placeholder="Write your note here..."></textarea>
-            <button>Save Note</button>
+        <div id="notes" hx-get="/notes" hx-trigger="load" hx-swap="innerHTML">
+            Loading notes…
         </div>
-
         <!-- Mood Section -->
-        <div class="card">
-            <h2>Mood for 25/03/2025</h2>
-            <div class="mood">
-                <!-- Example of numeric mood options -->
-                <!-- You could use radio inputs or a slider -->
-                <label><input type="radio" name="mood" value="0" />0</label>
-                <label><input type="radio" name="mood" value="1" />1</label>
-                <label><input type="radio" name="mood" value="2" />2</label>
-                <label><input type="radio" name="mood" value="3" />3</label>
-                <label><input type="radio" name="mood" value="4" />4</label>
-                <label><input type="radio" name="mood" value="5" />5</label>
-                <label><input type="radio" name="mood" value="6" />6</label>
-                <label><input type="radio" name="mood" value="7" />7</label>
-                <label><input type="radio" name="mood" value="8" />8</label>
-                <label><input type="radio" name="mood" value="9" />9</label>
-                <label><input type="radio" name="mood" value="10" />10</label>
-            </div>
+        <div
+            id="mood"
+            hx-get="/mood_rating"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            Loading mood…
         </div>
 
         <!-- Workout Section -->
-        <div class="card workout">
-            <h2>Workout for 25/03/2025</h2>
-            <h3>Legs</h3>
-            <button>Add Exercise</button>
-            <div class="exercise-group">
-                <input type="text" placeholder="Cardio name" />
-            </div>
-            <button>Save Workout</button>
+        <div
+            id="workoutlog"
+            hx-get="/workout_loging"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            Loading workout log…
         </div>
     </div>
 </div>
