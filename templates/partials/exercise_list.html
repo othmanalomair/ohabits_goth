@@ -1,3 +1,27 @@
-{{ define "exercise_list" }} {{ range .Exercises }}
-<div class="exercise-item">{{ .Name }}</div>
-{{ end }} {{ end }}
+{{ define "exercise_list" }}
+<div id="exercise-show" class="exercise-show">
+    <ul id="exercise-list">
+        {{ range .Exercises }}
+        <li data-order="{{ .Order }}" data-name="{{ .Name }}">{{ .Name }}</li>
+        {{ end }}
+    </ul>
+    <script>
+        // Update the hidden input for workout_name based on the selected option.
+        var select = document.getElementById("workout-select");
+        if (select && select.selectedIndex >= 0) {
+            var selectedOption = select.options[select.selectedIndex];
+            document.getElementById("workout_name").value = selectedOption.text;
+        }
+        // Build a JSON array from the list items.
+        var exercises = [];
+        document.querySelectorAll("#exercise-list li").forEach(function (li) {
+            exercises.push({
+                order: parseInt(li.getAttribute("data-order")),
+                name: li.getAttribute("data-name"),
+            });
+        });
+        document.getElementById("completed_exercises").value =
+            JSON.stringify(exercises);
+    </script>
+</div>
+{{ end }}

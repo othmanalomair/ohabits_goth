@@ -40,27 +40,49 @@ func GetTodosByDate(db *pgxpool.Pool, todoDate string, userID uuid.UUID) ([]Todo
 	return todos, nil
 }
 
-func CreateTodo(db *pgxpool.Pool, todo Todos, userID uuid.UUID) error {
+func GetTodoByID(db *pgxpool.Pool, todoID uuid.UUID, userID uuid.UUID) (*Todos, error) {
+	var todo Todos
 
-	// Create a new todo
-	_, err := db.Exec(context.Background(), `
-		INSERT INTO todos (user_id, text, completed, date)
-		VALUES ($1, $2, $3, $4)
-		`, userID, todo.Text, false, todo.Date)
+	err := db.QueryRow(context.Background(), `
+		SELECT id, user_id, text, completed, date, created_at, updated_at
+		FROM todos
+		WHERE id = $1 AND user_id = $2
+		`, todoID, userID).Scan(
+		&todo.ID,
+		&todo.UserID,
+		&todo.Text,
+		&todo.Completed,
+		&todo.Date,
+		&todo.CreatedAt,
+		&todo.UpdatedAt,
+	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &todo, nil
 }
 
-func UpdateTodo(db *pgxpool.Pool, todo Todos, id uuid.UUID, userID uuid.UUID) error {
+func CreateTodo(db *pgxpool.Pool, todo Todos, userID uuid.UUID) (uuid.UUID, error) {
+	var newID uuid.UUID
+	err := db.QueryRow(context.Background(), `
+		INSERT INTO todos (user_id, text, completed, date)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`, userID, todo.Text, false, todo.Date).Scan(&newID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return newID, nil
+}
+
+func UpdateTodo(db *pgxpool.Pool, todo Todos, userID uuid.UUID) error {
 
 	// Update a todo
 	_, err := db.Exec(context.Background(), `
 		UPDATE todos
 		SET text = $1, completed = $2
 		WHERE id = $3 AND user_id = $4
-		`, todo.Text, todo.Completed, id, userID)
+		`, todo.Text, todo.Completed, todo.ID, userID)
 	if err != nil {
 		return err
 	}

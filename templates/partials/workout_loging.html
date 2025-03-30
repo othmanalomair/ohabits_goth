@@ -1,26 +1,103 @@
-{{ define "workout_loging"}}
-<div class="card workout">
+{{ define "workout_loging" }}
+<div class="card workout" id="workout-log">
     <h2>Workout</h2>
+    <!-- Workout selection dropdown -->
+
     <select
         name="workout"
+        id="workout-select"
         hx-get="/workout"
         hx-include="this"
         hx-target="#exercise-show"
-        hx-trigger="change"
+        hx-trigger="load, change"
+        class="workout-select"
     >
+        <option value="">Select a workout</option>
         {{ range .Workout }}
-        <option value="{{ .ID }}">{{ .Name }}</option>
+        <option
+            value="{{ .ID }}"
+            {{
+            if
+            eq
+            .Name
+            $.WorkoutLog.Name
+            }}selected{{
+            end
+            }}
+        >
+            {{ .Name }}
+        </option>
         {{ end }}
     </select>
+
+    <!-- Container for exercises; will be replaced by the response from the GET /workout endpoint -->
     <div id="exercise-show" class="exercise-show">
-        <!-- This content will be replaced with the selected workout's exercises -->
         <div class="exercise-item">Select a workout to see exercises</div>
     </div>
-    <div class="exercise-group">
-        <input type="text" placeholder="Weight" />
-        <input type="text" placeholder="Cardio name" />
-        <input type="text" placeholder="Duration" />
-        <input class="submiting" type="submit" value="Save Workout" />
-    </div>
+
+    <!-- Workout log form -->
+    <form
+        hx-post="/workout_loging"
+        hx-target="#workout-log"
+        hx-swap="outerHTML"
+        method="post"
+    >
+        <div class="exercise-group">
+            <div class="form-row">
+                <label for="weight">Weight:</label>
+                <input
+                    type="text"
+                    name="weight"
+                    id="weight"
+                    placeholder="Weight"
+                    value="{{ .WorkoutLog.Weight }}"
+                />
+            </div>
+            <div class="form-row">
+                <label for="cardio">Cardio:</label>
+                <input
+                    type="text"
+                    name="cardio"
+                    id="cardio"
+                    placeholder="Cardio name"
+                    value="{{ .CardioName }}"
+                />
+            </div>
+            <div class="form-row">
+                <label for="duration">Duration (min):</label>
+                <input
+                    type="text"
+                    name="duration"
+                    id="duration"
+                    placeholder="Duration"
+                    value="{{ .CardioDuration }}"
+                />
+            </div>
+            <!-- Hidden fields for workout name and completed exercises -->
+            <input
+                type="hidden"
+                name="workout_name"
+                id="workout_name"
+                value="{{ .WorkoutLog.Name }}"
+            />
+            <input
+                type="hidden"
+                name="completed_exercises"
+                id="completed_exercises"
+                value='{{ printf "%s" .WorkoutLog.CompletedExercises }}'
+            />
+            <!-- Always use the current date -->
+            <input type="hidden" name="date" value="{{ now | formatDate }}" />
+        </div>
+        <button type="submit" class="workout-button">
+            <img
+                src="/static/images/svg/save.svg"
+                alt="Save Workout"
+                width="16"
+                height="16"
+            />
+            Save Workout
+        </button>
+    </form>
 </div>
 {{ end }}

@@ -2,9 +2,7 @@
 <div class="card">
     <h2>Habits</h2>
     <div class="list">
-        {{ range .Habits }}
-        <div class="list-item">{{ .HabitName }}</div>
-        {{ end }}
+        {{ range .Habits }} {{ template "habit_item" . }} {{ end }}
     </div>
 </div>
 {{ end }}

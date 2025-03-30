@@ -1,7 +1,25 @@
-{{ define "notes"}}
+{{ define "notes" }}
 <div class="card notes">
     <h2>Daily Notes</h2>
-    <textarea placeholder="Write your note here...">{{ .Notes.Text }}</textarea>
-    <button>Save Note</button>
+    <form hx-post="/notes" hx-target=".notes" hx-swap="outerHTML" method="post">
+        <textarea name="text" placeholder="Write your note here...">
+{{ .Notes.Text }}</textarea
+        >
+        <!-- If no note exists, use current date -->
+        <input
+            type="hidden"
+            name="date"
+            value="{{ if .Notes.Date.IsZero }}{{ now | formatDate }}{{ else }}{{ .Notes.Date | formatDate }}{{ end }}"
+        />
+        <button type="submit">
+            <img
+                src="/static/images/svg/save.svg"
+                alt="Save Note"
+                width="16"
+                height="16"
+            />
+            Save Note
+        </button>
+    </form>
 </div>
 {{ end }}

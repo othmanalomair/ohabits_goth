@@ -111,15 +111,18 @@ func GetWorkoutLogByDate(db *pgxpool.Pool, logDate string, userID uuid.UUID) (Wo
 }
 
 func CreateWorkoutLog(db *pgxpool.Pool, workoutLog WorkoutLog, userID uuid.UUID, workoutDate time.Time) error {
-	// Create a new workout log in the postgres database
-	_, err := DB.Exec(
-		context.Background(), `
-		INSERT INTO workout_logs (user_id, name, completed_exercises, cardio, weight, date)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		`, userID, workoutLog.Name, workoutLog.CompletedExercises, workoutLog.Cardio, workoutLog.Weight, workoutDate)
-	if err != nil {
-		return err
-	}
+	_, err := DB.Exec(context.Background(), `
+        INSERT INTO workout_logs (user_id, name, completed_exercises, cardio, weight, date)
+        VALUES ($1, $2, $3, $4, $5, $6)
+    `, userID, workoutLog.Name, workoutLog.CompletedExercises, workoutLog.Cardio, workoutLog.Weight, workoutDate)
+	return err
+}
 
-	return nil
+func UpdateWorkoutLog(db *pgxpool.Pool, logID uuid.UUID, logEntry WorkoutLog, userID uuid.UUID) error {
+	_, err := db.Exec(context.Background(), `
+		UPDATE workout_logs
+		SET name = $1, completed_exercises = $2, cardio = $3, weight = $4, date = $5, updated_at = NOW()
+		WHERE id = $6 AND user_id = $7
+	`, logEntry.Name, logEntry.CompletedExercises, logEntry.Cardio, logEntry.Weight, logEntry.Date, logID, userID)
+	return err
 }

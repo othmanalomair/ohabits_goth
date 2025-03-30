@@ -1,0 +1,28 @@
+{{ define "habits_by_day" }}
+<div class="card habits">
+    <h2>Habits for {{ .Day }}</h2>
+    <div class="list">
+        {{ if .Habits }} {{ range .Habits }}
+        <div
+            id="habit-{{ .Habit.ID }}"
+            hx-post="/habit/{{ .Habit.ID }}/toggle"
+            hx-trigger="click"
+            hx-target="this"
+            hx-swap="outerHTML"
+            class="habit-item {{ if .Completed }}list-item-checked{{ else }}list-item{{ end }}"
+        >
+            <span class="habit-name">{{ .Habit.Name }}</span>
+            {{ if .Completed }}
+            <img
+                class="habit-check"
+                src="/static/images/svg/check.svg"
+                alt="Completed"
+            />
+            {{ end }}
+        </div>
+        {{ end }} {{ else }}
+        <p>No habits scheduled for {{ .Day }}.</p>
+        {{ end }}
+    </div>
+</div>
+{{ end }}

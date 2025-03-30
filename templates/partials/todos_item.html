@@ -1,0 +1,31 @@
+{{ define "todos_item" }}
+<div
+    id="todo-{{ .ID }}"
+    hx-post="/todos/{{ .ID }}/toggle"
+    hx-trigger="click"
+    hx-target="this"
+    hx-swap="outerHTML"
+    class="todo-item {{ if .Completed }}list-item-checked{{ else }}list-item{{ end }}"
+>
+    <span class="todo-text">{{ .Text }}</span>
+    <div class="todo-actions">
+        <img
+            class="delete"
+            src="/static/images/svg/trash.svg"
+            alt="Delete"
+            hx-delete="/todos/{{ .ID }}/delete"
+            hx-trigger="click"
+            hx-target="#todo-{{ .ID }}"
+            hx-swap="outerHTML"
+            onclick="event.stopPropagation()"
+        />
+        {{ if .Completed }}
+        <img
+            class="todo-check"
+            src="/static/images/svg/check.svg"
+            alt="Completed"
+        />
+        {{ end }}
+    </div>
+</div>
+{{ end }}

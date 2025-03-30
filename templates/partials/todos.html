@@ -2,14 +2,18 @@
 <div class="card todos">
     <h2>Today's Tasks</h2>
     <!-- Existing tasks will be listed here -->
-    <div class="list">
-        {{ range .Todos }}
-        <div class="list-item">{{ .Text }}</div>
-        {{ end }}
+    <div class="list" id="todo-list">
+        {{ range .Todos }} {{ template "todos_item" . }} {{ end }}
     </div>
-    <form>
-        <input type="text" placeholder="Add a new task" />
+    <form
+        hx-post="/todos"
+        hx-target="#todo-list"
+        hx-trigger="submit"
+        hx-swap="afterbegin"
+        method="post"
+    >
+        <input type="text" id="text" name="text" placeholder="Add a new task" />
         <button type="submit">Add</button>
     </form>
 </div>
-{{ end}}
+{{ end }}

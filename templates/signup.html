@@ -1,0 +1,28 @@
+{{ define "signup" }}
+<div class="auth-container">
+    <h1>Sign Up &rarr;</h1>
+    <form method="POST" action="/signup">
+        <div class="input-group">
+            <label for="email">Enter your email</label>
+            <input
+                type="text"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+            />
+        </div>
+        <div class="input-group">
+            <label for="password">Enter your password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+            />
+        </div>
+        <button type="submit">Create Account</button>
+    </form>
+    <p>or continue with</p>
+    <p><a href="/login">Already have an account? Login</a></p>
+</div>
+{{ end }}
