@@ -1,32 +1,61 @@
 {{ define "content" }}
+
 <!-- Date Header -->
-<div class="date-header">
-    <h1>Tuesday</h1>
-    <p>Mar 25 / 2025</p>
+<div class="date-card">
+    <div class="date-header" id="date-header">
+        <h1>{{ .SelectedDate.Weekday }}</h1>
+        <p>{{ .SelectedDate.Format "Jan 2 / 2006" }}</p>
+    </div>
 </div>
 
-<!-- Example: You could insert a calendar here if needed -->
-<!-- <div class="calendar card">
-<p>Calendar goes here...</p>
-</div> -->
+<!-- Calendar Section (hidden by default) -->
+<div
+    id="calendar"
+    hx-get="/calendar?date={{ .SelectedDate | formatDate }}"
+    hx-trigger="load"
+    hx-swap="innerHTML"
+    style="display: none"
+>
+    Loading calendar…
+</div>
 
+<script>
+    // When the page loads, add a click listener to toggle the calendar display.
+    document.addEventListener("DOMContentLoaded", function () {
+        var dateHeader = document.getElementById("date-header");
+        var calendar = document.getElementById("calendar");
+        dateHeader.addEventListener("click", function () {
+            if (
+                calendar.style.display === "none" ||
+                calendar.style.display === ""
+            ) {
+                calendar.style.display = "block";
+            } else {
+                calendar.style.display = "none";
+            }
+        });
+    });
+</script>
 <!-- Two-column grid on desktop, single column on mobile -->
 <div class="grid-container">
     <!-- Left Column -->
     <div>
         <!-- Habits Section -->
-        <!-- This div will be updated with the habits table -->
         <div
             id="habitsTable"
-            hx-get="/habits_by_day"
+            hx-get="/habits_by_day?date={{ .SelectedDate | formatDate }}"
             hx-trigger="load"
             hx-swap="innerHTML"
         >
-            <!-- The habits table will load here automatically via htmx -->
             Loading habits…
         </div>
         <!-- Todos Section -->
-        <div id="todos" hx-get="/todos" hx-trigger="load" hx-swap="innerHTML">
+        <div
+            id="todos"
+            hx-get="/todos?date={{ .SelectedDate | formatDate }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
             Loading todos…
         </div>
     </div>
@@ -34,25 +63,29 @@
     <!-- Right Column -->
     <div>
         <!-- Notes Section -->
-        <div id="notes" hx-get="/notes" hx-trigger="load" hx-swap="innerHTML">
+        <div
+            id="notes"
+            hx-get="/notes?date={{ .SelectedDate | formatDate }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
             Loading notes…
         </div>
         <!-- Mood Section -->
         <div
             id="mood"
-            hx-get="/mood_rating"
+            hx-get="/mood_rating?date={{ .SelectedDate | formatDate }}"
             hx-trigger="load"
             hx-swap="innerHTML"
         >
             Loading mood…
         </div>
-
         <!-- Workout Section -->
         <div
             id="workoutlog"
-            hx-get="/workout_loging"
+            hx-get="/workout_loging?date={{ .SelectedDate | formatDate }}"
             hx-trigger="load"
-            hx-swap="innerHTML"
+            hx-swap="outerHTML"
         >
             Loading workout log…
         </div>

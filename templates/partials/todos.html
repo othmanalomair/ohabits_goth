@@ -12,6 +12,11 @@
         hx-swap="afterbegin"
         method="post"
     >
+        <input
+            type="hidden"
+            name="date"
+            value="{{ .SelectedDate | formatDate }}"
+        />
         <input type="text" id="text" name="text" placeholder="Add a new task" />
         <button type="submit">Add</button>
     </form>

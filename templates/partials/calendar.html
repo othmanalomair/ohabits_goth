@@ -1,0 +1,121 @@
+{{ define "calendar" }}
+<div class="calendar">
+    <div class="calendar-header">
+        <button id="prev-month">
+            <img
+                src="/static/images/svg/arrow-left-circle.svg"
+                alt="Previous Month"
+            />
+        </button>
+        <span id="month-year"></span>
+        <button id="next-month">
+            <img
+                src="/static/images/svg/arrow-right-circle.svg"
+                alt="Next Month"
+            />
+        </button>
+    </div>
+    <!-- Weekday headers in a separate grid row -->
+    <div class="calendar-day-headers">
+        <div class="calendar-day-header">Sun</div>
+        <div class="calendar-day-header">Mon</div>
+        <div class="calendar-day-header">Tue</div>
+        <div class="calendar-day-header">Wed</div>
+        <div class="calendar-day-header">Thu</div>
+        <div class="calendar-day-header">Fri</div>
+        <div class="calendar-day-header">Sat</div>
+    </div>
+    <!-- Day cells for the month -->
+    <div id="calendar-days" class="calendar-days"></div>
+</div>
+<script>
+    (function () {
+        var today = new Date();
+        var currentMonth = today.getMonth();
+        var currentYear = today.getFullYear();
+
+        var monthYearSpan = document.getElementById("month-year");
+        var calendarDaysDiv = document.getElementById("calendar-days");
+
+        var months = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ];
+
+        function renderCalendar(month, year) {
+            calendarDaysDiv.innerHTML = "";
+            monthYearSpan.textContent = months[month] + " " + year;
+
+            // Get the day of the week of the first day of the month
+            var firstDay = new Date(year, month, 1).getDay();
+            // Number of days in month
+            var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Create blank elements for days before the first day
+            for (var i = 0; i < firstDay; i++) {
+                var blankDiv = document.createElement("div");
+                blankDiv.classList.add("calendar-day");
+                calendarDaysDiv.appendChild(blankDiv);
+            }
+
+            // Create day elements
+            for (var day = 1; day <= daysInMonth; day++) {
+                var dayLink = document.createElement("a");
+                dayLink.classList.add("calendar-day");
+                dayLink.textContent = day;
+                // Create a date string in YYYY-MM-DD format
+                var dateStr =
+                    year +
+                    "-" +
+                    String(month + 1).padStart(2, "0") +
+                    "-" +
+                    String(day).padStart(2, "0");
+                dayLink.href = "/?date=" + dateStr;
+                // Highlight today if applicable
+                if (
+                    year === today.getFullYear() &&
+                    month === today.getMonth() &&
+                    day === today.getDate()
+                ) {
+                    dayLink.classList.add("today");
+                }
+                calendarDaysDiv.appendChild(dayLink);
+            }
+        }
+
+        document
+            .getElementById("prev-month")
+            .addEventListener("click", function () {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                renderCalendar(currentMonth, currentYear);
+            });
+
+        document
+            .getElementById("next-month")
+            .addEventListener("click", function () {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                renderCalendar(currentMonth, currentYear);
+            });
+
+        renderCalendar(currentMonth, currentYear);
+    })();
+</script>
+{{ end }}

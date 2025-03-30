@@ -5,7 +5,7 @@
         {{ if .Habits }} {{ range .Habits }}
         <div
             id="habit-{{ .Habit.ID }}"
-            hx-post="/habit/{{ .Habit.ID }}/toggle"
+            hx-post="/habit/{{ .Habit.ID }}/toggle?date={{ $.SelectedDate | formatDate }}"
             hx-trigger="click"
             hx-target="this"
             hx-swap="outerHTML"

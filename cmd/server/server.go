@@ -35,6 +35,7 @@ func Server() *http.Server {
 	protected.HandleFunc("/workout", handlers.GetWorkoutExercises).Methods("GET")
 	protected.HandleFunc("/workout_loging", handlers.WorkoutLoging).Methods("GET")
 	protected.HandleFunc("/workout_loging", handlers.SaveWorkoutLog).Methods("POST")
+	protected.HandleFunc("/calendar", handlers.CalendarHandler).Methods("GET")
 
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

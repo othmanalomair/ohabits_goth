@@ -1,7 +1,7 @@
 {{ define "habit_item" }}
 <div
     id="habit-{{ .ID }}"
-    hx-post="/habit/{{ .HabitID }}/toggle"
+    hx-post="/habit/{{ .HabitID }}/toggle?date={{ .Date | formatDate }}"
     hx-trigger="click"
     hx-target="this"
     hx-swap="outerHTML"

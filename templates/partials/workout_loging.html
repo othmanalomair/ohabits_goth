@@ -6,7 +6,7 @@
     <select
         name="workout"
         id="workout-select"
-        hx-get="/workout"
+        hx-get="/workout?date={{ .SelectedDate | formatDate }}"
         hx-include="this"
         hx-target="#exercise-show"
         hx-trigger="load, change"
@@ -64,7 +64,7 @@
                 />
             </div>
             <div class="form-row">
-                <label for="duration">Duration (min):</label>
+                <label for="duration">Duration:</label>
                 <input
                     type="text"
                     name="duration"
@@ -87,7 +87,11 @@
                 value='{{ printf "%s" .WorkoutLog.CompletedExercises }}'
             />
             <!-- Always use the current date -->
-            <input type="hidden" name="date" value="{{ now | formatDate }}" />
+            <input
+                type="hidden"
+                name="date"
+                value="{{ .SelectedDate | formatDate }}"
+            />
         </div>
         <button type="submit" class="workout-button">
             <img

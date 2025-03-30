@@ -41,9 +41,20 @@ func init() {
 
 // IndexHandler renders the full index page.
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	// Render the base template which includes index.html content
-	err := tmpl.ExecuteTemplate(w, "base.html", nil)
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
+	selectedDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
+		selectedDate = time.Now()
+	}
+	data := struct {
+		SelectedDate time.Time
+	}{
+		SelectedDate: selectedDate,
+	}
+	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -138,6 +149,7 @@ type HabitDisplay struct {
 }
 
 // HabitsCompletedByDate renders the habits completion div
+
 func HabitsCompletedByDate(w http.ResponseWriter, r *http.Request) {
 	// Extract userID from the request context.
 	userIDValue := r.Context().Value("userID")
@@ -151,19 +163,29 @@ func HabitsCompletedByDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use current date as string.
-	date := time.Now().Format("2006-01-02")
+	// Use current date as string (or from query).
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
+	// Parse selected date.
+	selectedDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		selectedDate = time.Now()
+	}
 
-	completedHabits, err := db.GetHabitsCompletedByDate(db.DB, date, userID)
+	completedHabits, err := db.GetHabitsCompletedByDate(db.DB, dateStr, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	data := struct {
-		Habits []db.HabitCompletion
+		Habits       []db.HabitCompletion
+		SelectedDate time.Time
 	}{
-		Habits: completedHabits,
+		Habits:       completedHabits,
+		SelectedDate: selectedDate,
 	}
 
 	// Render only the habits completion div partial.
@@ -186,21 +208,28 @@ func HabitsByDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get today's weekday (e.g. "Sunday").
-	day := time.Now().Weekday().String()
+	// Use the "date" query parameter, or default to today.
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
+	selectedDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		selectedDate = time.Now()
+	}
+	day := selectedDate.Weekday().String()
 
-	// Retrieve habits scheduled for today.
+	// Retrieve habits scheduled for the selected day.
 	habits, err := db.GetHabitsByDay(db.DB, userID, day)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	todayStr := time.Now().Format("2006-01-02")
 	var habitDisplays []HabitDisplay
 	for _, h := range habits {
-		// Try to retrieve the completion record for each habit for today.
-		hc, err := db.GetHabitCompletionByHabitAndDate(db.DB, h.ID, userID, todayStr)
+		// Try to retrieve the completion record for each habit for the selected date.
+		hc, err := db.GetHabitCompletionByHabitAndDate(db.DB, h.ID, userID, dateStr)
 		completed := false
 		if err == nil {
 			completed = hc.Completed
@@ -212,11 +241,13 @@ func HabitsByDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Day    string
-		Habits []HabitDisplay
+		Day          string
+		Habits       []HabitDisplay
+		SelectedDate time.Time
 	}{
-		Day:    day,
-		Habits: habitDisplays,
+		Day:          day,
+		Habits:       habitDisplays,
+		SelectedDate: selectedDate,
 	}
 
 	var buf bytes.Buffer
@@ -228,7 +259,7 @@ func HabitsByDay(w http.ResponseWriter, r *http.Request) {
 }
 
 func ToggleHabitCompletion(w http.ResponseWriter, r *http.Request) {
-	// Extract userID from the request context.
+	// Extract userID from context.
 	userIDValue := r.Context().Value("userID")
 	if userIDValue == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -248,37 +279,43 @@ func ToggleHabitCompletion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use current date as string.
-	todayStr := time.Now().Format("2006-01-02")
+	// Get date from query or form.
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = r.FormValue("date")
+	}
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
 
-	// Try to get the habit completion record for today.
-	hc, err := db.GetHabitCompletionByHabitAndDate(db.DB, habitID, userID, todayStr)
+	// Try to get the habit completion record for the selected date.
+	hc, err := db.GetHabitCompletionByHabitAndDate(db.DB, habitID, userID, dateStr)
 	if err != nil {
-		// If not found, create a new record.
+		// If not found, create a new record using the selected date.
 		if err == pgx.ErrNoRows || err.Error() == "no rows in result set" {
-			// Optionally, retrieve the habit to get its name.
 			habit, err := db.GetHabitByID(db.DB, habitID, userID)
 			var habitName string
 			if err == nil {
 				habitName = habit.Name
 			}
+			// Use the selected date (parsed) instead of time.Now()
+			newDate, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				newDate = time.Now()
+			}
 			newHC := db.HabitCompletion{
 				HabitID:   habitID,
 				HabitName: habitName,
 				UserID:    userID,
-				Completed: true, // default to toggled on
-				Date:      time.Now(),
+				Completed: true, // default toggled on
+				Date:      newDate,
 			}
 			if err := db.CreateHabitCompletion(db.DB, newHC, userID); err != nil {
 				http.Error(w, "Failed to create habit completion", http.StatusInternalServerError)
 				return
 			}
-			// Retrieve the newly created record.
-			hc, err = db.GetHabitCompletionByHabitAndDate(db.DB, habitID, userID, todayStr)
-			if err != nil {
-				http.Error(w, "Failed to retrieve habit completion", http.StatusInternalServerError)
-				return
-			}
+			// Instead of re-fetching from the DB, use the new record.
+			hc = &newHC
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -290,8 +327,8 @@ func ToggleHabitCompletion(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to update habit completion", http.StatusInternalServerError)
 			return
 		}
-		// Optionally, re-retrieve the updated record.
-		hc, err = db.GetHabitCompletionByHabitAndDate(db.DB, habitID, userID, todayStr)
+		// Re-read to ensure we have the latest data.
+		hc, err = db.GetHabitCompletionByHabitAndDate(db.DB, habitID, userID, dateStr)
 		if err != nil {
 			http.Error(w, "Failed to retrieve updated habit completion", http.StatusInternalServerError)
 			return
@@ -306,7 +343,6 @@ func ToggleHabitCompletion(w http.ResponseWriter, r *http.Request) {
 }
 
 func Todos(w http.ResponseWriter, r *http.Request) {
-
 	// Extract userID from the request context.
 	userIDValue := r.Context().Value("userID")
 	if userIDValue == nil {
@@ -319,19 +355,35 @@ func Todos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use current date as string.
-	date := time.Now().Format("2006-01-02")
+	// Get date from query or form:
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = r.FormValue("date")
+	}
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
 
-	todos, err := db.GetTodosByDate(db.DB, date, userID)
+	// Parse the selected date.
+	selectedDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		selectedDate = time.Now()
+	}
+
+	// Fetch todos for that day.
+	todos, err := db.GetTodosByDate(db.DB, dateStr, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Create a data structure that includes both todos and the selected date.
 	data := struct {
-		Todos []db.Todos
+		Todos        []db.Todos
+		SelectedDate time.Time
 	}{
-		Todos: todos,
+		Todos:        todos,
+		SelectedDate: selectedDate,
 	}
 
 	// Render only the todos div partial.
@@ -437,9 +489,17 @@ func NewTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use current date as string.
-	date := time.Now().Format("2006-01-02")
-	d, err := time.Parse("2006-01-02", date)
+	// Check for date in URL query and form value.
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = r.FormValue("date")
+	}
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
+
+	// Parse the date.
+	d, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		d = time.Now()
 	}
@@ -751,7 +811,7 @@ func extractCardioInfo(cardioJSON []byte) (string, string) {
 }
 
 func WorkoutLoging(w http.ResponseWriter, r *http.Request) {
-	// Extract userID from the request context.
+	// Extract userID from context.
 	userIDValue := r.Context().Value("userID")
 	if userIDValue == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -762,26 +822,29 @@ func WorkoutLoging(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Failed to parse form data", http.StatusInternalServerError)
-		return
+
+	// Get the selected date from query, default to today.
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
 	}
-	todayStr := time.Now().Format("2006-01-02")
-	today, err := time.Parse("2006-01-02", todayStr)
+	selectedDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		today = time.Now()
+		selectedDate = time.Now()
 	}
+
 	workouts, err := db.GetAllWorkouts(db.DB, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	workoutLog, err := db.GetWorkoutLogByDate(db.DB, todayStr, userID)
+
+	workoutLog, err := db.GetWorkoutLogByDate(db.DB, dateStr, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows || err.Error() == "no rows in result set" {
 			workoutLog = db.WorkoutLog{
 				UserID: userID,
-				Date:   today,
+				Date:   selectedDate,
 			}
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -790,11 +853,13 @@ func WorkoutLoging(w http.ResponseWriter, r *http.Request) {
 	}
 	cardioName, cardioDuration := extractCardioInfo(workoutLog.Cardio)
 	data := struct {
+		SelectedDate   time.Time
 		Workout        []db.Workout
 		WorkoutLog     db.WorkoutLog
 		CardioName     string
 		CardioDuration string
 	}{
+		SelectedDate:   selectedDate,
 		Workout:        workouts,
 		WorkoutLog:     workoutLog,
 		CardioName:     cardioName,
@@ -904,11 +969,14 @@ func GetWorkoutExercises(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse form data", http.StatusInternalServerError)
 		return
 	}
+
 	workoutIDStr := r.URL.Query().Get("workout")
+	// Instead of erroring out, if missing, render default content.
 	if workoutIDStr == "" {
-		http.Error(w, "Missing workout id", http.StatusBadRequest)
+		w.Write([]byte(`<div class="exercise-item">Select a workout to see exercises</div>`))
 		return
 	}
+
 	workoutID, err := uuid.Parse(workoutIDStr)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -923,4 +991,13 @@ func GetWorkoutExercises(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func CalendarHandler(w http.ResponseWriter, r *http.Request) {
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "calendar", nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
 }

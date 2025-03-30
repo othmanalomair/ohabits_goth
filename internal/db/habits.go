@@ -131,7 +131,7 @@ func CreateHabitCompletion(db *pgxpool.Pool, habitCompletion HabitCompletion, us
 	_, err := db.Exec(context.Background(), `
 		INSERT INTO habits_completions (habit_id, user_id, completed, date)
 		VALUES ($1, $2, $3, $4)
-		`, habitCompletion.HabitID, userID, false, habitCompletion.Date)
+		`, habitCompletion.HabitID, userID, habitCompletion.Completed, habitCompletion.Date)
 	return err
 }
 
