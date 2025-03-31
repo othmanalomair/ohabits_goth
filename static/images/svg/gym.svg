@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left weight -->
+  <rect x="2" y="10" width="8" height="12" rx="1" fill="#000"/>
+
+  <!-- Bar -->
+  <rect x="10" y="13" width="12" height="6" fill="#000"/>
+
+  <!-- Right weight -->
+  <rect x="22" y="10" width="8" height="12" rx="1" fill="#000"/>
+</svg>

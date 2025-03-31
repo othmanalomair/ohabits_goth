@@ -21,12 +21,61 @@ import (
 var tmpl *template.Template
 var DB *pgxpool.Pool // reference your DB connection
 
+// Define helper functions.
+
+func isActive(scheduledDays string, uiIndex int) bool {
+	var days []string
+	if err := json.Unmarshal([]byte(scheduledDays), &days); err == nil {
+		// Use a Sunday-first order for the UI:
+		uiWeekdays := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+		if uiIndex < 0 || uiIndex >= len(uiWeekdays) {
+			return false
+		}
+		expected := uiWeekdays[uiIndex]
+		// Return true if the expected weekday is present anywhere in the days slice.
+		for _, d := range days {
+			if d == expected {
+				return true
+			}
+		}
+		return false
+	}
+	// Fallback: try as []bool (if stored that way)
+	var boolDays []bool
+	if err := json.Unmarshal([]byte(scheduledDays), &boolDays); err == nil {
+		if uiIndex < 0 || uiIndex >= len(boolDays) {
+			return false
+		}
+		return boolDays[uiIndex]
+	}
+	return false
+}
+
+func list(args ...string) []string {
+	return args
+}
+
+func substr(s string, start, length int) string {
+	runes := []rune(s)
+	if start < 0 || start >= len(runes) {
+		return ""
+	}
+	end := start + length
+	if end > len(runes) {
+		end = len(runes)
+	}
+	return string(runes[start:end])
+}
+
 func init() {
 	tmpl = template.New("").Funcs(template.FuncMap{
 		"now": time.Now,
 		"formatDate": func(t time.Time) string {
 			return t.Format("2006-01-02")
 		},
+		"isActive": isActive,
+		"list":     list,
+		"substr":   substr,
 	})
 	var err error
 	tmpl, err = tmpl.ParseGlob("templates/*.html")
@@ -49,9 +98,29 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		selectedDate = time.Now()
 	}
+
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
+		User         db.User
 		SelectedDate time.Time
 	}{
+		User:         user,
 		SelectedDate: selectedDate,
 	}
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
@@ -1000,4 +1069,310 @@ func CalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(buf.Bytes())
+}
+
+// HabitsPage renders the habits page with a list of all habits.
+func HabitsPage(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get all habits for this user (using the Habit entity)
+	habits, err := db.GetAllHabits(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Also fetch the user for the header
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Habits []db.Habit
+		User   db.User
+	}{
+		Habits: habits,
+		User:   user,
+	}
+
+	// Render the full habits page
+	if err := tmpl.ExecuteTemplate(w, "habits", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// AddHabit handles adding a new habit (POST /habits)
+func AddHabit(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("habit_name")
+	if name == "" {
+		http.Error(w, "Habit name required", http.StatusBadRequest)
+		return
+	}
+	// Default scheduled days: a JSON array of 7 false values.
+	defaultDays := `[false,false,false,false,false,false,false]`
+	newHabit := db.Habit{
+		UserID:        userID,
+		Name:          name,
+		ScheduledDays: []byte(defaultDays),
+	}
+	if err := db.CreateHabit(db.DB, newHabit, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Return updated habits list partial.
+	habits, err := db.GetAllHabits(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data := struct {
+		Habits []db.Habit
+	}{Habits: habits}
+	tmpl.ExecuteTemplate(w, "habits_list", data)
+}
+
+// EditHabitForm renders a form to edit a habit (GET /habits/{id}/edit-form)
+func EditHabitForm(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	habitIDStr := vars["id"]
+	habitID, err := uuid.Parse(habitIDStr)
+	if err != nil {
+		http.Error(w, "Invalid habit ID", http.StatusBadRequest)
+		return
+	}
+	habit, err := db.GetHabitByID(db.DB, habitID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.ExecuteTemplate(w, "habit_edit", habit)
+}
+
+// EditHabit handles saving an edited habit (POST /habits/{id}/edit)
+func EditHabit(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	habitIDStr := vars["id"]
+	habitID, err := uuid.Parse(habitIDStr)
+	if err != nil {
+		http.Error(w, "Invalid habit ID", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+	newName := r.FormValue("habit_name")
+	if newName == "" {
+		http.Error(w, "Habit name required", http.StatusBadRequest)
+		return
+	}
+	habit, err := db.GetHabitByID(db.DB, habitID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	habit.Name = newName
+	if err := db.UpdateHabit(db.DB, habit, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Return updated habit partial.
+	tmpl.ExecuteTemplate(w, "habit_item_", habit)
+}
+
+// DeleteHabit handles deleting a habit (POST /habits/{id}/delete)
+func DeleteHabit(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	habitIDStr := vars["id"]
+	habitID, err := uuid.Parse(habitIDStr)
+	if err != nil {
+		http.Error(w, "Invalid habit ID", http.StatusBadRequest)
+		return
+	}
+	habit, err := db.GetHabitByID(db.DB, habitID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err := db.DeleteHabit(db.DB, habit); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Return updated habits list partial.
+	habits, err := db.GetAllHabits(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data := struct {
+		Habits []db.Habit
+	}{Habits: habits}
+	tmpl.ExecuteTemplate(w, "habits_list", data)
+
+}
+
+// ToggleHabitDay toggles the scheduled status for a given day (POST /habits/{id}/toggle?day=X)
+func ToggleHabitDay(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	habitIDStr := vars["id"]
+	habitID, err := uuid.Parse(habitIDStr)
+	if err != nil {
+		http.Error(w, "Invalid habit ID", http.StatusBadRequest)
+		return
+	}
+	dayStr := r.URL.Query().Get("day")
+	if dayStr == "" {
+		http.Error(w, "Missing day index", http.StatusBadRequest)
+		return
+	}
+	dayIndex, err := strconv.Atoi(dayStr)
+	if err != nil || dayIndex < 0 || dayIndex > 6 {
+		http.Error(w, "Invalid day index", http.StatusBadRequest)
+		return
+	}
+	habit, err := db.GetHabitByID(db.DB, habitID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Using weekday strings (new approach)
+	var schedule []string
+	if err := json.Unmarshal(habit.ScheduledDays, &schedule); err != nil {
+		// Initialize with no days active, or default as needed
+		schedule = []string{}
+	}
+
+	weekdayNames := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+	weekday := weekdayNames[dayIndex]
+	// get the weekday name for the day index
+
+	// Check if the weekday is already scheduled.
+	found := false
+	for i, d := range schedule {
+		if d == weekday {
+			// Remove the day from the schedule.
+			schedule = append(schedule[:i], schedule[i+1:]...)
+			found = true
+			break
+		}
+	}
+	if !found {
+		// Add the day to the schedule.
+		schedule = append(schedule, weekday)
+	}
+	newSchedule, err := json.Marshal(schedule)
+
+	if err != nil {
+		http.Error(w, "Failed to marshal schedule", http.StatusInternalServerError)
+		return
+	}
+	habit.ScheduledDays = newSchedule
+	// After updating the habit in the database…
+	if err := db.UpdateHabit(db.DB, habit, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated habit partial using the correct template name.
+	if err := tmpl.ExecuteTemplate(w, "habit_item_", habit); err != nil {
+		http.Error(w, "Failed to render habit item", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+// CancelHabitEdit returns the habit item partial to cancel editing.
+func CancelHabitEdit(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	habitIDStr := vars["id"]
+	habitID, err := uuid.Parse(habitIDStr)
+	if err != nil {
+		http.Error(w, "Invalid habit ID", http.StatusBadRequest)
+		return
+	}
+	habit, err := db.GetHabitByID(db.DB, habitID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Render the habit_item_ partial.
+	if err := tmpl.ExecuteTemplate(w, "habit_item_", habit); err != nil {
+		http.Error(w, "Failed to render habit item", http.StatusInternalServerError)
+		return
+	}
 }

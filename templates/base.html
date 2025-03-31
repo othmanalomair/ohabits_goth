@@ -28,13 +28,133 @@
             <div class="profile">
                 <img
                     class="avatar-img"
-                    src="https://kmwmklklyusmjtnlxmkk.supabase.co/storage/v1/object/public/avatars/avatars/a71661ad-6144-43ae-b4b5-ac4a08fa16f2.jpg"
-                    alt="User Profile"
+                    src="{{ if .User.AvatarURL }}{{ .User.AvatarURL }}{{ else }}/static/images/profile.jpg{{ end }}"
+                    alt="{{ .User.DisplayName }}"
                 />
-                <span>Othman Alomair</span>
+                <span>{{ .User.DisplayName }}</span>
             </div>
         </header>
+
+        <!-- Overlay Menu (hidden by default) -->
+        <div id="overlay-menu" class="overlay-menu">
+            <!-- Overlay Header -->
+            <div class="overlay-header">
+                <div class="overlay-logo">Ohabits</div>
+                <button class="overlay-close" id="overlay-close">
+                    <img src="/static/images/svg/x.svg" alt="Close Menu" />
+                </button>
+            </div>
+
+            <!-- Overlay Nav Links -->
+            <ul class="overlay-links">
+                <li>
+                    <a href="/">
+                        <img src="/static/images/svg/home.svg" alt="Home" />
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <a href="/view">
+                        <img
+                            src="/static/images/svg/view.svg"
+                            alt="View Mode"
+                        />
+                        View mode
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="/notes"
+                        hx-get="/notes"
+                        hx-target="main"
+                        hx-swap="innerHTML"
+                    >
+                        <img src="/static/images/svg/note.svg" alt="Notes" />
+                        Notes
+                    </a>
+                </li>
+                <li>
+                    <a hx-get="/habits" hx-target="main" hx-swap="innerHTML">
+                        <img src="/static/images/svg/habit.svg" alt="Habits" />
+                        Habits
+                    </a>
+                </li>
+                <li>
+                    <a href="/workout_plans">
+                        <img
+                            src="/static/images/svg/gym.svg"
+                            alt="Workout Plans"
+                        />
+                        Workout plans
+                    </a>
+                </li>
+                <li>
+                    <a href="/profile">
+                        <img
+                            src="/static/images/svg/profile.svg"
+                            alt="Profile"
+                        />
+                        Profile page
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Sign Out Button -->
+            <div class="center">
+                <button class="sign-out-button">Sign Out</button>
+            </div>
+
+            <!-- Overlay Footer -->
+            <div class="overlay-footer">
+                <div class="overlay-socials">
+                    <a href="https://instagram.com" target="_blank">
+                        <img
+                            src="/static/images/svg/instagram.svg"
+                            alt="Instagram"
+                        />
+                    </a>
+                    <a href="https://twitter.com" target="_blank">
+                        <img
+                            src="/static/images/svg/twitter.svg"
+                            alt="Twitter"
+                        />
+                    </a>
+                    <a href="https://github.com" target="_blank">
+                        <img src="/static/images/svg/github.svg" alt="GitHub" />
+                    </a>
+                </div>
+                <p>DESIGNED BY OTHMAN ALOMAIR</p>
+            </div>
+        </div>
+
         <main>{{ block "content" . }}{{ end }}</main>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var menuBtn = document.querySelector(".menu-btn");
+                var overlayMenu = document.getElementById("overlay-menu");
+                var overlayClose = document.getElementById("overlay-close");
+                var overlayMenuItems =
+                    document.querySelectorAll("#overlay-menu li");
+
+                // Open the overlay menu
+                menuBtn.addEventListener("click", function () {
+                    overlayMenu.style.display = "flex";
+                });
+
+                // Close the overlay menu
+                overlayClose.addEventListener("click", function () {
+                    overlayMenu.style.display = "none";
+                });
+
+                // Close the overlay menu when clicking on a menu item
+                overlayMenuItems.forEach(function (item) {
+                    item.addEventListener("click", function () {
+                        overlayMenu.style.display = "none";
+                    });
+                });
+            });
+        </script>
     </body>
 </html>
 {{ end }}
