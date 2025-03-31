@@ -44,6 +44,18 @@ func Server() *http.Server {
 	protected.HandleFunc("/habits/{id}/toggle", handlers.ToggleHabitDay).Methods("POST")
 	protected.HandleFunc("/habits/{id}/cancel", handlers.CancelHabitEdit).Methods("GET")
 
+	// Workout Plans
+	protected.HandleFunc("/workout_plan", handlers.WorkoutPlanPage).Methods("GET")
+	protected.HandleFunc("/workout_plan", handlers.CreateWorkoutPlan).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/toggle", handlers.ToggleWorkoutPlan).Methods("GET")
+	protected.HandleFunc("/workout_plan/{id}/delete", handlers.DeleteWorkoutPlan).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/edit-form", handlers.EditWorkoutPlanForm).Methods("GET")
+	protected.HandleFunc("/workout_plan/{id}/edit", handlers.EditWorkoutPlan).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/update-day", handlers.UpdateWorkoutPlanDay).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/exercises", handlers.AddWorkoutExercise).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/save", handlers.SaveWorkoutPlan).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/cancel", handlers.CancelWorkoutPlanEdit).Methods("GET")
+
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 

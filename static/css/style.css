@@ -751,3 +751,164 @@ main {
     background-color: #fef7f3;
     color: #1e0c02;
 }
+
+.workout-plan-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.workout-plan-container h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #1e0c02;
+}
+
+.add-workout-plan-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.add-workout-plan-form input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #eaebeb;
+    border-radius: 4px;
+    background-color: #fef7f3;
+    color: #1e0c02;
+}
+
+.add-workout-plan-form button {
+    background-color: #f2600c;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#workout-plan-item {
+    border-bottom: 1px solid #eaebeb;
+    padding: 0.5rem 0;
+    margin-bottom: 2rem;
+}
+
+.workout-plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eaebeb;
+    padding: 0.5rem 0.5rem;
+    margin-bottom: 1rem;
+    background-color: #ffe9d8;
+    border-radius: 0.5rem;
+}
+.workout-plan-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+.workout-plan-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.workout-plan-details {
+    margin-top: 1rem;
+}
+.workout-plan-day {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.workout-plan-exercises ul {
+    list-style: none;
+    padding: 0;
+}
+.workout-plan-exercises li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.group-them {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.group-them button {
+    border: none;
+    background: #ffffff;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.group-them button:hover {
+    background-color: #fdf6f2;
+}
+
+.flex-them {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-them button {
+    border: none;
+    background: #ffe9d8;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.flex-them button:hover {
+    background-color: #fdf6f2;
+}
+
+.flex-them input[type="text"] {
+    border: none;
+    background: #ffe9d8;
+    border-radius: 4px;
+    font-size: 1.5rem;
+    text-decoration: underline;
+    margin-block-start: 0.83em;
+    margin-block-end: 0.83em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-weight: bold;
+    unicode-bidi: isolate;
+    padding: 0;
+    margin: 0;
+    max-width: 10rem;
+}
+
+.flex-them select {
+    background: #ffe9d8;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.save-btn {
+    border: none;
+    background-color: #15a249;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.center-save-btn {
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -1,0 +1,29 @@
+{{ define "workout_plan" }}
+<div class="workout-plan-container">
+    <h1>Workout Plans</h1>
+
+    <!-- Workout Plans List -->
+    <div id="workout-plans-list">
+        {{ range .WorkoutPlans }} {{ template "workout_plan_item" . }} {{ end }}
+    </div>
+
+    <!-- Add New Workout Plan Form -->
+    <form
+        id="add-workout-plan-form"
+        class="add-workout-plan-form"
+        hx-post="/workout_plan"
+        hx-target="#workout-plans-list"
+        hx-swap="outerHTML"
+    >
+        <input
+            type="text"
+            name="workout_name"
+            placeholder="New Workout Plan..."
+            required
+        />
+        <button type="submit">
+            <img src="/static/images/svg/plus.svg" alt="Add Workout Plan" />
+        </button>
+    </form>
+</div>
+{{ end }}

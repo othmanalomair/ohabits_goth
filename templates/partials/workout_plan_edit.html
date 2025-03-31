@@ -1,0 +1,51 @@
+{{ define "workout_plan_edit" }}
+<div class="workout-plan-item" id="workout-plan-{{ .Workout.ID }}">
+    {{ $plan := . }}
+    <form
+        hx-post="/workout_plan/{{ $plan.Workout.ID }}/edit"
+        hx-target="#workout-plan-{{ $plan.Workout.ID }}"
+        hx-swap="outerHTML"
+        class="workout-plan-header"
+    >
+        <div class="flex-them">
+            <input
+                type="text"
+                name="workout_name"
+                value="{{ $plan.Workout.Name }}"
+                required
+            />
+            <select name="day" required>
+                {{ $days := list "Sunday" "Monday" "Tuesday" "Wednesday"
+                "Thursday" "Friday" "Saturday" "N/A" }} {{ range $d := $days }}
+                <option
+                    value="{{ $d }}"
+                    {{
+                    if
+                    eq
+                    $plan.Workout.Day
+                    $d
+                    }}selected{{
+                    end
+                    }}
+                >
+                    {{ $d }}
+                </option>
+                {{ end }}
+            </select>
+        </div>
+        <div class="flex-them">
+            <button type="submit">
+                <img src="/static/images/svg/check-green.svg" alt="Save" />
+            </button>
+            <button
+                type="button"
+                hx-get="/workout_plan/{{ $plan.Workout.ID }}/cancel"
+                hx-target="#workout-plan-{{ $plan.Workout.ID }}"
+                hx-swap="outerHTML"
+            >
+                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+            </button>
+        </div>
+    </form>
+</div>
+{{ end }}

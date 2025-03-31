@@ -1,0 +1,137 @@
+{{ define "workout_plan_item" }}
+<div class="workout-plan-item" id="workout-plan-{{ .Workout.ID }}">
+    <div class="workout-plan-header">
+        <h2>{{ .Workout.Name }}</h2>
+        <div class="workout-plan-actions">
+            <button
+                hx-get="/workout_plan/{{ .Workout.ID }}/edit-form"
+                hx-target="#workout-plan-{{ .Workout.ID }}"
+                hx-swap="outerHTML"
+            >
+                <img src="/static/images/svg/edit.svg" alt="Edit" />
+            </button>
+            <button
+                hx-post="/workout_plan/{{ .Workout.ID }}/delete"
+                hx-target="#workout-plans-list"
+                hx-swap="outerHTML"
+            >
+                <img src="/static/images/svg/trash-red.svg" alt="Delete" />
+            </button>
+            <!-- Toggle: if open, show X (to close); if closed, show an open icon -->
+            <button
+                hx-get="/workout_plan/{{ .Workout.ID }}/toggle?open={{ not .Open }}"
+                hx-target="#workout-plan-{{ .Workout.ID }}"
+                hx-swap="outerHTML"
+            >
+                {{ if .Open }}
+                <img src="/static/images/svg/up.svg" alt="Close" />
+                {{ else }}
+                <img src="/static/images/svg/down.svg" alt="Open" />
+                {{ end }}
+            </button>
+        </div>
+    </div>
+
+    {{ if .Open }}
+    <div class="workout-plan-details">
+        <!-- Day Selection -->
+        <div class="workout-plan-day">
+            <label for="workout-day-{{ .Workout.ID }}">Day:</label>
+            <select
+                id="workout-day-{{ .Workout.ID }}"
+                name="day"
+                hx-post="/workout_plan/{{ .Workout.ID }}/update-day"
+                hx-target="#workout-plan-{{ .Workout.ID }}"
+                hx-swap="outerHTML"
+                class="workout-select"
+            >
+                {{ $days := list "Sunday" "Monday" "Tuesday" "Wednesday"
+                "Thursday" "Friday" "Saturday" "N/A" }} {{ range $d := $days }}
+                <option
+                    value="{{ $d }}"
+                    {{
+                    if
+                    eq
+                    $.Workout.Day
+                    $d
+                    }}selected{{
+                    end
+                    }}
+                >
+                    {{ $d }}
+                </option>
+                {{ end }}
+            </select>
+        </div>
+
+        <!-- Exercises List -->
+        <div class="workout-plan-exercises">
+            <h3>Exercises</h3>
+            <ul>
+                {{ range .Workout.Exercises }}
+                <li data-order="{{ .Order }}">
+                    <span class="exercise-name">{{ .Name }}</span>
+                    <div class="group-them">
+                        <button
+                            hx-get="/workout_plan/{{ $.Workout.ID }}/exercises/{{ .Order }}/edit-form"
+                            hx-target="closest li"
+                            hx-swap="outerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/edit.svg"
+                                alt="Edit Exercise"
+                            />
+                        </button>
+                        <button
+                            hx-post="/workout_plan/{{ $.Workout.ID }}/exercises/{{ .Order }}/delete"
+                            hx-target="#workout-plan-{{ $.Workout.ID }}"
+                            hx-swap="outerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/trash-red.svg"
+                                alt="Delete Exercise"
+                            />
+                        </button>
+                        <button class="reorder-btn">
+                            <img
+                                src="/static/images/svg/layers.svg"
+                                alt="Reorder"
+                            />
+                        </button>
+                    </div>
+                </li>
+                {{ end }}
+            </ul>
+            <!-- Add New Exercise Form -->
+            <form
+                class="add-workout-plan-form"
+                hx-post="/workout_plan/{{ .Workout.ID }}/exercises"
+                hx-target="#workout-plan-{{ .Workout.ID }}"
+                hx-swap="outerHTML"
+            >
+                <input
+                    type="text"
+                    name="exercise_name"
+                    placeholder="Add new exercise"
+                    required
+                />
+                <button type="submit">
+                    <img src="/static/images/svg/plus.svg" alt="Add Exercise" />
+                </button>
+            </form>
+            <!-- Save Button (finalize the plan) -->
+            <div class="center-save-btn">
+                <button
+                    hx-post="/workout_plan/{{ .Workout.ID }}/save"
+                    hx-target="#workout-plan-{{ .Workout.ID }}"
+                    hx-swap="outerHTML"
+                    class="save-btn"
+                >
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{ end }}

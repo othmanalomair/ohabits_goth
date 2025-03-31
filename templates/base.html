@@ -80,7 +80,11 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/workout_plans">
+                    <a
+                        hx-get="/workout_plan"
+                        hx-target="main"
+                        hx-swap="innerHTML"
+                    >
                         <img
                             src="/static/images/svg/gym.svg"
                             alt="Workout Plans"

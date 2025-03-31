@@ -1376,3 +1376,377 @@ func CancelHabitEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// WorkoutPlanPage renders the workout plans page.
+func WorkoutPlanPage(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	workouts, err := db.GetAllWorkouts(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Wrap each workout in a local struct to include an "Open" flag.
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	var plans []WorkoutPlan
+	for _, wkt := range workouts {
+		plans = append(plans, WorkoutPlan{Workout: wkt, Open: false})
+	}
+	data := struct {
+		WorkoutPlans []WorkoutPlan
+	}{
+		WorkoutPlans: plans,
+	}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// CreateWorkoutPlan creates a new workout plan.
+func CreateWorkoutPlan(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("workout_name")
+	newWorkout := db.Workout{
+		UserID:    userID,
+		Name:      name,
+		Day:       "N/A",
+		Exercises: []db.Exercise{},
+	}
+	if err := db.CreateWorkout(db.DB, newWorkout, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	WorkoutPlanPage(w, r)
+}
+
+// ToggleWorkoutPlan toggles the open/closed state of a workout plan.
+func ToggleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Toggle open state: for simplicity, use a query parameter.
+	openParam := r.URL.Query().Get("open")
+	open := true
+	if openParam == "false" {
+		open = false
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: open}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// DeleteWorkoutPlan deletes a workout plan.
+func DeleteWorkoutPlan(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	if err := db.DeleteWorkout(db.DB, workoutID, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	WorkoutPlanPage(w, r)
+}
+
+// CancelWorkoutPlanEdit re-renders the workout plan item (cancelling the edit mode).
+func CancelWorkoutPlanEdit(w http.ResponseWriter, r *http.Request) {
+	// This handler re-renders the workout plan item in non-edit mode.
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: false}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// EditWorkoutPlanForm renders the edit form for a workout plan.
+func EditWorkoutPlanForm(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: true}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_edit", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// EditWorkoutPlan handles saving updates from the edit form.
+func EditWorkoutPlan(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("workout_name")
+	day := r.FormValue("day")
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	workout.Name = name
+	workout.Day = day
+	if err := db.UpdateWorkout(db.DB, workoutID, workout, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: false}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// UpdateWorkoutPlanDay updates the day selection for a workout plan.
+func UpdateWorkoutPlanDay(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	newDay := r.FormValue("day")
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	workout.Day = newDay
+	if err := db.UpdateWorkout(db.DB, workoutID, workout, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: true}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// AddWorkoutExercise handles adding a new exercise to a workout plan.
+func AddWorkoutExercise(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	exerciseName := r.FormValue("exercise_name")
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	newOrder := len(workout.Exercises) + 1
+	newExercise := db.Exercise{
+		Order: newOrder,
+		Name:  exerciseName,
+	}
+	workout.Exercises = append(workout.Exercises, newExercise)
+	if err := db.UpdateWorkout(db.DB, workoutID, workout, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: true}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// SaveWorkoutPlan finalizes and "saves" the workout plan (here we simply close the plan view).
+func SaveWorkoutPlan(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: false}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
