@@ -1,0 +1,21 @@
+{{ define "workout_exercise_item" }}
+<li data-order="{{ .Exercise.Order }}">
+    <span class="exercise-name">{{ .Exercise.Name }}</span>
+    <div class="group-them">
+        <button
+            hx-get="/workout_plan/{{ $.WorkoutID }}/exercises/{{ .Exercise.Order }}/edit-form"
+            hx-target="closest li"
+            hx-swap="outerHTML"
+        >
+            <img src="/static/images/svg/edit.svg" alt="Edit Exercise" />
+        </button>
+        <button
+            hx-post="/workout_plan/{{ $.WorkoutID }}/exercises/{{ .Exercise.Order }}/delete"
+            hx-target="closest ul"
+            hx-swap="outerHTML"
+        >
+            <img src="/static/images/svg/trash-red.svg" alt="Delete Exercise" />
+        </button>
+    </div>
+</li>
+{{ end }}

@@ -1,0 +1,54 @@
+{{ define "profile" }}
+<div id="profile-card" class="profile-card">
+    <h2>Profile</h2>
+    <div class="profile-image">
+        {{ if .User.AvatarURL }}
+        <img src="{{ .User.AvatarURL }}" alt="Profile Picture" />
+        {{ else }}
+        <img
+            src="/static/images/profile/default.jpg"
+            alt="Default Profile Picture"
+        />
+        {{ end }}
+    </div>
+    <form
+        hx-post="/profile"
+        hx-target="#profile-card"
+        hx-swap="outerHTML"
+        enctype="multipart/form-data"
+    >
+        <div class="form-row">
+            <label for="display_name">Display Name:</label>
+            <input
+                class="profile-input"
+                type="text"
+                id="display_name"
+                name="display_name"
+                value="{{ .User.DisplayName }}"
+                required
+            />
+        </div>
+        <div class="form-row">
+            <label for="email">Email:</label>
+            <input
+                class="profile-input"
+                type="email"
+                id="email"
+                name="email"
+                value="{{ .User.Email }}"
+                required
+            />
+        </div>
+        <div class="form-row">
+            <label for="profile_picture">Profile Picture:</label>
+            <input
+                type="file"
+                id="profile_picture"
+                name="profile_picture"
+                accept="image/*"
+            />
+        </div>
+        <button type="submit" class="btn">Save Profile</button>
+    </form>
+</div>
+{{ end }}

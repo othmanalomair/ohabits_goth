@@ -1,0 +1,27 @@
+{{ define "workout_exercise_edit" }}
+<li data-order="{{ .Exercise.Order }}">
+    <form
+        hx-post="/workout_plan/{{ .WorkoutID }}/exercises/{{ .Exercise.Order }}/edit"
+        hx-target="closest li"
+        hx-swap="outerHTML"
+    >
+        <input
+            type="text"
+            name="exercise_name"
+            value="{{ .Exercise.Name }}"
+            required
+        />
+        <button type="submit">
+            <img src="/static/images/svg/check-green.svg" alt="Save" />
+        </button>
+        <button
+            type="button"
+            hx-get="/workout_plan/{{ .WorkoutID }}/exercises/{{ .Exercise.Order }}/cancel"
+            hx-target="closest li"
+            hx-swap="outerHTML"
+        >
+            <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+        </button>
+    </form>
+</li>
+{{ end }}

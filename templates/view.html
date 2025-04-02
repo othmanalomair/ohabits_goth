@@ -1,0 +1,67 @@
+{{ define "view" }}
+<div class="view-container">
+    <!-- Month Picker -->
+    <div class="view-header">
+        <button
+            id="prevMonth"
+            hx-get="/view?month={{ .PrevMonth }}"
+            hx-target="main"
+            hx-swap="innerHTML"
+        >
+            &lt;
+        </button>
+        <h1>{{ .CurrentMonth }}</h1>
+        <button
+            id="nextMonth"
+            hx-get="/view?month={{ .NextMonth }}"
+            hx-target="main"
+            hx-swap="innerHTML"
+        >
+            &gt;
+        </button>
+    </div>
+
+    <!-- Daily Records Table -->
+    <table class="view-table">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Workout</th>
+                <th>Cardio</th>
+                <th>Weight</th>
+                <th>Habits</th>
+                <th>Mood</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .DailyViews }}
+            <tr>
+                <td style="width: 1rem">{{ .Day }}</td>
+                <td>
+                    {{ if .View.Workout }} {{ .View.Workout }} {{ else }} - {{
+                    end }}
+                </td>
+                <td>
+                    {{ if .View.Cardio }} {{ formatCardio .View.Cardio }} {{
+                    else }} - {{ end }}
+                </td>
+                <td>
+                    {{ if eq .View.Weight 0.0 }} - {{ else }} {{ .View.Weight }}
+                    {{ end }}
+                </td>
+                <td>
+                    {{ if .View.Habits }}{{ .View.Habits }}{{ else }}-{{ end }}
+                </td>
+                <td>
+                    {{ if .View.Mood }} {{ if eq (value .View.Mood) 1 }}😞 {{
+                    else if eq (value .View.Mood) 2 }}🙁 {{ else if eq (value
+                    .View.Mood) 3 }}😐 {{ else if eq (value .View.Mood) 4 }}🙂
+                    {{ else if eq (value .View.Mood) 5 }}😄 {{ end }} {{ else }}
+                    - {{ end }}
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+{{ end }}

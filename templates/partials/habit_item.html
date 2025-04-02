@@ -5,7 +5,7 @@
     hx-trigger="click"
     hx-target="this"
     hx-swap="outerHTML"
-    class="habit-item {{ if .Completed }}list-item-checked{{ else }}list-item{{ end }}"
+    class="todo-item {{ if .Completed }}list-item-checked{{ else }}list-item{{ end }}"
 >
     <span class="habit-name">{{ .HabitName }}</span>
     {{ if .Completed }}

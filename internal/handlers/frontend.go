@@ -6,15 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"image"
+	"image/jpeg"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/image/draw"
 	"ohabits.com/internal/db"
 )
 
@@ -76,6 +82,35 @@ func init() {
 		"isActive": isActive,
 		"list":     list,
 		"substr":   substr,
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+		"value": func(p *int) int {
+			if p == nil {
+				return 0
+			}
+			return *p
+		},
+		"formatCardio": func(cardio json.RawMessage) string {
+			if len(cardio) == 0 {
+				return "-"
+			}
+			var arr []interface{}
+			if err := json.Unmarshal([]byte(cardio), &arr); err != nil || len(arr) < 2 {
+				return "-"
+			}
+			name, ok1 := arr[0].(string)
+			duration, ok2 := arr[1].(float64)
+			if !ok1 || !ok2 {
+				return "-"
+			}
+			return fmt.Sprintf("%s (%dmin)", name, int(duration))
+		},
+		"nl2br": func(text string) template.HTML {
+			escaped := template.HTMLEscapeString(text)
+			withBreaks := strings.ReplaceAll(escaped, "\n", "<br>")
+			return template.HTML(withBreaks)
+		},
 	})
 	var err error
 	tmpl, err = tmpl.ParseGlob("templates/*.html")
@@ -1019,6 +1054,11 @@ func SaveWorkoutLog(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	// Update the URL query so that WorkoutLoging uses the correct date.
+	r.URL.RawQuery = "date=" + dateStr
+
+	// Call the WorkoutLoging handler to re-render the page.
 	WorkoutLoging(w, r)
 }
 
@@ -1440,7 +1480,29 @@ func CreateWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	WorkoutPlanPage(w, r)
+	// After successful creation, fetch all workouts.
+	workouts, err := db.GetAllWorkouts(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	var plans []WorkoutPlan
+	for _, wkt := range workouts {
+		plans = append(plans, WorkoutPlan{Workout: wkt, Open: false})
+	}
+	data := struct {
+		WorkoutPlans []WorkoutPlan
+	}{
+		WorkoutPlans: plans,
+	}
+	// Return the container partial.
+	if err := tmpl.ExecuteTemplate(w, "workout_plans_container", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // ToggleWorkoutPlan toggles the open/closed state of a workout plan.
@@ -1506,7 +1568,30 @@ func DeleteWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	WorkoutPlanPage(w, r)
+
+	// After deletion, re-fetch workouts.
+	workouts, err := db.GetAllWorkouts(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	var plans []WorkoutPlan
+	for _, wkt := range workouts {
+		plans = append(plans, WorkoutPlan{Workout: wkt, Open: false})
+	}
+	data := struct {
+		WorkoutPlans []WorkoutPlan
+	}{
+		WorkoutPlans: plans,
+	}
+	// Return the container partial.
+	if err := tmpl.ExecuteTemplate(w, "workout_plans_container", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // CancelWorkoutPlanEdit re-renders the workout plan item (cancelling the edit mode).
@@ -1749,4 +1834,479 @@ func SaveWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func DeleteWorkoutExercise(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	orderStr := vars["order"]
+	order, err := strconv.Atoi(orderStr)
+	if err != nil {
+		http.Error(w, "Invalid exercise order", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	newExercises := []db.Exercise{}
+	for _, ex := range workout.Exercises {
+		if ex.Order != order {
+			newExercises = append(newExercises, ex)
+		}
+	}
+	// Reassign orders sequentially.
+	for i := range newExercises {
+		newExercises[i].Order = i + 1
+	}
+	workout.Exercises = newExercises
+	if err := db.UpdateWorkout(db.DB, workoutID, workout, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	plan := WorkoutPlan{Workout: workout, Open: true}
+	if err := tmpl.ExecuteTemplate(w, "workout_plan_item", plan); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func EditWorkoutExerciseForm(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	orderStr := vars["order"]
+	order, err := strconv.Atoi(orderStr)
+	if err != nil {
+		http.Error(w, "Invalid exercise order", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var exercise db.Exercise
+	found := false
+	for _, ex := range workout.Exercises {
+		if ex.Order == order {
+			exercise = ex
+			found = true
+			break
+		}
+	}
+	if !found {
+		http.Error(w, "Exercise not found", http.StatusNotFound)
+		return
+	}
+	data := struct {
+		WorkoutID uuid.UUID
+		Exercise  db.Exercise
+	}{
+		WorkoutID: workout.ID,
+		Exercise:  exercise,
+	}
+	if err := tmpl.ExecuteTemplate(w, "workout_exercise_edit", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func EditWorkoutExercise(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	orderStr := vars["order"]
+	order, err := strconv.Atoi(orderStr)
+	if err != nil {
+		http.Error(w, "Invalid exercise order", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	newName := r.FormValue("exercise_name")
+	if newName == "" {
+		http.Error(w, "Exercise name required", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var updatedExercise db.Exercise
+	updated := false
+	for i, ex := range workout.Exercises {
+		if ex.Order == order {
+			workout.Exercises[i].Name = newName
+			updatedExercise = workout.Exercises[i]
+			updated = true
+			break
+		}
+	}
+	if !updated {
+		http.Error(w, "Exercise not found", http.StatusNotFound)
+		return
+	}
+	if err := db.UpdateWorkout(db.DB, workoutID, workout, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type WorkoutExerciseData struct {
+		WorkoutID uuid.UUID
+		Exercise  db.Exercise
+	}
+	data := WorkoutExerciseData{
+		WorkoutID: workout.ID,
+		Exercise:  updatedExercise,
+	}
+	if err := tmpl.ExecuteTemplate(w, "workout_exercise_item", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func CancelWorkoutExerciseEdit(w http.ResponseWriter, r *http.Request) {
+	// Re-render the specific workout exercise item to cancel exercise edit.
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	workoutIDStr := vars["id"]
+	workoutID, err := uuid.Parse(workoutIDStr)
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+	orderStr := vars["order"]
+	order, err := strconv.Atoi(orderStr)
+	if err != nil {
+		http.Error(w, "Invalid exercise order", http.StatusBadRequest)
+		return
+	}
+	workout, err := db.GetWorkout(db.DB, workoutID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var exercise db.Exercise
+	found := false
+	for _, ex := range workout.Exercises {
+		if ex.Order == order {
+			exercise = ex
+			found = true
+			break
+		}
+	}
+	if !found {
+		http.Error(w, "Exercise not found", http.StatusNotFound)
+		return
+	}
+	type WorkoutExerciseData struct {
+		WorkoutID uuid.UUID
+		Exercise  db.Exercise
+	}
+	data := WorkoutExerciseData{
+		WorkoutID: workout.ID,
+		Exercise:  exercise,
+	}
+	if err := tmpl.ExecuteTemplate(w, "workout_exercise_item", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func ViewHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract userID from context.
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the month query parameter; default to current month ("YYYY-MM")
+	month := r.URL.Query().Get("month")
+	if month == "" {
+		month = time.Now().Format("2006-01")
+	}
+
+	// Retrieve the daily view for the month.
+	dailyViews, err := db.GetViewByMonth(db.DB, month, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Compute previous and next month values.
+	t, err := time.Parse("2006-01", month)
+	if err != nil {
+		t = time.Now()
+	}
+	prevMonth := t.AddDate(0, -1, 0).Format("2006-01")
+	nextMonth := t.AddDate(0, 1, 0).Format("2006-01")
+	currentMonth := t.Format("January 2006")
+
+	data := struct {
+		DailyViews   []db.DailyView
+		PrevMonth    string
+		NextMonth    string
+		CurrentMonth string
+	}{
+		DailyViews:   dailyViews,
+		PrevMonth:    prevMonth,
+		NextMonth:    nextMonth,
+		CurrentMonth: currentMonth,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "view", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func NotesHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract userID from context.
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the month query parameter; default to current month ("YYYY-MM")
+	month := r.URL.Query().Get("month")
+	if month == "" {
+		month = time.Now().Format("2006-01")
+	}
+
+	// Retrieve the daily view for the month.
+	dailyNotes, err := db.GetNotesByMonth(db.DB, month, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Compute previous and next month values.
+	t, err := time.Parse("2006-01", month)
+	if err != nil {
+		t = time.Now()
+	}
+	prevMonth := t.AddDate(0, -1, 0).Format("2006-01")
+	nextMonth := t.AddDate(0, 1, 0).Format("2006-01")
+	currentMonth := t.Format("January 2006")
+
+	data := struct {
+		DailyNote    []db.DailyNote
+		PrevMonth    string
+		NextMonth    string
+		CurrentMonth string
+	}{
+		DailyNote:    dailyNotes,
+		PrevMonth:    prevMonth,
+		NextMonth:    nextMonth,
+		CurrentMonth: currentMonth,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "mnotes", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func ProfileHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data := struct {
+		User db.User
+	}{
+		User: user,
+	}
+	if err := tmpl.ExecuteTemplate(w, "profile", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
+	// Ensure we accept multipart form data
+	if err := r.ParseMultipartForm(10 << 20); err != nil { // limit to 10MB
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get form values.
+	email := r.FormValue("email")
+	displayName := r.FormValue("display_name")
+
+	// Fetch the existing user.
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user.Email = email
+	user.DisplayName = displayName
+
+	// Process file upload if provided.
+	file, handler, err := r.FormFile("profile_picture")
+	if err == nil {
+		defer file.Close()
+
+		// Validate that the file is an image.
+		contentType := handler.Header.Get("Content-Type")
+		if !strings.HasPrefix(contentType, "image/") {
+			http.Error(w, "Only image files are allowed", http.StatusBadRequest)
+			return
+		}
+
+		// Decode the image.
+		img, _, err := image.Decode(file)
+		if err != nil {
+			http.Error(w, "Failed to decode image", http.StatusBadRequest)
+			return
+		}
+
+		// Resize image to 140x140 using golang.org/x/image/draw.
+		dst := image.NewRGBA(image.Rect(0, 0, 140, 140))
+		// Using bilinear scaling.
+		draw.BiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Over, nil)
+
+		// Create directory: static/images/profile/<userid>/
+		dirPath := filepath.Join("static", "images", "profile", userID.String())
+		if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+			http.Error(w, "Failed to create image directory", http.StatusInternalServerError)
+			return
+		}
+
+		// Generate a random file name.
+		randomName := uuid.New().String() + ".jpg"
+		filePath := filepath.Join(dirPath, randomName)
+
+		outFile, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, "Failed to create image file", http.StatusInternalServerError)
+			return
+		}
+		defer outFile.Close()
+
+		// Save the resized image as JPEG.
+		if err := jpeg.Encode(outFile, dst, &jpeg.Options{Quality: 85}); err != nil {
+			http.Error(w, "Failed to encode image", http.StatusInternalServerError)
+			return
+		}
+
+		// Update the user's AvatarURL (using a relative path).
+		relativePath := "/" + filepath.ToSlash(filePath)
+		user.AvatarURL = &relativePath
+	}
+	// else: if no file is uploaded, we simply don't change the AvatarURL.
+
+	// Update the user in the database.
+	if err := db.UpdateUser(db.DB, user, userID); err != nil {
+		http.Error(w, "Failed to update user", http.StatusInternalServerError)
+		return
+	}
+
+	// Re-render the profile page.
+	ProfileHandler(w, r)
+}
+
+func SignOutHandler(w http.ResponseWriter, r *http.Request) {
+	// Clear the session/cookie.
+	// For example, if you use a cookie "session_id", set its MaxAge to -1 to delete it:
+	http.SetCookie(w, &http.Cookie{
+		Name:   "token",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	// Optionally clear other session data if needed.
+
+	// For HTMX, you can issue a full-page redirect by setting the HX-Redirect header:
+	w.Header().Set("HX-Redirect", "/login")
 }

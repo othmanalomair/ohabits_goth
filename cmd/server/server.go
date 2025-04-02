@@ -43,6 +43,11 @@ func Server() *http.Server {
 	protected.HandleFunc("/habits/{id}/delete", handlers.DeleteHabit).Methods("POST")
 	protected.HandleFunc("/habits/{id}/toggle", handlers.ToggleHabitDay).Methods("POST")
 	protected.HandleFunc("/habits/{id}/cancel", handlers.CancelHabitEdit).Methods("GET")
+	protected.HandleFunc("/view", handlers.ViewHandler).Methods("GET")
+	protected.HandleFunc("/mnotes", handlers.NotesHandler).Methods("GET")
+	protected.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
+	protected.HandleFunc("/profile", handlers.UpdateProfileHandler).Methods("POST")
+	protected.HandleFunc("/signout", handlers.SignOutHandler).Methods("GET")
 
 	// Workout Plans
 	protected.HandleFunc("/workout_plan", handlers.WorkoutPlanPage).Methods("GET")
@@ -55,6 +60,12 @@ func Server() *http.Server {
 	protected.HandleFunc("/workout_plan/{id}/exercises", handlers.AddWorkoutExercise).Methods("POST")
 	protected.HandleFunc("/workout_plan/{id}/save", handlers.SaveWorkoutPlan).Methods("POST")
 	protected.HandleFunc("/workout_plan/{id}/cancel", handlers.CancelWorkoutPlanEdit).Methods("GET")
+
+	// Workout Plan Exercise Routes
+	protected.HandleFunc("/workout_plan/{id}/exercises/{order}/delete", handlers.DeleteWorkoutExercise).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/exercises/{order}/edit-form", handlers.EditWorkoutExerciseForm).Methods("GET")
+	protected.HandleFunc("/workout_plan/{id}/exercises/{order}/edit", handlers.EditWorkoutExercise).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/exercises/{order}/cancel", handlers.CancelWorkoutExerciseEdit).Methods("GET")
 
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

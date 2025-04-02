@@ -17,7 +17,7 @@
             >
                 <img src="/static/images/svg/trash-red.svg" alt="Delete" />
             </button>
-            <!-- Toggle: if open, show X (to close); if closed, show an open icon -->
+            <!-- Toggle: if open, show up icon; if closed, show down icon -->
             <button
                 hx-get="/workout_plan/{{ .Workout.ID }}/toggle?open={{ not .Open }}"
                 hx-target="#workout-plan-{{ .Workout.ID }}"
@@ -67,7 +67,7 @@
         <!-- Exercises List -->
         <div class="workout-plan-exercises">
             <h3>Exercises</h3>
-            <ul>
+            <ul id="exercises-{{ .Workout.ID }}">
                 {{ range .Workout.Exercises }}
                 <li data-order="{{ .Order }}">
                     <span class="exercise-name">{{ .Name }}</span>
@@ -92,12 +92,6 @@
                                 alt="Delete Exercise"
                             />
                         </button>
-                        <button class="reorder-btn">
-                            <img
-                                src="/static/images/svg/layers.svg"
-                                alt="Reorder"
-                            />
-                        </button>
                     </div>
                 </li>
                 {{ end }}
@@ -119,17 +113,6 @@
                     <img src="/static/images/svg/plus.svg" alt="Add Exercise" />
                 </button>
             </form>
-            <!-- Save Button (finalize the plan) -->
-            <div class="center-save-btn">
-                <button
-                    hx-post="/workout_plan/{{ .Workout.ID }}/save"
-                    hx-target="#workout-plan-{{ .Workout.ID }}"
-                    hx-swap="outerHTML"
-                    class="save-btn"
-                >
-                    Save
-                </button>
-            </div>
         </div>
     </div>
     {{ end }}

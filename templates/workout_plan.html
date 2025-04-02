@@ -3,9 +3,7 @@
     <h1>Workout Plans</h1>
 
     <!-- Workout Plans List -->
-    <div id="workout-plans-list">
-        {{ range .WorkoutPlans }} {{ template "workout_plan_item" . }} {{ end }}
-    </div>
+    <div id="workout-plans-list">{{ template "workout_plans_list" . }}</div>
 
     <!-- Add New Workout Plan Form -->
     <form

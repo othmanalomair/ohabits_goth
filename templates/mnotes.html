@@ -1,0 +1,42 @@
+{{ define "mnotes" }}
+<div class="view-container">
+    <!-- Month Picker -->
+    <div class="view-header">
+        <button
+            id="prevMonth"
+            hx-get="/mnotes?month={{ .PrevMonth }}"
+            hx-target="main"
+            hx-swap="innerHTML"
+        >
+            &lt;
+        </button>
+        <h1>{{ .CurrentMonth }}</h1>
+        <button
+            id="nextMonth"
+            hx-get="/mnotes?month={{ .NextMonth }}"
+            hx-target="main"
+            hx-swap="innerHTML"
+        >
+            &gt;
+        </button>
+    </div>
+
+    <!-- Daily Records Table -->
+    <table class="view-table">
+        <thead>
+            <tr>
+                <th style="width: 1rem">Day</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .DailyNote }}
+            <tr>
+                <td>{{ .Day }}</td>
+                <td>{{ if .Note }}{{ nl2br .Note }}{{ else }}-{{ end }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+{{ end }}

@@ -54,7 +54,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/view">
+                    <a hx-get="/view" hx-target="main" hx-swap="innerHTML">
                         <img
                             src="/static/images/svg/view.svg"
                             alt="View Mode"
@@ -63,12 +63,7 @@
                     </a>
                 </li>
                 <li>
-                    <a
-                        href="/notes"
-                        hx-get="/notes"
-                        hx-target="main"
-                        hx-swap="innerHTML"
-                    >
+                    <a hx-get="/mnotes" hx-target="main" hx-swap="innerHTML">
                         <img src="/static/images/svg/note.svg" alt="Notes" />
                         Notes
                     </a>
@@ -93,7 +88,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/profile">
+                    <a hx-get="/profile" hx-target="main" hx-swap="innerHTML">
                         <img
                             src="/static/images/svg/profile.svg"
                             alt="Profile"
@@ -105,7 +100,13 @@
 
             <!-- Sign Out Button -->
             <div class="center">
-                <button class="sign-out-button">Sign Out</button>
+                <button
+                    class="sign-out-button"
+                    hx-get="/signout"
+                    hx-trigger="click"
+                >
+                    Sign Out
+                </button>
             </div>
 
             <!-- Overlay Footer -->
