@@ -6,7 +6,7 @@
         id="add-habit-form"
         hx-post="/habits"
         hx-target="#habits-list"
-        hx-swap="outerHTML"
+        hx-swap="innerHTML"
     >
         <input
             type="text"
@@ -18,11 +18,22 @@
             <img src="/static/images/svg/plus.svg" alt="Add Habit" />
         </button>
     </form>
-    <!-- Habits List -->
-    <div id="habits-list">{{ template "habits_list" . }}</div>
+    <!-- Habits List Container -->
+    <div id="habits-list">
+        {{ template "habits_list" . }}
+    </div>
 </div>
-{{ end }} {{ define "habits_list" }} {{ range .Habits }} {{ template
-"habit_item_" . }} {{ end }} {{ end }} {{ define "habit_item_" }}
+{{ end }}
+
+
+
+{{ define "habits_list" }}
+    {{ range .Habits }}
+        {{ template "habit_item_" . }}
+    {{ end }}
+{{ end }}
+
+{{ define "habit_item_" }}
 <div class="habit-item" id="habit-{{ .ID }}">
     {{ $habit := . }}
 

@@ -5,6 +5,40 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{ block "title" . }}Habits Dashboard{{ end }}</title>
+        <meta name="description" content="Track your habits and workouts" />
+        <!-- Favicon and Icons -->
+        <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+        <link
+            rel="icon"
+            href="/static/favicon-16x16.png"
+            sizes="16x16"
+            type="image/png"
+        />
+        <link
+            rel="icon"
+            href="/static/favicon-32x32.png"
+            sizes="32x32"
+            type="image/png"
+        />
+        <link
+            rel="apple-touch-icon"
+            href="/static/apple-touch-icon.png"
+            type="image/png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="192x192"
+            href="/static/android-chrome-192x192.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="512x512"
+            href="/static/android-chrome-512x512.png"
+        />
+        <link rel="manifest" href="/static/site.webmanifest" />
+
         <!-- Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,7 +62,7 @@
             <div class="profile">
                 <img
                     class="avatar-img"
-                    src="{{ if .User.AvatarURL }}{{ .User.AvatarURL }}{{ else }}/static/images/profile.jpg{{ end }}"
+                    src="{{ if .User.AvatarURL }}{{ .User.AvatarURL }}{{ else }}/static/images/profile/default.jpg{{ end }}"
                     alt="{{ .User.DisplayName }}"
                 />
                 <span>{{ .User.DisplayName }}</span>
