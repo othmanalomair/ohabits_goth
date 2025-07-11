@@ -48,6 +48,29 @@
         />
         <link rel="stylesheet" href="/static/css/style.css" />
         <script src="/static/js/htmx.min.js"></script>
+        
+        <script>
+        // Global workout animation handler (won't get reset by HTMX swaps)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listen for HTMX afterSwap events
+            document.body.addEventListener('htmx:afterSwap', function(event) {
+                // Check if workout was just saved
+                if (window.workoutSaveTriggered && event.target.id === 'workout-log') {
+                    window.workoutSaveTriggered = false; // Reset the flag
+                    
+                    setTimeout(function() {
+                        var workoutContainer = document.getElementById('workout-log');
+                        if (workoutContainer) {
+                            workoutContainer.classList.add('flash-success');
+                            setTimeout(function() {
+                                workoutContainer.classList.remove('flash-success');
+                            }, 800);
+                        }
+                    }, 50);
+                }
+            });
+        });
+        </script>
     </head>
     <body>
         <header>

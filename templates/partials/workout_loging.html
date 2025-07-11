@@ -41,6 +41,7 @@
         hx-target="#workout-log"
         hx-swap="outerHTML"
         method="post"
+        onsubmit="this.querySelector('button').classList.add('saving'); return true;"
     >
         <div class="exercise-group">
             <div class="form-row">
@@ -93,7 +94,10 @@
                 value="{{ .SelectedDate | formatDate }}"
             />
         </div>
-        <button type="submit" class="workout-button">
+        <button type="submit" class="workout-button" onclick="
+            this.classList.add('saving');
+            window.workoutSaveTriggered = true;
+        ">
             <img
                 src="/static/images/svg/save.svg"
                 alt="Save Workout"

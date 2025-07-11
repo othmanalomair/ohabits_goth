@@ -34,6 +34,11 @@
         var currentMonth = today.getMonth();
         var currentYear = today.getFullYear();
 
+        // Get selected date from URL parameter
+        var urlParams = new URLSearchParams(window.location.search);
+        var selectedDateStr = urlParams.get('date');
+        var selectedDate = selectedDateStr ? new Date(selectedDateStr + 'T00:00:00') : null;
+
         var monthYearSpan = document.getElementById("month-year");
         var calendarDaysDiv = document.getElementById("calendar-days");
 
@@ -81,7 +86,8 @@
                     "-" +
                     String(day).padStart(2, "0");
                 dayLink.href = "/?date=" + dateStr;
-                // Highlight today if applicable
+                
+                // Highlight today if applicable (red border)
                 if (
                     year === today.getFullYear() &&
                     month === today.getMonth() &&
@@ -89,6 +95,16 @@
                 ) {
                     dayLink.classList.add("today");
                 }
+                
+                // Highlight selected date if applicable (blue background)
+                if (selectedDate &&
+                    year === selectedDate.getFullYear() &&
+                    month === selectedDate.getMonth() &&
+                    day === selectedDate.getDate()
+                ) {
+                    dayLink.classList.add("selected");
+                }
+                
                 calendarDaysDiv.appendChild(dayLink);
             }
         }
