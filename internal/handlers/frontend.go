@@ -112,6 +112,23 @@ func init() {
 			withBreaks := strings.ReplaceAll(escaped, "\n", "<br>")
 			return template.HTML(withBreaks)
 		},
+		"formatNoteWithTodos": func(note string, todos []db.Todos) string {
+			result := note
+			if len(todos) > 0 {
+				if result != "" {
+					result += "\n\n"
+				}
+				result += "مهام اليوم :-\n"
+				for _, todo := range todos {
+					if todo.Completed {
+						result += "- ✅ " + todo.Text + "\n"
+					} else {
+						result += "- ❌ " + todo.Text + "\n"
+					}
+				}
+			}
+			return result
+		},
 	})
 	var err error
 	tmpl, err = tmpl.ParseGlob("templates/*.html")

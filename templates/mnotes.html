@@ -31,7 +31,10 @@
             {{ range .DailyNote }}
             <div class="note-entry">
                 <div class="day-cell">{{ .Day }}</div>
-                <div class="note-cell">{{ if .Note }}{{ nl2br .Note }}{{ else }}-{{ end }}</div>
+                <div class="note-cell">
+                    {{ $formattedNote := formatNoteWithTodos .Note .Todos }}
+                    {{ if $formattedNote }}{{ nl2br $formattedNote }}{{ else }}-{{ end }}
+                </div>
             </div>
             {{ end }}
         </div>

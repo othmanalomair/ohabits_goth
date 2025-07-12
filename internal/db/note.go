@@ -12,8 +12,9 @@ import (
 
 // DailyNote represents the aggregated note for one day.
 type DailyNote struct {
-	Day  int    `json:"day"`
-	Note string `json:"note"`
+	Day   int     `json:"day"`
+	Note  string  `json:"note"`
+	Todos []Todos `json:"todos"`
 }
 
 func GetNoteByDate(db *pgxpool.Pool, dateStr string, userID uuid.UUID) (Notes, error) {
@@ -87,7 +88,16 @@ func GetNotesByMonth(db *pgxpool.Pool, month string, userID uuid.UUID) ([]DailyN
 				return nil, err
 			}
 		}
-		notes = append(notes, DailyNote{Day: day, Note: note})
+
+		// Get todos for this date
+		dateStr := currentDate.Format("2006-01-02")
+		todos, err := GetTodosByDate(db, dateStr, userID)
+		if err != nil {
+			// If there's an error getting todos, continue with empty todos slice
+			todos = []Todos{}
+		}
+
+		notes = append(notes, DailyNote{Day: day, Note: note, Todos: todos})
 	}
 	return notes, nil
 }
