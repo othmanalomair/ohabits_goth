@@ -9,16 +9,9 @@
             hx-trigger="click"
             hx-target="this"
             hx-swap="outerHTML"
-            class="todo-item {{ if .Completed }}list-item-checked{{ else }}list-item{{ end }}"
+            class="habit-item {{ if .Completed }}habit-completed{{ else }}habit-pending{{ end }}"
         >
             <span class="habit-name">{{ .Habit.Name }}</span>
-            {{ if .Completed }}
-            <img
-                class="habit-check"
-                src="/static/images/svg/check.svg"
-                alt="Completed"
-            />
-            {{ end }}
         </div>
         {{ end }} {{ else }}
         <p>No habits scheduled for {{ .Day }}.</p>

@@ -41,38 +41,43 @@
         hx-target="#workout-log"
         hx-swap="outerHTML"
         method="post"
-        onsubmit="this.querySelector('button').classList.add('saving'); return true;"
     >
         <div class="exercise-group">
             <div class="form-row">
                 <label for="weight">Weight:</label>
                 <input
-                    type="text"
+                    type="number"
                     name="weight"
                     id="weight"
                     placeholder="Weight"
                     value="{{ .WorkoutLog.Weight }}"
+                    step="0.1"
+                    min="0"
                 />
             </div>
-            <div class="form-row">
-                <label for="cardio">Cardio:</label>
-                <input
-                    type="text"
-                    name="cardio"
-                    id="cardio"
-                    placeholder="Cardio name"
-                    value="{{ .CardioName }}"
-                />
-            </div>
-            <div class="form-row">
-                <label for="duration">Duration:</label>
-                <input
-                    type="text"
-                    name="duration"
-                    id="duration"
-                    placeholder="Duration"
-                    value="{{ .CardioDuration }}"
-                />
+            <div class="form-row cardio-duration-row">
+                <div class="cardio-field">
+                    <label for="cardio">Cardio:</label>
+                    <input
+                        type="text"
+                        name="cardio"
+                        id="cardio"
+                        placeholder="Cardio name"
+                        value="{{ .CardioName }}"
+                    />
+                </div>
+                <div class="duration-field">
+                    <label for="duration">Duration:</label>
+                    <input
+                        type="number"
+                        name="duration"
+                        id="duration"
+                        placeholder="Minutes"
+                        value="{{ .CardioDuration }}"
+                        step="1"
+                        min="0"
+                    />
+                </div>
             </div>
             <!-- Hidden fields for workout name and completed exercises -->
             <input
@@ -94,10 +99,7 @@
                 value="{{ .SelectedDate | formatDate }}"
             />
         </div>
-        <button type="submit" class="workout-button" onclick="
-            this.classList.add('saving');
-            window.workoutSaveTriggered = true;
-        ">
+        <button type="submit" class="workout-button">
             <img
                 src="/static/images/svg/save.svg"
                 alt="Save Workout"

@@ -43,33 +43,46 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="/static/css/style.css" />
         <script src="/static/js/htmx.min.js"></script>
         
         <script>
-        // Global workout animation handler (won't get reset by HTMX swaps)
+        // Global success message handler
         document.addEventListener('DOMContentLoaded', function() {
-            // Listen for HTMX afterSwap events
-            document.body.addEventListener('htmx:afterSwap', function(event) {
-                // Check if workout was just saved
-                if (window.workoutSaveTriggered && event.target.id === 'workout-log') {
-                    window.workoutSaveTriggered = false; // Reset the flag
+            // Listen for HTMX afterRequest events (only fires after actual requests, not on load)
+            document.body.addEventListener('htmx:afterRequest', function(event) {
+                // Only show messages for successful POST requests
+                if (event.detail.xhr.status === 200 && event.detail.requestConfig.verb === 'post') {
+                    var url = event.detail.requestConfig.path;
                     
-                    setTimeout(function() {
-                        var workoutContainer = document.getElementById('workout-log');
-                        if (workoutContainer) {
-                            workoutContainer.classList.add('flash-success');
-                            setTimeout(function() {
-                                workoutContainer.classList.remove('flash-success');
-                            }, 800);
-                        }
-                    }, 50);
+                    if (url === '/notes') {
+                        showSuccessMessage('✓ Note saved successfully!');
+                    } else if (url === '/workout_loging') {
+                        showSuccessMessage('✓ Workout saved successfully!');
+                    }
                 }
             });
         });
+        
+        function showSuccessMessage(message) {
+            var messageDiv = document.createElement('div');
+            messageDiv.innerHTML = message;
+            messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3); z-index: 1000; font-weight: 500; font-size: 14px;';
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(function() {
+                messageDiv.style.opacity = '0';
+                messageDiv.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    if (messageDiv.parentNode) {
+                        document.body.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 2000);
+        }
         </script>
     </head>
     <body>

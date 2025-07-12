@@ -1,8 +1,7 @@
 {{ define "notes" }}
 <div class="card notes">
     <h2>Daily Notes</h2>
-    <form hx-post="/notes" hx-target=".notes" hx-swap="outerHTML" method="post" 
-          onsubmit="this.querySelector('button').classList.add('saving'); return true;">
+    <form hx-post="/notes" hx-target=".notes" hx-swap="outerHTML" method="post">
         <textarea name="text" placeholder="Write your note here...">
 {{ .Notes.Text }}</textarea
         >
@@ -25,27 +24,7 @@
 </div>
 
 <script>
-// Add animation after the notes template is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    addNotesAnimation();
-});
-
-// Also add it when HTMX swaps content
-document.body.addEventListener('htmx:afterSwap', function(event) {
-    if (event.target.classList.contains('notes')) {
-        addNotesAnimation();
-    }
-});
-
-function addNotesAnimation() {
-    var notesContainer = document.querySelector('.notes');
-    if (notesContainer && !notesContainer.hasAttribute('data-animated')) {
-        notesContainer.setAttribute('data-animated', 'true');
-        notesContainer.classList.add('flash-success');
-        setTimeout(function() {
-            notesContainer.classList.remove('flash-success');
-        }, 800);
-    }
-}
+// Notes save animation is now handled by CSS on button only
+// No card-wide animation needed
 </script>
 {{ end }}

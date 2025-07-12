@@ -1,20 +1,28 @@
 body {
-    color: #171717;
-    background: #fef7f3;
-    font-family: "Roboto", Arial, Helvetica, sans-serif;
+    color: #2d3748;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family:
+        "Inter",
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
 }
 
 /* ----------- HEADER STYLING ----------- */
 header {
-    background-color: #fab791;
-    height: 52px;
-    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    height: 64px;
+    padding: 0 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #dee2e6;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     position: fixed;
     top: 0;
     left: 0;
@@ -23,16 +31,16 @@ header {
 }
 
 .logo {
-    color: #f4f5f7;
-    font-weight: bold;
-    font-size: 34px;
-    line-height: 1.18;
-    letter-spacing: -0.04em;
+    color: #4c51bf;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
     margin: 0;
 }
 
 .logo a {
-    color: #f4f5f7;
+    color: #4c51bf;
     text-decoration: none;
 }
 
@@ -41,10 +49,12 @@ header {
     display: flex;
     align-items: center;
     padding: 2px;
-    border: 1px solid #f6f7f7;
+    border: 2px solid #4c51bf;
     width: 110px;
     height: 45px;
-    border-radius: 8px;
+    border-radius: 12px;
+    background: rgba(76, 81, 191, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 /* Avatar image */
@@ -57,9 +67,9 @@ header {
 
 /* Profile name styling */
 .profile span {
-    color: #f6f7f7;
+    color: #2d3748;
     font-weight: 600;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.2;
     letter-spacing: 0.02em;
     margin-left: 8px;
@@ -67,37 +77,46 @@ header {
 
 /* ----------- SIDENAV (HAMBURGER MENU) ----------- */
 .menu-btn {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    padding: 3px;
-    border: none;
-    background: none;
+    padding: 6px;
+    border: 2px solid #4c51bf;
+    background: rgba(76, 81, 191, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+.menu-btn:hover {
+    background: rgba(76, 81, 191, 0.2);
+    transform: scale(1.05);
 }
 .menu-btn span {
-    width: 18px;
+    width: 16px;
     height: 2px;
-    background-color: #f4f5f7;
+    background-color: #4c51bf;
     display: block;
+    border-radius: 1px;
+    transition: all 0.3s ease;
 }
 
 /* ----------- MAIN CONTENT AREA ----------- */
 main {
     max-width: 1200px;
-    margin: 5rem auto;
-    padding: 0 1rem;
+    margin: 6rem auto 2rem;
+    padding: 0 1.5rem;
 }
 .date-card {
-    background-color: #fff;
-    border-radius: 6px;
-    padding: 1rem;
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 .date-header {
     cursor: pointer;
@@ -108,23 +127,26 @@ main {
 .date-header h1 {
     margin: 0;
     padding: 0;
-    padding-top: 0.3rem;
-    font-size: 2rem;
-    margin-bottom: 0.2rem;
+    font-size: 2.5rem;
+    color: #2d3748;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
 }
 
 .date-header p {
     margin: 0;
     padding: 0;
-    font-size: 1rem;
-    color: #666;
+    font-size: 1.125rem;
+    color: #718096;
+    font-weight: 500;
 }
 
 /* Grid layout for large screens */
 .grid-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: 2.5rem;
 }
 
 /* Single column on mobile */
@@ -133,22 +155,138 @@ main {
         grid-template-columns: 1fr;
         gap: 0;
     }
+
+    /* Make date card exactly same as other cards on mobile */
+    .date-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Ensure all cards have consistent styling on mobile */
+    .card {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 2rem;
+    }
+
+    /* Remove any extra margins from main content */
+    main {
+        padding: 0 1.5rem;
+        margin: 6rem auto 2rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Compact calendar for mobile */
+    .calendar {
+        padding: 1rem;
+        margin: 0.5rem auto;
+        max-width: 100%;
+    }
+
+    .calendar-header {
+        margin-bottom: 1rem;
+    }
+
+    .calendar-header button {
+        width: 36px;
+        height: 36px;
+    }
+
+    .calendar-header span {
+        font-size: 1.125rem;
+    }
+
+    .calendar-day-headers {
+        gap: 0.125rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #calendar-days {
+        gap: 0.125rem;
+    }
+
+    .calendar-day-header {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.125rem;
+    }
+
+    .calendar-day {
+        padding: 0.375rem 0.125rem;
+        font-size: 0.75rem;
+        min-height: 28px;
+    }
+
+    /* Compact habits and todos for mobile */
+    .habit-item,
+    .list-item,
+    .list-item-checked,
+    .todo-item {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        min-height: 40px;
+        font-size: 0.875rem;
+    }
+
+    /* Compact todo form for mobile */
+    .todos form {
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .todos input[type="text"] {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .todos button {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .todo-delete-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    .habit-name {
+        font-size: 0.875rem;
+    }
 }
 
 /* ----------- SECTION CARDS ----------- */
 .card {
-    background-color: #fff;
-    border-radius: 6px;
-    padding: 1rem;
-    padding-top: 0.1rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px rgba(31, 38, 135, 0.3);
 }
 
 .card h2 {
-    margin-bottom: 1rem;
-    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
     text-align: center;
+    color: #2d3748;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 /* ----------- LIST ----------- */
@@ -159,43 +297,98 @@ main {
 }
 
 .list-item {
-    background-color: #ffe3d1;
-    color: #5e6565;
-    border-radius: 4px;
-    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    color: #2d3748;
     font-weight: 500;
-    font-size: 0.8rem;
+    font-size: 1rem;
+    text-align: center;
 }
 
 .list-item-checked {
-    background-color: #f15f0b;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: #fff;
-    border-radius: 4px;
-    padding: 0.5rem;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
     font-weight: 500;
-    font-size: 0.8rem;
+    font-size: 1rem;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+}
+
+.list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.list-item-checked:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(72, 187, 120, 0.4);
 }
 
 .habit-item {
-    position: relative;
-    padding-right: 2.5rem; /* add extra space on the right for the check icon */
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
 }
 
-/* Style for the habit name text if needed */
+.habit-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.habit-item.habit-completed {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+}
+
+.habit-item.habit-completed:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(72, 187, 120, 0.4);
+}
+
+.habit-item.habit-pending {
+    background: rgba(255, 255, 255, 0.8);
+    color: #2d3748;
+}
+
 .habit-name {
-    display: inline-block;
-}
-
-/* Style for the check icon */
-.habit-check {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 20px; /* adjust size as needed */
-    width: auto;
+    font-weight: 500;
+    font-size: 1rem;
+    text-align: center;
+    width: 100%;
 }
 
 /* ----------- todos ----------- */
@@ -205,41 +398,120 @@ main {
 
 .todos form {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.75rem;
+    margin-top: 1rem;
     margin-bottom: 1rem;
 }
 
 .todos input[type="text"] {
     flex: 1;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #ffe3d1;
+    padding: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 1rem;
+    color: #2d3748;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.todos input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .todos button {
-    padding: 0.5rem 1rem;
-    background-color: #f15f0b;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
     cursor: pointer;
     color: #fff;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.todos button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
 }
 
 .todo-item {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem;
-    border-radius: 4px;
+    min-height: 48px;
+    color: #2d3748;
+    font-weight: 500;
+    font-size: 1rem;
     cursor: pointer;
-    transition: background 0.2s;
+}
+
+.todo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.todo-item.todo-completed {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+}
+
+.todo-item.todo-completed:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(72, 187, 120, 0.4);
+}
+
+.todo-item.todo-pending {
+    background: rgba(255, 255, 255, 0.8);
+    color: #2d3748;
 }
 
 .todo-text {
     flex: 1;
+    text-align: left;
+}
+
+.todo-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.todo-delete-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: rgba(239, 68, 68, 0.1);
+    color: #e53e3e;
+}
+
+.todo-delete-btn:hover {
+    background: #e53e3e;
+    color: #fff;
+    transform: scale(1.1);
 }
 
 /* Container for the action icons */
@@ -264,85 +536,173 @@ main {
 
 /* ----------- NOTES ----------- */
 .notes textarea {
-    width: 95%;
-    height: 80px;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    width: 100%;
+    height: 100px;
+    padding: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
     resize: vertical;
-    margin-bottom: 0.5rem;
-    background-color: #ffe3d1;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 1rem;
+    color: #2d3748;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.notes textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .notes button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     cursor: pointer;
-    background-color: #f15f0b;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
     color: #fff;
-    padding: 0.5rem 1rem;
-    font-weight: 700;
-    font-size: 0.9rem;
+    padding: 0.875rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
     width: 100%;
-    height: 40px;
-    transition: background-color 0.3s ease;
+    height: 48px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    position: relative;
 }
 
 .notes button:hover {
-    background-color: #d44a02;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
 }
 
-/* Save success animation */
+/* Save success animation - button only */
 .notes button.saving {
-    background-color: #28a745 !important;
-    transform: scale(0.98);
-    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+    color: white !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 12px 30px rgba(72, 187, 120, 0.6) !important;
+    transition: all 0.3s ease !important;
 }
 
-.notes.flash-success, .workout.flash-success {
-    animation: flashSuccess 0.8s ease-in-out;
+.workout-button.saving {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+    color: white !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 12px 30px rgba(72, 187, 120, 0.6) !important;
+    transition: all 0.3s ease !important;
 }
 
-@keyframes flashSuccess {
+/* Alternative: Simple immediate green feedback */
+.notes button:active {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+    transform: scale(0.96);
+    transition: all 0.1s ease;
+}
+
+@keyframes buttonSaveSuccess {
     0% {
-        background-color: inherit;
-        border-color: inherit;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    10% {
+        transform: scale(0.96);
     }
     25% {
-        background-color: #d4edda;
-        border-color: #28a745;
-        transform: scale(1.01);
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        transform: scale(0.98);
+        box-shadow: 0 12px 25px rgba(72, 187, 120, 0.4);
+    }
+    50% {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
     }
     75% {
-        background-color: #d4edda;
-        border-color: #28a745;
-        transform: scale(1.01);
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+    }
+    90% {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
     }
     100% {
-        background-color: inherit;
-        border-color: inherit;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         transform: scale(1);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+}
+
+/* Subtle checkmark feedback */
+.notes button.saving::after {
+    content: "✓";
+    position: absolute;
+    right: 1rem;
+    opacity: 0;
+    animation: subtleCheckmark 1s ease-in-out;
+}
+
+@keyframes subtleCheckmark {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    25% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    35% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    85% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
     }
 }
 
 /* Workout button save animation */
-.workout button.saving, .workout-button.saving {
-    background-color: #28a745 !important;
-    transform: scale(0.98);
-    transition: all 0.2s ease;
+.workout button.saving,
+.workout-button.saving {
+    animation: buttonSaveSuccess 1s ease-in-out;
 }
 
-/* Center and style the mood options */
+.workout-button.saving::after {
+    content: "✓";
+    position: absolute;
+    right: 1rem;
+    opacity: 0;
+    animation: subtleCheckmark 1s ease-in-out;
+}
+
+/* Mood rating section styling */
 .mood {
     display: flex;
-    justify-content: center; /* Centers the mood options horizontally */
+    justify-content: center;
     align-items: center;
-    gap: 1.5rem; /* Increase gap for breathing room */
-    margin-top: 1rem;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
 }
 
 .mood label {
@@ -350,89 +710,290 @@ main {
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    font-size: 1.5rem; /* Larger icons */
+    padding: 0.8rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mood label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .mood input[type="radio"] {
-    /* Remove default styling */
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-color: #fff;
-    border: 2px solid #ccc;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(102, 126, 234, 0.3);
     border-radius: 50%;
-    width: 2rem;
-    height: 2rem;
+    width: 1.5rem;
+    height: 1.5rem;
     margin-bottom: 0.5rem;
     cursor: pointer;
-    transition:
-        background-color 0.2s,
-        border-color 0.2s;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
 }
 
 .mood input[type="radio"]:checked {
-    background-color: #ff6b35; /* Use your primary color */
-    border-color: #ff6b35;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #4c51bf;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transform: scale(1.1);
+}
+
+.mood input[type="radio"]:checked + span {
+    transform: scale(1.1);
+    filter: brightness(1.2);
 }
 
 .mood label span {
     display: block;
-    font-size: 1.5rem; /* Make the emoji icon bigger */
+    font-size: 1.8rem;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile responsiveness for mood section */
+@media (max-width: 768px) {
+    .mood {
+        gap: 0.8rem;
+        padding: 0.8rem;
+    }
+
+    .mood label {
+        padding: 0.6rem;
+    }
+
+    .mood label span {
+        font-size: 1.5rem;
+    }
+
+    .mood input[type="radio"] {
+        width: 1.2rem;
+        height: 1.2rem;
+    }
 }
 /* ----------- WORKOUT SECTION ----------- */
 
 .exercise-group {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
     align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.2rem;
+    backdrop-filter: blur(10px);
 }
 
 .form-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: 100%;
-    max-width: 400px; /* Ensure all inputs are same width */
+    max-width: 450px;
 }
 
 .form-row label {
-    flex: 0 0 80px; /* Fixed width for labels */
+    flex: 0 0 70px;
     font-weight: 600;
-    font-size: 1rem;
-    color: #333;
+    font-size: 0.9rem;
+    color: #2d3748;
+    text-align: right;
 }
 
-.form-row input[type="text"] {
+/* Weight input - standard size */
+.form-row input[name="weight"] {
     flex: 1;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #ffe3d1;
-    font-size: 1rem;
+    max-width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Cardio input - larger for text */
+.cardio-field input[name="cardio"] {
+    flex: 1;
+    max-width: 80%;
+    padding: 0.75rem;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Duration input - small for numbers */
+.duration-field input[name="duration"] {
+    flex: 1;
+    max-width: 50%;
+    padding: 0.75rem;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Focus states for all workout inputs */
+.form-row input[name="weight"]:focus,
+.cardio-field input[name="cardio"]:focus,
+.duration-field input[name="duration"]:focus {
+    outline: none;
+    border-color: #4c51bf;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+/* Cardio and Duration on same line */
+.cardio-duration-row {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 450px;
+}
+
+.cardio-field,
+.duration-field {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 1;
+}
+
+.cardio-field {
+    flex: 2; /* Cardio gets reasonable space */
+    max-width: 65%; /* Ensure it doesn't take too much space */
+}
+
+.duration-field {
+    flex: 0 0 90px; /* Fixed width for duration - small and compact */
+    max-width: 90px;
+    min-width: 90px;
+}
+
+.cardio-field label,
+.duration-field label {
+    flex: 0 0 auto;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #2d3748;
+    white-space: nowrap;
+}
+
+/* Mobile responsiveness for workout section */
+@media (max-width: 768px) {
+    .exercise-group {
+        padding: 1rem;
+        gap: 0.8rem;
+    }
+
+    .form-row {
+        max-width: 100%;
+        gap: 0.5rem;
+    }
+
+    .form-row label {
+        flex: 0 0 60px;
+        font-size: 0.8rem;
+    }
+
+    .cardio-duration-row {
+        flex-direction: row; /* Keep them on same line even on mobile */
+        gap: 0.5rem;
+    }
+
+    .cardio-field {
+        max-width: 60%; /* Smaller cardio field on mobile */
+    }
+
+    .duration-field {
+        flex: 0 0 75px; /* Even smaller fixed width on mobile */
+        max-width: 75px;
+        min-width: 75px;
+    }
+
+    .cardio-field,
+    .duration-field {
+        gap: 0.5rem;
+    }
+
+    .cardio-field label,
+    .duration-field label {
+        flex: 0 0 60px;
+        font-size: 0.8rem;
+    }
+
+    /* Mobile input sizes */
+    .form-row input[name="weight"] {
+        max-width: 100%;
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .cardio-field input[name="cardio"] {
+        max-width: 50%;
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .duration-field input[name="duration"] {
+        max-width: 40%;
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .workout-button {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+        height: 44px;
+    }
+
+    .workout-select {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+    }
 }
 
 .workout-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     cursor: pointer;
-    background-color: #f15f0b;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
     color: #fff;
-    padding: 0.5rem 1rem;
-    font-weight: 700;
-    font-size: 0.9rem;
+    padding: 0.875rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
     width: 100%;
-    height: 40px;
-    transition: background-color 0.3s ease;
+    height: 48px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    position: relative;
 }
 
 .workout-button:hover {
-    background-color: #d44a02;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
 }
 
 .workout-select {
@@ -440,22 +1001,34 @@ main {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background-color: #ffe3d1;
-    border: none;
-    border-radius: 4px;
-    color: #171717;
-    padding: 0.5rem 1rem;
-    font-weight: 700;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    color: #2d3748;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
     font-size: 0.9rem;
     width: 100%;
-    height: 40px;
+    height: auto;
+    min-height: 44px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+}
+
+.workout-select:focus {
+    outline: none;
+    border-color: #4c51bf;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
 }
 
 .workout-select option {
-    background-color: #ffe3d1;
-    color: #171717;
-    padding: 0.5rem 1rem;
-    font-weight: 700;
+    background: rgba(255, 255, 255, 0.95);
+    color: #2d3748;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
     font-size: 0.9rem;
 }
 
@@ -479,11 +1052,12 @@ main {
 
 /* Calendar container */
 .calendar {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    padding: 1.5rem;
     margin: 1rem auto;
 }
 
@@ -492,87 +1066,104 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .calendar-header button {
     border: none;
     color: #fff;
     padding: 0.5rem;
-    border-radius: 4px;
-    background-color: #ffe3d1;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    transition: background-color 0.2s ease;
+    width: 40px;
+    height: 40px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .calendar-header button:hover {
-    background-color: #ff8a47;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
 .calendar-header img {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 .calendar-header span {
-    font-size: 1.2rem;
-    font-weight: bold;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    letter-spacing: -0.01em;
 }
 
 /* Container for weekday headers */
 .calendar-day-headers {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
 }
 
 /* Day cells for the month */
 #calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 /* Individual weekday header styling */
 .calendar-day-header {
     text-align: center;
-    font-weight: bold;
-    color: #555;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.25rem;
 }
 
 /* Styling for individual day cells */
 .calendar-day {
     text-align: center;
-    padding: 0.5rem;
-    border-radius: 4px;
-    background-color: #ffe3d1;
-    color: #171717;
+    padding: 0.5rem 0.25rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    color: #2d3748;
     text-decoration: none;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .calendar-day:hover {
-    background-color: #ffa15b;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .calendar-day.today {
-    border: 2px solid #ff6b35;
+    border: 2px solid #e53e3e;
+    background: rgba(229, 62, 62, 0.1);
 }
 
 .calendar-day.selected {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
     color: #fff;
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
 }
 
 .calendar-day.selected:hover {
-    background-color: #0056b3;
+    background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
     color: #fff;
 }
 
