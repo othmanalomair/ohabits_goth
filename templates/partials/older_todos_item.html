@@ -1,0 +1,25 @@
+{{ define "older_todos_item" }}
+<div
+    id="todo-{{ .ID }}"
+    class="todo-item older-todo {{ if .Completed }}todo-completed{{ else }}todo-pending{{ end }}"
+    hx-post="/todos/{{ .ID }}/toggle"
+    hx-trigger="click"
+    hx-target="#todo-{{ .ID }}"
+    hx-swap="outerHTML"
+>
+    <span class="todo-text">{{ .Text }}</span>
+    <span class="todo-date">({{ .Date | formatDate }})</span>
+    <div class="todo-actions">
+        <button
+            class="todo-delete-btn"
+            hx-delete="/todos/{{ .ID }}/delete"
+            hx-trigger="click"
+            hx-target="#todo-{{ .ID }}"
+            hx-swap="outerHTML"
+            onclick="event.stopPropagation()"
+        >
+            ×
+        </button>
+    </div>
+</div>
+{{ end }}

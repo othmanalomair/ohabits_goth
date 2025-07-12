@@ -1,0 +1,66 @@
+{{ define "404" }}
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Page Not Found - Ohabits</title>
+        <meta name="description" content="Page not found" />
+        <!-- Favicon and Icons -->
+        <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+        <link
+            rel="icon"
+            href="/static/favicon-16x16.png"
+            sizes="16x16"
+            type="image/png"
+        />
+        <link
+            rel="icon"
+            href="/static/favicon-32x32.png"
+            sizes="32x32"
+            type="image/png"
+        />
+        <link
+            rel="apple-touch-icon"
+            href="/static/apple-touch-icon.png"
+            type="image/png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="192x192"
+            href="/static/android-chrome-192x192.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="512x512"
+            href="/static/android-chrome-512x512.png"
+        />
+        <link rel="manifest" href="/static/site.webmanifest" />
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/css/style.css" />
+    </head>
+    <body>
+        <div class="error-container">
+            <div class="error-content">
+                <div class="error-number">404</div>
+                <h1 class="error-title">Page Not Found</h1>
+                <p class="error-description">
+                    Oops! The page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong URL.
+                </p>
+                <div class="error-actions">
+                    <a href="/" class="btn-primary">Go Home</a>
+                    <button onclick="history.back()" class="btn-secondary">Go Back</button>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+{{ end }}

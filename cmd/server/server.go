@@ -72,6 +72,9 @@ func Server() *http.Server {
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
+	// 404 handler - must be last
+	r.NotFoundHandler = http.HandlerFunc(handlers.NotFoundHandler)
+
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: r,

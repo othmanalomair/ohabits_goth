@@ -1,10 +1,21 @@
 {{ define "todos" }}
 <div class="card todos">
     <h2>Today's Tasks</h2>
-    <!-- Existing tasks will be listed here -->
+    <!-- Today's tasks will be listed here -->
     <div class="list" id="todo-list">
         {{ range .Todos }} {{ template "todos_item" . }} {{ end }}
     </div>
+    
+    <!-- Older unfinished tasks section -->
+    {{ if .OlderTodos }}
+    <div class="older-todos-section">
+        <h3 class="older-todos-title">Unfinished Tasks from Previous Days</h3>
+        <div class="older-todo-list">
+            {{ range .OlderTodos }} {{ template "older_todos_item" . }} {{ end }}
+        </div>
+    </div>
+    {{ end }}
+    
     <form
         hx-post="/todos"
         hx-target="#todo-list"

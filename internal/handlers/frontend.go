@@ -499,12 +499,21 @@ func Todos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch older unfinished todos (before the selected date)
+	olderTodos, err := db.GetOlderUnfinishedTodos(db.DB, dateStr, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Create a data structure that includes both todos and the selected date.
 	data := struct {
 		Todos        []db.Todos
+		OlderTodos   []db.Todos
 		SelectedDate time.Time
 	}{
 		Todos:        todos,
+		OlderTodos:   olderTodos,
 		SelectedDate: selectedDate,
 	}
 
@@ -2503,4 +2512,12 @@ func SignOutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// For HTMX, you can issue a full-page redirect by setting the HX-Redirect header:
 	w.Header().Set("HX-Redirect", "/login")
+}
+
+// NotFoundHandler renders the 404 error page.
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	if err := tmpl.ExecuteTemplate(w, "404", nil); err != nil {
+		http.Error(w, "Page not found", http.StatusNotFound)
+	}
 }

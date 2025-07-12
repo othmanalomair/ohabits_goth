@@ -40,6 +40,39 @@ func GetTodosByDate(db *pgxpool.Pool, todoDate string, userID uuid.UUID) ([]Todo
 	return todos, nil
 }
 
+func GetOlderUnfinishedTodos(db *pgxpool.Pool, beforeDate string, userID uuid.UUID) ([]Todos, error) {
+	todos := []Todos{}
+
+	rows, err := db.Query(context.Background(), `
+		SELECT id, user_id, text, completed, date, created_at, updated_at
+		FROM todos
+		WHERE date < $1 AND user_id = $2 AND completed = false
+		ORDER BY date DESC, created_at DESC
+		`, beforeDate, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var todo Todos
+		err := rows.Scan(
+			&todo.ID,
+			&todo.UserID,
+			&todo.Text,
+			&todo.Completed,
+			&todo.Date,
+			&todo.CreatedAt,
+			&todo.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		todos = append(todos, todo)
+	}
+	return todos, nil
+}
+
 func GetTodoByID(db *pgxpool.Pool, todoID uuid.UUID, userID uuid.UUID) (*Todos, error) {
 	var todo Todos
 

@@ -2,9 +2,7 @@
 <div class="card notes">
     <h2>Daily Notes</h2>
     <form hx-post="/notes" hx-target=".notes" hx-swap="outerHTML" method="post">
-        <textarea name="text" placeholder="Write your note here...">
-{{ .Notes.Text }}</textarea
-        >
+        <textarea name="text" placeholder="Write your note here..." dir="rtl">{{ .Notes.Text }}</textarea>
         <!-- If no note exists, use current date -->
         <input
             type="hidden"
