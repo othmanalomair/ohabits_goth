@@ -394,7 +394,7 @@ main {
     .notes textarea {
         padding: 0.75rem;
         font-size: 0.8rem;
-        min-height: 80px;
+        min-height: 200px;
     }
 
     .notes button {
@@ -892,7 +892,7 @@ main {
 /* ----------- NOTES ----------- */
 .notes textarea {
     width: 100%;
-    height: 100px;
+    height: 200px;
     padding: 1rem;
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
@@ -4150,7 +4150,7 @@ main {
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 24px;
-    box-shadow: 
+    box-shadow:
         0 8px 32px rgba(31, 38, 135, 0.37),
         0 0 0 1px rgba(255, 255, 255, 0.05);
     position: relative;
@@ -4158,13 +4158,17 @@ main {
 }
 
 .auth-container::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
     pointer-events: none;
 }
 
@@ -4217,7 +4221,7 @@ main {
 .input-group input[type="password"]:focus {
     border-color: #4c51bf;
     background: rgba(255, 255, 255, 0.95);
-    box-shadow: 
+    box-shadow:
         0 0 0 3px rgba(76, 81, 191, 0.1),
         0 4px 16px rgba(76, 81, 191, 0.2);
     transform: translateY(-1px);
@@ -4291,7 +4295,7 @@ main {
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 24px;
-    box-shadow: 
+    box-shadow:
         0 8px 32px rgba(31, 38, 135, 0.37),
         0 0 0 1px rgba(255, 255, 255, 0.05);
     position: relative;
@@ -4299,13 +4303,17 @@ main {
 }
 
 .error-content::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
     pointer-events: none;
 }
 
@@ -4348,7 +4356,8 @@ main {
     flex-wrap: wrap;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
     padding: 1rem 2rem;
     border-radius: 16px;
     font-size: 1rem;
@@ -4390,17 +4399,18 @@ main {
     .error-number {
         font-size: 6rem;
     }
-    
+
     .error-title {
         font-size: 2rem;
     }
-    
+
     .error-actions {
         flex-direction: column;
         align-items: center;
     }
-    
-    .btn-primary, .btn-secondary {
+
+    .btn-primary,
+    .btn-secondary {
         width: 100%;
         max-width: 280px;
     }

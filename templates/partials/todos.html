@@ -21,6 +21,7 @@
         hx-target="#todo-list"
         hx-trigger="submit"
         hx-swap="afterbegin"
+        hx-on::after-request="this.reset()"
         method="post"
     >
         <input
