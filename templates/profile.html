@@ -1,7 +1,7 @@
 {{ define "profile" }}
 <div id="profile-card" class="profile-card">
     <h2>Profile</h2>
-    <div class="profile-image">
+    <div class="profile-image" onclick="document.getElementById('profile_picture').click()">
         {{ if .User.AvatarURL }}
         <img src="{{ .User.AvatarURL }}" alt="Profile Picture" />
         {{ else }}
@@ -10,6 +10,9 @@
             alt="Default Profile Picture"
         />
         {{ end }}
+        <div class="profile-image-overlay">
+            <span>Click to change</span>
+        </div>
     </div>
     <form
         hx-post="/profile"
@@ -17,8 +20,17 @@
         hx-swap="outerHTML"
         enctype="multipart/form-data"
     >
+        <input
+            type="file"
+            id="profile_picture"
+            name="profile_picture"
+            accept="image/*"
+            style="display: none;"
+            onchange="this.form.submit()"
+        />
+        
         <div class="form-row">
-            <label for="display_name">Display Name:</label>
+            <label for="display_name">Display Name</label>
             <input
                 class="profile-input"
                 type="text"
@@ -28,8 +40,9 @@
                 required
             />
         </div>
+        
         <div class="form-row">
-            <label for="email">Email:</label>
+            <label for="email">Email</label>
             <input
                 class="profile-input"
                 type="email"
@@ -39,16 +52,68 @@
                 required
             />
         </div>
-        <div class="form-row">
-            <label for="profile_picture">Profile Picture:</label>
-            <input
-                type="file"
-                id="profile_picture"
-                name="profile_picture"
-                accept="image/*"
-            />
+        
+        <div class="password-section">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordSection()">
+                <span id="password-toggle-text">Change Password</span>
+                <span id="password-toggle-icon">+</span>
+            </button>
+            
+            <div id="password-fields" class="password-fields" style="display: none;">
+                <div class="form-row">
+                    <label for="current_password">Current Password</label>
+                    <input
+                        class="profile-input"
+                        type="password"
+                        id="current_password"
+                        name="current_password"
+                        placeholder="Enter current password to change"
+                    />
+                </div>
+                
+                <div class="form-row">
+                    <label for="new_password">New Password</label>
+                    <input
+                        class="profile-input"
+                        type="password"
+                        id="new_password"
+                        name="new_password"
+                        placeholder="Enter new password"
+                    />
+                </div>
+                
+                <div class="form-row">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input
+                        class="profile-input"
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="Confirm new password"
+                    />
+                </div>
+            </div>
         </div>
+        
         <button type="submit" class="btn">Save Profile</button>
     </form>
 </div>
+
+<script>
+function togglePasswordSection() {
+    const passwordFields = document.getElementById('password-fields');
+    const toggleText = document.getElementById('password-toggle-text');
+    const toggleIcon = document.getElementById('password-toggle-icon');
+    
+    if (passwordFields.style.display === 'none') {
+        passwordFields.style.display = 'block';
+        toggleText.textContent = 'Hide Password Change';
+        toggleIcon.textContent = '−';
+    } else {
+        passwordFields.style.display = 'none';
+        toggleText.textContent = 'Change Password';
+        toggleIcon.textContent = '+';
+    }
+}
+</script>
 {{ end }}

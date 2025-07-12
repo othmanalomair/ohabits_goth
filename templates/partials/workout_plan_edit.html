@@ -5,46 +5,32 @@
         hx-post="/workout_plan/{{ $plan.Workout.ID }}/edit"
         hx-target="#workout-plan-{{ $plan.Workout.ID }}"
         hx-swap="outerHTML"
-        class="workout-plan-header"
+        class="workout-plan-header workout-plan-edit-form"
     >
-        <div class="flex-them">
+        <div class="workout-plan-edit-inline">
             <input
                 type="text"
                 name="workout_name"
                 value="{{ $plan.Workout.Name }}"
+                placeholder="Workout name..."
                 required
             />
-            <select name="day" required>
-                {{ $days := list "Sunday" "Monday" "Tuesday" "Wednesday"
-                "Thursday" "Friday" "Saturday" "N/A" }} {{ range $d := $days }}
-                <option
-                    value="{{ $d }}"
-                    {{
-                    if
-                    eq
-                    $plan.Workout.Day
-                    $d
-                    }}selected{{
-                    end
-                    }}
+            <!-- Hidden field to preserve the current day -->
+            <input type="hidden" name="day" value="{{ $plan.Workout.Day }}" />
+            <div class="workout-edit-actions">
+                <button type="submit" title="Save changes">
+                    <img src="/static/images/svg/check-green.svg" alt="Save" />
+                </button>
+                <button
+                    type="button"
+                    hx-get="/workout_plan/{{ $plan.Workout.ID }}/cancel"
+                    hx-target="#workout-plan-{{ $plan.Workout.ID }}"
+                    hx-swap="outerHTML"
+                    title="Cancel editing"
                 >
-                    {{ $d }}
-                </option>
-                {{ end }}
-            </select>
-        </div>
-        <div class="flex-them">
-            <button type="submit">
-                <img src="/static/images/svg/check-green.svg" alt="Save" />
-            </button>
-            <button
-                type="button"
-                hx-get="/workout_plan/{{ $plan.Workout.ID }}/cancel"
-                hx-target="#workout-plan-{{ $plan.Workout.ID }}"
-                hx-swap="outerHTML"
-            >
-                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
-            </button>
+                    <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+                </button>
+            </div>
         </div>
     </form>
 </div>

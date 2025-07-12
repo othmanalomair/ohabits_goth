@@ -1,27 +1,33 @@
 {{ define "workout_exercise_edit" }}
-<li data-order="{{ .Exercise.Order }}">
+<li data-order="{{ .Exercise.Order }}" class="exercise-edit-item">
     <form
         hx-post="/workout_plan/{{ .WorkoutID }}/exercises/{{ .Exercise.Order }}/edit"
         hx-target="closest li"
         hx-swap="outerHTML"
+        class="exercise-edit-form"
     >
         <input
             type="text"
             name="exercise_name"
             value="{{ .Exercise.Name }}"
+            placeholder="Exercise name..."
+            class="exercise-edit-input"
             required
         />
-        <button type="submit">
-            <img src="/static/images/svg/check-green.svg" alt="Save" />
-        </button>
-        <button
-            type="button"
-            hx-get="/workout_plan/{{ .WorkoutID }}/exercises/{{ .Exercise.Order }}/cancel"
-            hx-target="closest li"
-            hx-swap="outerHTML"
-        >
-            <img src="/static/images/svg/x-red.svg" alt="Cancel" />
-        </button>
+        <div class="exercise-edit-actions">
+            <button type="submit" title="Save exercise">
+                <img src="/static/images/svg/check-green.svg" alt="Save" />
+            </button>
+            <button
+                type="button"
+                hx-get="/workout_plan/{{ .WorkoutID }}/exercises/{{ .Exercise.Order }}/cancel"
+                hx-target="closest li"
+                hx-swap="outerHTML"
+                title="Cancel editing"
+            >
+                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+            </button>
+        </div>
     </form>
 </li>
 {{ end }}
