@@ -237,6 +237,7 @@ main {
 
     /* Compact todo form for mobile */
     .todos form {
+        flex-direction: column;
         gap: 0.5rem;
         margin-top: 0.75rem;
         margin-bottom: 0.75rem;
@@ -260,6 +261,309 @@ main {
 
     .habit-name {
         font-size: 0.875rem;
+    }
+}
+
+/* Extra small screens (phones < 512px) */
+@media (max-width: 512px) {
+    /* Force body to not overflow */
+    body {
+        overflow-x: hidden;
+        width: 100vw;
+        max-width: 100vw;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Force all elements to respect viewport width */
+    *,
+    *::before,
+    *::after {
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+
+    /* Force main to fit viewport */
+    main {
+        padding: 0 0.5rem;
+        margin: 5rem auto 1rem;
+        width: 100vw;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* Make grid container more compact */
+    .grid-container {
+        width: calc(100vw - 1rem);
+        max-width: calc(100vw - 1rem);
+        margin: 0;
+        padding: 0;
+        gap: 0;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* Compact date card */
+    .date-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        width: calc(100vw - 1rem);
+        max-width: calc(100vw - 1rem);
+        box-sizing: border-box;
+    }
+
+    /* Compact all cards */
+    .card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 16px;
+        width: calc(100vw - 1rem);
+        max-width: calc(100vw - 1rem);
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* Very compact calendar */
+    .calendar {
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        width: calc(100% - 0.5rem);
+        max-width: calc(100% - 0.5rem);
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* Ensure calendar days don't overflow */
+    #calendar-days {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .calendar-day-headers {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Compact habits */
+    .habit-item {
+        width: calc(100% - 0.5rem);
+        max-width: calc(100% - 0.5rem);
+    }
+
+    .calendar-day {
+        padding: 0.25rem 0.125rem;
+        font-size: 0.7rem;
+        min-height: 24px;
+    }
+
+    .calendar-day-header {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.125rem;
+    }
+
+    /* Compact habits and todos */
+    .habit-item,
+    .todo-item {
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.8rem;
+        min-height: 36px;
+    }
+
+    /* Compact forms */
+    .todos form {
+        flex-direction: column;
+        gap: 0.25rem;
+        margin: 0.5rem 0;
+    }
+
+    .todos input[type="text"] {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .todos button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    /* Compact notes */
+    .notes textarea {
+        padding: 0.75rem;
+        font-size: 0.8rem;
+        min-height: 80px;
+    }
+
+    .notes button {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    /* Very compact workout section */
+    .exercise-group {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .form-row {
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-row label {
+        flex: 0 0 50px;
+        font-size: 0.75rem;
+    }
+
+    .cardio-duration-row {
+        gap: 0.25rem;
+    }
+
+    .cardio-field label,
+    .duration-field label {
+        flex: 0 0 60px;
+        font-size: 0.75rem;
+        text-align: right;
+        margin-right: 0.25rem;
+        white-space: nowrap;
+    }
+
+    .cardio-duration-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .cardio-field {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .duration-field {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Compact mood section */
+    .mood {
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .mood label {
+        padding: 0.4rem;
+    }
+
+    .mood label span {
+        font-size: 1.25rem;
+    }
+
+    .mood input[type="radio"] {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* Ensure all workout inputs fit properly */
+    .form-row input[name="weight"] {
+        max-width: 80px;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .cardio-field input[name="cardio"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.35rem;
+        font-size: 0.7rem;
+    }
+
+    .duration-field input[name="duration"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.35rem;
+        font-size: 0.7rem;
+    }
+
+    .workout-button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        height: 40px;
+    }
+
+    .workout-select {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        min-height: 36px;
+    }
+}
+
+/* Ultra small screens (< 375px) */
+@media (max-width: 375px) {
+    body {
+        width: 100vw;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    main {
+        padding: 0 0.25rem;
+        width: 100vw;
+        max-width: 100vw;
+    }
+
+    .grid-container {
+        width: calc(100vw - 0.5rem);
+        max-width: calc(100vw - 0.5rem);
+    }
+
+    .card {
+        padding: 0.75rem;
+        border-radius: 12px;
+        width: calc(100vw - 0.5rem);
+        max-width: calc(100vw - 0.5rem);
+    }
+
+    .date-card {
+        padding: 0.75rem;
+        width: calc(100vw - 0.5rem);
+        max-width: calc(100vw - 0.5rem);
+    }
+
+    .calendar {
+        padding: 0.5rem;
+        width: calc(100% - 0.25rem);
+        max-width: calc(100% - 0.25rem);
+    }
+
+    .cardio-field {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .duration-field {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .cardio-field input[name="cardio"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.3rem;
+        font-size: 0.65rem;
+    }
+
+    .duration-field input[name="duration"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.3rem;
+        font-size: 0.65rem;
+    }
+
+    .form-row input[name="weight"] {
+        max-width: 70px;
+        padding: 0.4rem;
     }
 }
 
@@ -840,7 +1144,7 @@ main {
 /* Duration input - small for numbers */
 .duration-field input[name="duration"] {
     flex: 1;
-    max-width: 50%;
+    max-width: 75%;
     padding: 0.75rem;
     border: 1px solid rgba(102, 126, 234, 0.2);
     border-radius: 8px;
@@ -883,9 +1187,9 @@ main {
 }
 
 .duration-field {
-    flex: 0 0 90px; /* Fixed width for duration - small and compact */
-    max-width: 90px;
-    min-width: 90px;
+    flex: 0 0 110px; /* Fixed width for duration - more space for input */
+    max-width: 110px;
+    min-width: 110px;
 }
 
 .cardio-field label,
@@ -895,6 +1199,7 @@ main {
     font-size: 0.85rem;
     color: #2d3748;
     white-space: nowrap;
+    text-align: left;
 }
 
 /* Mobile responsiveness for workout section */
@@ -915,18 +1220,19 @@ main {
     }
 
     .cardio-duration-row {
-        flex-direction: row; /* Keep them on same line even on mobile */
-        gap: 0.5rem;
+        flex-direction: column; /* Stack vertically on mobile */
+        gap: 0.25rem;
     }
 
     .cardio-field {
-        max-width: 60%; /* Smaller cardio field on mobile */
+        max-width: 100%; /* Full width on mobile */
+        width: 100%;
     }
 
     .duration-field {
-        flex: 0 0 75px; /* Even smaller fixed width on mobile */
-        max-width: 75px;
-        min-width: 75px;
+        max-width: 100%; /* Full width on mobile */
+        width: 100%;
+        flex: 0;
     }
 
     .cardio-field,
@@ -938,24 +1244,26 @@ main {
     .duration-field label {
         flex: 0 0 60px;
         font-size: 0.8rem;
+        text-align: right;
     }
 
     /* Mobile input sizes */
     .form-row input[name="weight"] {
-        max-width: 100%;
+        max-width: 1000%;
         padding: 0.6rem;
         font-size: 0.85rem;
     }
 
     .cardio-field input[name="cardio"] {
-        max-width: 50%;
-        padding: 0.6rem;
+        max-width: 100%;
+        width: 100%;
+        padding: 0.45rem;
         font-size: 0.85rem;
     }
 
     .duration-field input[name="duration"] {
-        max-width: 40%;
-        padding: 0.6rem;
+        max-width: 100%;
+        padding: 0.45rem;
         font-size: 0.85rem;
     }
 
@@ -1170,136 +1478,393 @@ main {
 /* ------------- OVERLAY MENU ------------- */
 .overlay-menu {
     position: fixed;
-    top: -24px;
-    left: -24px;
-    width: 100%;
-    height: 100%;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     display: none; /* hidden by default */
     flex-direction: column;
     justify-content: flex-start;
-    background-color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     z-index: 9999;
-    padding: 1.5rem;
+    padding: 0;
     overflow-y: auto; /* allow scrolling if menu is tall */
+    backdrop-filter: blur(20px);
+    box-sizing: border-box;
 }
 
 .overlay-header {
-    background-color: #fab791;
-    height: 52px;
-    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    height: 64px;
+    padding: 0 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #dee2e6;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-
-    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 51;
+    margin-bottom: 0;
 }
 
 .overlay-logo {
-    color: #f4f5f7;
-    font-weight: bold;
-    font-size: 34px;
-    line-height: 1.18;
-    letter-spacing: -0.04em;
+    color: #4c51bf;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
     margin: 0;
 }
 
 .overlay-close {
-    background: none;
-    border: none;
+    background: rgba(76, 81, 191, 0.1);
+    border: 2px solid #4c51bf;
+    border-radius: 12px;
     cursor: pointer;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.overlay-close:hover {
+    background: rgba(76, 81, 191, 0.2);
+    transform: scale(1.05);
 }
 
 .overlay-close img {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) saturate(100%) invert(25%) sepia(52%) saturate(1464%)
+        hue-rotate(225deg) brightness(97%) contrast(85%);
+}
+
+.overlay-content {
+    padding: 2rem;
+    margin-top: 64px;
+    height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .overlay-links {
     list-style: none;
     padding: 0;
-    margin: 0 0 2rem 0;
+    margin: 0 0 1rem 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    flex: 0;
+    align-content: start;
 }
 
 .overlay-links li {
-    margin: 1rem 0;
+    margin: 0;
 }
 
 .overlay-links li a {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     text-decoration: none;
-    color: #171717;
-    font-size: 2.2rem;
-    font-weight: 700;
-    transition: color 0.2s;
+    color: #2d3748;
+    font-size: 1.125rem;
+    font-weight: 600;
+    padding: 2rem 1rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    transition: all 0.3s ease;
+    text-align: center;
 }
 
 .overlay-links li a:hover {
-    color: #f15f0b;
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.3);
+    background: rgba(255, 255, 255, 1);
+    color: #4c51bf;
 }
 
 .overlay-links li a img {
     width: 32px;
     height: 32px;
-    margin-right: 0.5rem;
-    margin-left: 1rem;
+    margin-bottom: 0.75rem;
+    margin-right: 0;
+    margin-left: 0;
+    filter: brightness(0) saturate(100%) invert(20%) sepia(15%) saturate(1200%)
+        hue-rotate(186deg) brightness(97%) contrast(92%);
+}
+
+.overlay-links li a:hover img {
+    filter: brightness(0) saturate(100%) invert(25%) sepia(52%) saturate(1464%)
+        hue-rotate(225deg) brightness(97%) contrast(85%);
 }
 
 /* Sign Out Button */
 .center {
+    margin-top: 2rem;
     display: flex;
     justify-content: center;
+    margin-bottom: 1.5rem;
 }
+
 .sign-out-button {
-    background-color: #f15f0b;
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
     border: none;
-    border-radius: 25px;
+    border-radius: 16px;
     color: #fff;
-    padding: 1.5rem 7rem;
-    font-size: 1.5rem;
-    font-weight: 400;
+    padding: 1rem 3rem;
+    font-size: 1.125rem;
+    font-weight: 600;
     cursor: pointer;
-    margin-bottom: 3rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(229, 62, 62, 0.3);
+    backdrop-filter: blur(10px);
 }
 
 .sign-out-button:hover {
-    background-color: #ff8a47;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(229, 62, 62, 0.4);
+    background: linear-gradient(135deg, #c53030 0%, #9c2626 100%);
 }
 
 /* Footer with socials */
 .overlay-footer {
     text-align: center;
-    margin-top: auto; /* push footer to bottom */
-    padding-top: 1rem;
+    padding-top: 1.5rem;
 }
 
 .overlay-socials {
     display: flex;
     justify-content: center;
-    gap: 4rem;
-    margin-bottom: 1rem;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.overlay-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.2);
+    transition: all 0.3s ease;
+}
+
+.overlay-socials a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(31, 38, 135, 0.3);
+    background: rgba(255, 255, 255, 1);
 }
 
 .overlay-socials a img {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) saturate(100%) invert(20%) sepia(15%) saturate(1200%)
+        hue-rotate(186deg) brightness(97%) contrast(92%);
+}
+
+.overlay-socials a:hover img {
+    filter: brightness(0) saturate(100%) invert(25%) sepia(52%) saturate(1464%)
+        hue-rotate(225deg) brightness(97%) contrast(85%);
 }
 
 .overlay-footer p {
-    color: #000;
+    color: rgba(255, 255, 255, 0.9);
     font-weight: 600;
-    font-size: 0.75rem;
-    margin-bottom: 2rem;
-    letter-spacing: 0.08em;
-    line-height: 117%;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile responsive overlay menu */
+@media (max-width: 768px) {
+    .overlay-menu {
+        padding: 0;
+    }
+
+    .overlay-header {
+        height: 56px;
+        padding: 0 16px;
+    }
+
+    .overlay-content {
+        padding: 1.5rem;
+        margin-top: 56px;
+        height: calc(100vh - 56px);
+    }
+
+    .overlay-logo {
+        font-size: 24px;
+    }
+
+    .overlay-close {
+        width: 36px;
+        height: 36px;
+    }
+
+    .overlay-close img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .overlay-links {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .overlay-links li a {
+        flex-direction: row;
+        font-size: 1.25rem;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        min-height: auto;
+        text-align: left;
+    }
+
+    .overlay-links li a img {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.75rem;
+        margin-bottom: 0;
+    }
+
+    .center {
+        margin-bottom: 1rem;
+    }
+
+    .sign-out-button {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+        border-radius: 12px;
+    }
+
+    .overlay-footer {
+        padding-top: 1rem;
+    }
+
+    .overlay-socials {
+        gap: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .overlay-socials a {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    .overlay-socials a img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .overlay-footer p {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .overlay-menu {
+        padding: 0;
+    }
+
+    .overlay-header {
+        height: 52px;
+        padding: 0 12px;
+    }
+
+    .overlay-content {
+        padding: 1rem;
+        margin-top: 52px;
+        height: calc(100vh - 52px);
+    }
+
+    .overlay-logo {
+        font-size: 20px;
+    }
+
+    .overlay-close {
+        width: 32px;
+        height: 32px;
+    }
+
+    .overlay-close img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .overlay-links {
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .overlay-links li a {
+        font-size: 1.125rem;
+        padding: 0.875rem 1rem;
+        border-radius: 10px;
+    }
+
+    .overlay-links li a img {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.5rem;
+    }
+
+    .center {
+        margin-bottom: 1rem;
+    }
+
+    .sign-out-button {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
+    }
+
+    .overlay-footer {
+        padding-top: 0.1rem;
+    }
+
+    .overlay-socials {
+        gap: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .overlay-socials a {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+
+    .overlay-socials a img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .overlay-footer p {
+        font-size: 0.7rem;
+        margin-bottom: 0.1rem;
+    }
 }
 
 .habits-container {

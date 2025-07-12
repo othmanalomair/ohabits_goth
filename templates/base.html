@@ -115,90 +115,93 @@
                 </button>
             </div>
 
-            <!-- Overlay Nav Links -->
-            <ul class="overlay-links">
-                <li>
-                    <a href="/">
-                        <img src="/static/images/svg/home.svg" alt="Home" />
-                        Home
-                    </a>
-                </li>
-                <li>
-                    <a hx-get="/view" hx-target="main" hx-swap="innerHTML">
-                        <img
-                            src="/static/images/svg/view.svg"
-                            alt="View Mode"
-                        />
-                        View mode
-                    </a>
-                </li>
-                <li>
-                    <a hx-get="/mnotes" hx-target="main" hx-swap="innerHTML">
-                        <img src="/static/images/svg/note.svg" alt="Notes" />
-                        Notes
-                    </a>
-                </li>
-                <li>
-                    <a hx-get="/habits" hx-target="main" hx-swap="innerHTML">
-                        <img src="/static/images/svg/habit.svg" alt="Habits" />
-                        Habits
-                    </a>
-                </li>
-                <li>
-                    <a
-                        hx-get="/workout_plan"
-                        hx-target="main"
-                        hx-swap="innerHTML"
+            <!-- Overlay Content -->
+            <div class="overlay-content">
+                <!-- Overlay Nav Links -->
+                <ul class="overlay-links">
+                    <li>
+                        <a href="/">
+                            <img src="/static/images/svg/home.svg" alt="Home" />
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <a hx-get="/view" hx-target="main" hx-swap="innerHTML">
+                            <img
+                                src="/static/images/svg/view.svg"
+                                alt="View Mode"
+                            />
+                            View mode
+                        </a>
+                    </li>
+                    <li>
+                        <a hx-get="/mnotes" hx-target="main" hx-swap="innerHTML">
+                            <img src="/static/images/svg/note.svg" alt="Notes" />
+                            Notes
+                        </a>
+                    </li>
+                    <li>
+                        <a hx-get="/habits" hx-target="main" hx-swap="innerHTML">
+                            <img src="/static/images/svg/habit.svg" alt="Habits" />
+                            Habits
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            hx-get="/workout_plan"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/gym.svg"
+                                alt="Workout Plans"
+                            />
+                            Workout plans
+                        </a>
+                    </li>
+                    <li>
+                        <a hx-get="/profile" hx-target="main" hx-swap="innerHTML">
+                            <img
+                                src="/static/images/svg/profile.svg"
+                                alt="Profile"
+                            />
+                            Profile page
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Sign Out Button -->
+                <div class="center">
+                    <button
+                        class="sign-out-button"
+                        hx-get="/signout"
+                        hx-trigger="click"
                     >
-                        <img
-                            src="/static/images/svg/gym.svg"
-                            alt="Workout Plans"
-                        />
-                        Workout plans
-                    </a>
-                </li>
-                <li>
-                    <a hx-get="/profile" hx-target="main" hx-swap="innerHTML">
-                        <img
-                            src="/static/images/svg/profile.svg"
-                            alt="Profile"
-                        />
-                        Profile page
-                    </a>
-                </li>
-            </ul>
-
-            <!-- Sign Out Button -->
-            <div class="center">
-                <button
-                    class="sign-out-button"
-                    hx-get="/signout"
-                    hx-trigger="click"
-                >
-                    Sign Out
-                </button>
-            </div>
-
-            <!-- Overlay Footer -->
-            <div class="overlay-footer">
-                <div class="overlay-socials">
-                    <a href="https://instagram.com" target="_blank">
-                        <img
-                            src="/static/images/svg/instagram.svg"
-                            alt="Instagram"
-                        />
-                    </a>
-                    <a href="https://twitter.com" target="_blank">
-                        <img
-                            src="/static/images/svg/twitter.svg"
-                            alt="Twitter"
-                        />
-                    </a>
-                    <a href="https://github.com" target="_blank">
-                        <img src="/static/images/svg/github.svg" alt="GitHub" />
-                    </a>
+                        Sign Out
+                    </button>
                 </div>
-                <p>DESIGNED BY OTHMAN ALOMAIR</p>
+
+                <!-- Overlay Footer -->
+                <div class="overlay-footer">
+                    <div class="overlay-socials">
+                        <a href="https://instagram.com" target="_blank">
+                            <img
+                                src="/static/images/svg/instagram.svg"
+                                alt="Instagram"
+                            />
+                        </a>
+                        <a href="https://twitter.com" target="_blank">
+                            <img
+                                src="/static/images/svg/twitter.svg"
+                                alt="Twitter"
+                            />
+                        </a>
+                        <a href="https://github.com" target="_blank">
+                            <img src="/static/images/svg/github.svg" alt="GitHub" />
+                        </a>
+                    </div>
+                    <p>DESIGNED BY OTHMAN ALOMAIR</p>
+                </div>
             </div>
         </div>
 
