@@ -1867,105 +1867,565 @@ main {
     }
 }
 
+/* ------------- HABITS PAGE STYLES ------------- */
 .habits-container {
-    max-width: 400px;
-    margin: 2rem auto;
-    background-color: #fff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    box-sizing: border-box;
 }
 
 .habits-container h1 {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     text-align: center;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-    color: #1e0c02;
+    font-size: 2rem;
+    color: #2d3748;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 2rem 0;
 }
 
 #add-habit-form {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: 1rem;
 }
 
 #add-habit-form input[type="text"] {
     flex: 1;
-    padding: 0.5rem;
-    border: 1px solid #eaebeb;
-    border-radius: 4px;
-    background-color: #fef7f3;
-    color: #1e0c02;
+    padding: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 1rem;
+    color: #2d3748;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+#add-habit-form input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 #add-habit-form button {
-    background-color: #f2600c;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
-    padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: 12px;
     cursor: pointer;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#add-habit-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+}
+
+#add-habit-form button img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) saturate(100%) invert(100%);
 }
 
 .habit-item {
-    border-bottom: 1px solid #eaebeb;
-    padding: 0.5rem 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.habit-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px rgba(31, 38, 135, 0.3);
+}
+
+.habit-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
 }
 
 .habit-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
+    flex: 1;
 }
 
 .habit-header h3 {
-    font-size: 1rem;
+    font-size: 1.25rem;
     margin: 0;
-    color: #1e0c02;
+    color: #2d3748;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    flex: 1;
+}
+
+.habit-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
 }
 
 .habit-actions button {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
     cursor: pointer;
-    margin-left: 0.5rem;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.habit-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+.habit-actions button img {
+    width: 16px;
+    height: 16px;
 }
 
 .habit-days {
-    margin-top: 0.5rem;
     display: flex;
-    gap: 0.25rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 0;
 }
 
 .day-button {
-    width: 2rem;
-    height: 2rem;
-    border: 1px solid #eaebeb;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid rgba(102, 126, 234, 0.2);
     border-radius: 50%;
-    background-color: #fef7f3;
-    color: #1e0c02;
-    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.8);
+    color: #2d3748;
+    font-size: 0.875rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.day-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
 }
 
 .day-button.active {
-    background-color: #f2600c;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #fff;
-    border-color: #f2600c;
+    border-color: #4c51bf;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    transform: scale(1.1);
+}
+
+.day-button.active:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.5);
 }
 
 .habit-item form {
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    align-items: center;
 }
 
 .habit-item form input[type="text"] {
     flex: 1;
+    padding: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 1rem;
+    color: #2d3748;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.habit-item form input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.habit-item form button {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
     padding: 0.5rem;
-    border: 1px solid #eaebeb;
-    border-radius: 4px;
-    background-color: #fef7f3;
-    color: #1e0c02;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.habit-item form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+.habit-item form button img {
+    width: 16px;
+    height: 16px;
+}
+
+/* Mobile optimizations for habits */
+@media (max-width: 768px) {
+    .habits-container {
+        padding: 1rem;
+    }
+
+    .habits-container h1 {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        font-size: 1.5rem;
+    }
+
+    #add-habit-form {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #add-habit-form input[type="text"] {
+        padding: 0.875rem;
+        font-size: 1rem;
+        border-radius: 10px;
+    }
+
+    #add-habit-form button {
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
+        width: 100%;
+    }
+
+    .habit-item {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-radius: 16px;
+        gap: 1rem;
+    }
+
+    .habit-left {
+        gap: 0.5rem;
+    }
+
+    .habit-header {
+        gap: 0.5rem;
+    }
+
+    .habit-header h3 {
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+
+    .habit-actions {
+        gap: 0.25rem;
+    }
+
+    .habit-actions button {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+
+    .habit-actions button img {
+        width: 10px;
+        height: 10px;
+    }
+
+    .habit-days {
+        gap: 0.25rem;
+    }
+
+    .day-button {
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.65rem;
+        border-width: 1px;
+    }
+
+    .habit-item form {
+        gap: 0.5rem;
+    }
+
+    .habit-item form input[type="text"] {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .habit-item form button {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+
+    .habit-item form button img {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .habits-container {
+        padding: 0.75rem;
+    }
+
+    .habits-container h1 {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        font-size: 1.25rem;
+    }
+
+    #add-habit-form {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        gap: 0.5rem;
+    }
+
+    #add-habit-form input[type="text"] {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        border-radius: 8px;
+    }
+
+    #add-habit-form button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+    }
+
+    .habit-item {
+        padding: 0.6rem;
+        margin-bottom: 0.6rem;
+        border-radius: 12px;
+        gap: 0.5rem;
+        justify-content: space-between;
+    }
+
+    .habit-left {
+        gap: 0.4rem;
+        flex: 1;
+    }
+
+    .habit-header {
+        gap: 0.4rem;
+    }
+
+    .habit-header h3 {
+        font-size: 0.8rem;
+        line-height: 1.1;
+    }
+
+    .habit-actions {
+        gap: 0.2rem;
+    }
+
+    .habit-actions button {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+
+    .habit-actions button img {
+        width: 8px;
+        height: 8px;
+    }
+
+    .habit-days {
+        gap: 0.2rem;
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+
+    .day-button {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 0.6rem;
+        border-width: 1px;
+    }
+
+    .habit-item form {
+        gap: 0.3rem;
+        width: 100%;
+    }
+
+    .habit-item form input[type="text"] {
+        padding: 0.4rem;
+        font-size: 0.8rem;
+        border-radius: 6px;
+    }
+
+    .habit-item form button {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+
+    .habit-item form button img {
+        width: 8px;
+        height: 8px;
+    }
+}
+
+/* Ultra small screens */
+@media (max-width: 375px) {
+    .habits-container {
+        padding: 0.5rem;
+    }
+
+    .habits-container h1 {
+        padding: 0.6rem;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    #add-habit-form {
+        padding: 0.6rem;
+        margin-bottom: 0.75rem;
+        gap: 0.4rem;
+    }
+
+    #add-habit-form input[type="text"] {
+        padding: 0.65rem;
+        font-size: 0.9rem;
+    }
+
+    #add-habit-form button {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.85rem;
+    }
+
+    .habit-item {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        justify-content: space-between;
+        gap: 0.4rem;
+    }
+
+    .habit-left {
+        gap: 0.3rem;
+        flex: 1;
+    }
+
+    .habit-header {
+        gap: 0.3rem;
+    }
+
+    .habit-header h3 {
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
+    .habit-actions {
+        gap: 0.15rem;
+    }
+
+    .habit-actions button {
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+    }
+
+    .habit-actions button img {
+        width: 7px;
+        height: 7px;
+    }
+
+    .habit-days {
+        gap: 0.15rem;
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+
+    .day-button {
+        width: 1.1rem;
+        height: 1.1rem;
+        font-size: 0.55rem;
+        border-width: 1px;
+    }
+
+    .habit-item form {
+        gap: 0.25rem;
+        width: 100%;
+    }
+
+    .habit-item form input[type="text"] {
+        padding: 0.35rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+
+    .habit-item form button {
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+    }
+
+    .habit-item form button img {
+        width: 7px;
+        height: 7px;
+    }
 }
 
 .workout-plan-container {
@@ -2130,48 +2590,585 @@ main {
 }
 
 .view-container {
-    width: 100%;
-    background-color: #fff;
-    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
     box-sizing: border-box;
 }
 
 .view-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
 }
 
 .view-header h1 {
-    font-size: 1.5rem;
+    font-size: 2rem;
     margin: 0;
+    color: #2d3748;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.view-header button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.125rem;
+    font-weight: 600;
+    min-width: 48px;
+    height: 48px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.view-header button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
 .view-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.view-table th,
-.view-table td {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
+.view-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 1rem 0.75rem;
     text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    border: none;
 }
 
-@media (max-width: 600px) {
+.view-table td {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.875rem 0.75rem;
+    text-align: center;
+    color: #2d3748;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.view-table tr:hover td {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.view-table tbody tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.view-table tbody tr:nth-child(even):hover td {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .view-container {
+        padding: 1rem;
+    }
+
+    .view-header {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .view-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .view-header button {
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        min-width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    .view-table {
+        font-size: 0.8rem;
+        border-radius: 16px;
+    }
+
+    .view-table th {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .view-table td {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .view-container {
+        padding: 0.75rem;
+    }
+
+    .view-header {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+
+    .view-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .view-header button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.9rem;
+        min-width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+
+    .view-table {
+        font-size: 0.7rem;
+        border-radius: 12px;
+    }
+
+    .view-table th {
+        padding: 0.6rem 0.3rem;
+        font-size: 0.75rem;
+    }
+
+    .view-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.65rem;
+        line-height: 1.2;
+    }
+}
+
+/* Ultra small screens */
+@media (max-width: 375px) {
     .view-container {
         padding: 0.5rem;
     }
-    .view-header h1 {
-        font-size: 1.2rem;
+
+    .view-header {
+        padding: 0.6rem;
+        margin-bottom: 0.75rem;
     }
-    .view-table th,
-    .view-table td {
-        padding: 0.3rem;
+
+    .view-header h1 {
+        font-size: 1.1rem;
+    }
+
+    .view-header button {
+        padding: 0.3rem 0.5rem;
         font-size: 0.8rem;
+        min-width: 32px;
+        height: 32px;
+    }
+
+    .view-table {
+        font-size: 0.6rem;
+    }
+
+    .view-table th {
+        padding: 0.5rem 0.2rem;
+        font-size: 0.65rem;
+    }
+
+    .view-table td {
+        padding: 0.4rem 0.15rem;
+        font-size: 0.6rem;
+        line-height: 1.1;
+    }
+}
+
+/* ------------- NOTES PAGE STYLES ------------- */
+.notes-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    box-sizing: border-box;
+}
+
+.notes-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notes-header h1 {
+    font-size: 2rem;
+    margin: 0;
+    color: #2d3748;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.notes-header button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.125rem;
+    font-weight: 600;
+    min-width: 48px;
+    height: 48px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.notes-header button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Notebook-style table */
+.notebook-table {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Add notebook lines background */
+.notebook-table::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: repeating-linear-gradient(
+        transparent,
+        transparent 2.2rem,
+        rgba(102, 126, 234, 0.1) 2.2rem,
+        rgba(102, 126, 234, 0.1) 2.3rem
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+.notebook-header {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    position: relative;
+    z-index: 2;
+}
+
+.day-column,
+.note-column {
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    text-align: center;
+}
+
+.note-column {
+    text-align: right;
+    direction: rtl;
+}
+
+.notebook-body {
+    position: relative;
+    z-index: 2;
+}
+
+.note-entry {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    min-height: 2.2rem;
+    border-bottom: 2px solid rgba(251, 191, 36, 0.4);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.note-entry:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.note-entry:last-child {
+    border-bottom: none;
+}
+
+/* Red margin line like a real notebook */
+.note-entry::before {
+    content: "";
+    position: absolute;
+    left: 78px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e53e3e;
+    z-index: 1;
+}
+
+.day-cell {
+    padding: 0.75rem;
+    background: rgba(102, 126, 234, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #4c51bf;
+    font-size: 1rem;
+    border-right: 2px solid #e53e3e;
+}
+
+.note-cell {
+    padding: 0.75rem 1rem;
+    direction: rtl;
+    text-align: right;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #2d3748;
+    min-height: 2.2rem;
+    display: flex;
+    align-items: center;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.note-cell:empty::before {
+    content: "-";
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* Mobile optimizations for notes */
+@media (max-width: 768px) {
+    .notes-container {
+        padding: 1rem;
+    }
+
+    .notes-header {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .notes-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .notes-header button {
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        min-width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    .notebook-table {
+        border-radius: 16px;
+    }
+
+    .notebook-table::before {
+        background-image: repeating-linear-gradient(
+            transparent,
+            transparent 2.4rem,
+            rgba(102, 126, 234, 0.1) 2.4rem,
+            rgba(102, 126, 234, 0.1) 2.5rem
+        );
+    }
+
+    .notebook-header {
+        grid-template-columns: 60px 1fr;
+    }
+
+    .day-column,
+    .note-column {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .note-entry {
+        grid-template-columns: 60px 1fr;
+        min-height: 2.4rem;
+    }
+
+    .note-entry::before {
+        left: 58px;
+    }
+
+    .day-cell {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.9rem;
+        border-right: 2px solid #e53e3e;
+    }
+
+    .note-cell {
+        padding: 0.6rem 0.75rem;
+        font-size: 1.1rem;
+        min-height: 2.4rem;
+        line-height: 1.5;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .notes-container {
+        padding: 0.75rem;
+    }
+
+    .notes-header {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+
+    .notes-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .notes-header button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.9rem;
+        min-width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+
+    .notebook-table {
+        border-radius: 12px;
+    }
+
+    .notebook-table::before {
+        background-image: repeating-linear-gradient(
+            transparent,
+            transparent 2.2rem,
+            rgba(102, 126, 234, 0.1) 2.2rem,
+            rgba(102, 126, 234, 0.1) 2.3rem
+        );
+    }
+
+    .notebook-header {
+        grid-template-columns: 50px 1fr;
+    }
+
+    .day-column,
+    .note-column {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.85rem;
+    }
+
+    .note-entry {
+        grid-template-columns: 50px 1fr;
+        min-height: 2.2rem;
+    }
+
+    .note-entry::before {
+        left: 48px;
+    }
+
+    .day-cell {
+        padding: 0.5rem 0.3rem;
+        font-size: 0.85rem;
+        border-right: 2px solid #e53e3e;
+    }
+
+    .note-cell {
+        padding: 0.5rem 0.6rem;
+        font-size: 1rem;
+        min-height: 2.2rem;
+        line-height: 1.4;
+    }
+}
+
+/* Ultra small screens */
+@media (max-width: 375px) {
+    .notes-container {
+        padding: 0.5rem;
+    }
+
+    .notes-header {
+        padding: 0.6rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .notes-header h1 {
+        font-size: 1.1rem;
+    }
+
+    .notes-header button {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.8rem;
+        min-width: 32px;
+        height: 32px;
+    }
+
+    .notebook-table::before {
+        background-image: repeating-linear-gradient(
+            transparent,
+            transparent 2rem,
+            rgba(102, 126, 234, 0.1) 2rem,
+            rgba(102, 126, 234, 0.1) 2.1rem
+        );
+    }
+
+    .notebook-header {
+        grid-template-columns: 45px 1fr;
+    }
+
+    .day-column,
+    .note-column {
+        padding: 0.5rem 0.3rem;
+        font-size: 0.8rem;
+    }
+
+    .note-entry {
+        grid-template-columns: 45px 1fr;
+        min-height: 2rem;
+    }
+
+    .note-entry::before {
+        left: 43px;
+    }
+
+    .day-cell {
+        padding: 0.4rem 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .note-cell {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.95rem;
+        min-height: 2rem;
+        line-height: 1.3;
     }
 }
 
@@ -2324,4 +3321,49 @@ main {
 
 .create-account a:hover {
     text-decoration: underline;
+}
+
+/* Workout Order Controls */
+.workout-plan-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.workout-order-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.order-button {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
+.order-button img {
+    width: 14px;
+    height: 14px;
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(226deg) brightness(91%) contrast(97%);
+}
+
+.order-button:hover img {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(226deg) brightness(111%) contrast(97%);
 }

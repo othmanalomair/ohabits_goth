@@ -36,26 +36,29 @@
 {{ define "habit_item_" }}
 <div class="habit-item" id="habit-{{ .ID }}">
     {{ $habit := . }}
-
-    <div class="habit-header">
-        <h3>{{ $habit.Name }}</h3>
-        <div class="habit-actions">
-            <button
-                hx-get="/habits/{{ $habit.ID }}/edit-form"
-                hx-target="#habit-{{ $habit.ID }}"
-                hx-swap="outerHTML"
-            >
-                <img src="/static/images/svg/edit.svg" alt="Edit" />
-            </button>
-            <button
-                hx-post="/habits/{{ $habit.ID }}/delete"
-                hx-target="#habits-list"
-                hx-swap="outerHTML"
-            >
-                <img src="/static/images/svg/trash-red.svg" alt="Delete" />
-            </button>
+    
+    <div class="habit-left">
+        <div class="habit-header">
+            <h3>{{ $habit.Name }}</h3>
+            <div class="habit-actions">
+                <button
+                    hx-get="/habits/{{ $habit.ID }}/edit-form"
+                    hx-target="#habit-{{ $habit.ID }}"
+                    hx-swap="outerHTML"
+                >
+                    <img src="/static/images/svg/edit.svg" alt="Edit" />
+                </button>
+                <button
+                    hx-post="/habits/{{ $habit.ID }}/delete"
+                    hx-target="#habits-list"
+                    hx-swap="outerHTML"
+                >
+                    <img src="/static/images/svg/trash-red.svg" alt="Delete" />
+                </button>
+            </div>
         </div>
     </div>
+    
     <div class="habit-days">
         {{ $days := list "Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" }} {{ range
         $i, $day := $days }}
@@ -74,24 +77,28 @@
 {{ define "habit_edit" }}
 <div class="habit-item" id="habit-{{ .ID }}">
     {{ $habit := . }}
-    <form
-        hx-post="/habits/{{ $habit.ID }}/edit"
-        hx-target="#habit-{{ $habit.ID }}"
-        hx-swap="outerHTML"
-    >
-        <input type="text" name="habit_name" value="{{ $habit.Name }}" required />
-        <button type="submit">
-            <img src="/static/images/svg/check-green.svg" alt="Save" />
-        </button>
-        <button
-            type="button"
-            hx-get="/habits/{{ $habit.ID }}/cancel"
+    
+    <div class="habit-left">
+        <form
+            hx-post="/habits/{{ $habit.ID }}/edit"
             hx-target="#habit-{{ $habit.ID }}"
             hx-swap="outerHTML"
         >
-            <img src="/static/images/svg/x-red.svg" alt="Cancel" />
-        </button>
-    </form>
+            <input type="text" name="habit_name" value="{{ $habit.Name }}" required />
+            <button type="submit">
+                <img src="/static/images/svg/check-green.svg" alt="Save" />
+            </button>
+            <button
+                type="button"
+                hx-get="/habits/{{ $habit.ID }}/cancel"
+                hx-target="#habit-{{ $habit.ID }}"
+                hx-swap="outerHTML"
+            >
+                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+            </button>
+        </form>
+    </div>
+    
     <div class="habit-days">
         {{ $days := list "Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" }}
         {{ range $i, $day := $days }}

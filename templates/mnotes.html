@@ -1,7 +1,7 @@
 {{ define "mnotes" }}
-<div class="view-container">
+<div class="notes-container">
     <!-- Month Picker -->
-    <div class="view-header">
+    <div class="notes-header">
         <button
             id="prevMonth"
             hx-get="/mnotes?month={{ .PrevMonth }}"
@@ -21,22 +21,20 @@
         </button>
     </div>
 
-    <!-- Daily Records Table -->
-    <table class="view-table">
-        <thead>
-            <tr>
-                <th style="width: 1rem">Day</th>
-                <th>Note</th>
-            </tr>
-        </thead>
-        <tbody>
+    <!-- Daily Notes Notebook -->
+    <div class="notebook-table">
+        <div class="notebook-header">
+            <div class="day-column">Day</div>
+            <div class="note-column">Note</div>
+        </div>
+        <div class="notebook-body">
             {{ range .DailyNote }}
-            <tr>
-                <td>{{ .Day }}</td>
-                <td>{{ if .Note }}{{ nl2br .Note }}{{ else }}-{{ end }}</td>
-            </tr>
+            <div class="note-entry">
+                <div class="day-cell">{{ .Day }}</div>
+                <div class="note-cell">{{ if .Note }}{{ nl2br .Note }}{{ else }}-{{ end }}</div>
+            </div>
             {{ end }}
-        </tbody>
-    </table>
+        </div>
+    </div>
 </div>
 {{ end }}

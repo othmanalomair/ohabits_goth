@@ -52,6 +52,8 @@ func Server() *http.Server {
 	// Workout Plans
 	protected.HandleFunc("/workout_plan", handlers.WorkoutPlanPage).Methods("GET")
 	protected.HandleFunc("/workout_plan", handlers.CreateWorkoutPlan).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/move-up", handlers.MoveWorkoutUp).Methods("POST")
+	protected.HandleFunc("/workout_plan/{id}/move-down", handlers.MoveWorkoutDown).Methods("POST")
 	protected.HandleFunc("/workout_plan/{id}/toggle", handlers.ToggleWorkoutPlan).Methods("GET")
 	protected.HandleFunc("/workout_plan/{id}/delete", handlers.DeleteWorkoutPlan).Methods("POST")
 	protected.HandleFunc("/workout_plan/{id}/edit-form", handlers.EditWorkoutPlanForm).Methods("GET")

@@ -2295,6 +2295,96 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	ProfileHandler(w, r)
 }
 
+func MoveWorkoutUp(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+
+	// Get workout ID from URL
+	vars := mux.Vars(r)
+	workoutID, err := uuid.Parse(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+
+	// Move workout up
+	if err := db.MoveWorkoutUp(db.DB, workoutID, userID); err != nil {
+		http.Error(w, "Failed to move workout up", http.StatusInternalServerError)
+		return
+	}
+
+	// Re-render the workout plans list
+	workouts, err := db.GetAllWorkouts(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	var plans []WorkoutPlan
+	for _, wkt := range workouts {
+		plans = append(plans, WorkoutPlan{Workout: wkt, Open: false})
+	}
+	data := struct {
+		WorkoutPlans []WorkoutPlan
+	}{
+		WorkoutPlans: plans,
+	}
+	tmpl.ExecuteTemplate(w, "workout_plans_list", data)
+}
+
+func MoveWorkoutDown(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+
+	// Get workout ID from URL
+	vars := mux.Vars(r)
+	workoutID, err := uuid.Parse(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid workout ID", http.StatusBadRequest)
+		return
+	}
+
+	// Move workout down
+	if err := db.MoveWorkoutDown(db.DB, workoutID, userID); err != nil {
+		http.Error(w, "Failed to move workout down", http.StatusInternalServerError)
+		return
+	}
+
+	// Re-render the workout plans list
+	workouts, err := db.GetAllWorkouts(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type WorkoutPlan struct {
+		Workout db.Workout
+		Open    bool
+	}
+	var plans []WorkoutPlan
+	for _, wkt := range workouts {
+		plans = append(plans, WorkoutPlan{Workout: wkt, Open: false})
+	}
+	data := struct {
+		WorkoutPlans []WorkoutPlan
+	}{
+		WorkoutPlans: plans,
+	}
+	tmpl.ExecuteTemplate(w, "workout_plans_list", data)
+}
+
 func SignOutHandler(w http.ResponseWriter, r *http.Request) {
 	// Clear the session/cookie.
 	// For example, if you use a cookie "session_id", set its MaxAge to -1 to delete it:

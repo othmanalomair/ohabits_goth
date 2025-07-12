@@ -1,7 +1,29 @@
 {{ define "workout_plan_item" }}
 <div class="workout-plan-item" id="workout-plan-{{ .Workout.ID }}">
     <div class="workout-plan-header">
-        <h2>{{ .Workout.Name }}</h2>
+        <div class="workout-plan-title">
+            <div class="workout-order-controls">
+                <button
+                    class="order-button"
+                    hx-post="/workout_plan/{{ .Workout.ID }}/move-up"
+                    hx-target="#workout-plans-list"
+                    hx-swap="innerHTML"
+                    title="Move up"
+                >
+                    <img src="/static/images/svg/up.svg" alt="Move up" />
+                </button>
+                <button
+                    class="order-button"
+                    hx-post="/workout_plan/{{ .Workout.ID }}/move-down"
+                    hx-target="#workout-plans-list"
+                    hx-swap="innerHTML"
+                    title="Move down"
+                >
+                    <img src="/static/images/svg/down.svg" alt="Move down" />
+                </button>
+            </div>
+            <h2>{{ .Workout.Name }}</h2>
+        </div>
         <div class="workout-plan-actions">
             <button
                 hx-get="/workout_plan/{{ .Workout.ID }}/edit-form"
