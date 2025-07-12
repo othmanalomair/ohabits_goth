@@ -11,9 +11,10 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=builder /app/app .
-# Copy the .env file and templates folder so they’re available at runtime
+# Copy the .env file, templates folder, and static assets so they're available at runtime
 COPY .env .env
 COPY templates/ templates/
+COPY static/ static/
 
 ENV DATABASE_URL="postgres://most3mr:50998577@most3mr.com:5432/ohabits?sslmode=disable"
 ENV JWT_SECRET="most3mr123"
