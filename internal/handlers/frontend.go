@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/image/draw"
 	"ohabits.com/internal/db"
 )
@@ -2191,9 +2192,43 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		User db.User
+		User           db.User
+		SuccessMessage string
+		ErrorMessage   string
 	}{
-		User: user,
+		User:           user,
+		SuccessMessage: "",
+		ErrorMessage:   "",
+	}
+	if err := tmpl.ExecuteTemplate(w, "profile", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func renderProfileWithSuccess(w http.ResponseWriter, user db.User, message string) {
+	data := struct {
+		User           db.User
+		SuccessMessage string
+		ErrorMessage   string
+	}{
+		User:           user,
+		SuccessMessage: message,
+		ErrorMessage:   "",
+	}
+	if err := tmpl.ExecuteTemplate(w, "profile", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func renderProfileWithError(w http.ResponseWriter, user db.User, message string) {
+	data := struct {
+		User           db.User
+		SuccessMessage string
+		ErrorMessage   string
+	}{
+		User:           user,
+		SuccessMessage: "",
+		ErrorMessage:   message,
 	}
 	if err := tmpl.ExecuteTemplate(w, "profile", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -2221,13 +2256,58 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	// Get form values.
 	email := r.FormValue("email")
 	displayName := r.FormValue("display_name")
+	currentPassword := r.FormValue("current_password")
+	newPassword := r.FormValue("new_password")
+	confirmPassword := r.FormValue("confirm_password")
 
-	// Fetch the existing user.
-	user, err := db.GetUser(db.DB, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	// Check if password change is requested
+	passwordChangeRequested := currentPassword != "" || newPassword != "" || confirmPassword != ""
+	
+	var user db.User
+	var err error
+	
+	if passwordChangeRequested {
+		// Get user with password for verification
+		user, err = db.GetUserWithPassword(db.DB, userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		
+		// Validate all password fields are provided
+		if currentPassword == "" || newPassword == "" || confirmPassword == "" {
+			renderProfileWithError(w, user, "All password fields are required")
+			return
+		}
+
+		// Validate new passwords match
+		if newPassword != confirmPassword {
+			renderProfileWithError(w, user, "New passwords do not match")
+			return
+		}
+
+		// Verify current password
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(currentPassword)); err != nil {
+			renderProfileWithError(w, user, "Current password is incorrect")
+			return
+		}
+
+		// Hash new password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+		if err != nil {
+			http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+			return
+		}
+		user.Password = string(hashedPassword)
+	} else {
+		// Get user without password for regular updates
+		user, err = db.GetUser(db.DB, userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
+
 	user.Email = email
 	user.DisplayName = displayName
 
@@ -2239,14 +2319,14 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 		// Validate that the file is an image.
 		contentType := handler.Header.Get("Content-Type")
 		if !strings.HasPrefix(contentType, "image/") {
-			http.Error(w, "Only image files are allowed", http.StatusBadRequest)
+			renderProfileWithError(w, user, "Only image files are allowed")
 			return
 		}
 
 		// Decode the image.
 		img, _, err := image.Decode(file)
 		if err != nil {
-			http.Error(w, "Failed to decode image", http.StatusBadRequest)
+			renderProfileWithError(w, user, "Failed to decode image")
 			return
 		}
 
@@ -2286,13 +2366,20 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	// else: if no file is uploaded, we simply don't change the AvatarURL.
 
 	// Update the user in the database.
-	if err := db.UpdateUser(db.DB, user, userID); err != nil {
-		http.Error(w, "Failed to update user", http.StatusInternalServerError)
-		return
+	if passwordChangeRequested {
+		if err := db.UpdateUserWithPassword(db.DB, user, userID); err != nil {
+			http.Error(w, "Failed to update user", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		if err := db.UpdateUser(db.DB, user, userID); err != nil {
+			http.Error(w, "Failed to update user", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	// Re-render the profile page.
-	ProfileHandler(w, r)
+	// Render profile page with success message
+	renderProfileWithSuccess(w, user, "Profile updated successfully!")
 }
 
 func MoveWorkoutUp(w http.ResponseWriter, r *http.Request) {

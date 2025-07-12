@@ -48,41 +48,52 @@
         />
         <link rel="stylesheet" href="/static/css/style.css" />
         <script src="/static/js/htmx.min.js"></script>
-        
+
         <script>
-        // Global success message handler
-        document.addEventListener('DOMContentLoaded', function() {
-            // Listen for HTMX afterRequest events (only fires after actual requests, not on load)
-            document.body.addEventListener('htmx:afterRequest', function(event) {
-                // Only show messages for successful POST requests
-                if (event.detail.xhr.status === 200 && event.detail.requestConfig.verb === 'post') {
-                    var url = event.detail.requestConfig.path;
-                    
-                    if (url === '/notes') {
-                        showSuccessMessage('✓ Note saved successfully!');
-                    } else if (url === '/workout_loging') {
-                        showSuccessMessage('✓ Workout saved successfully!');
-                    }
-                }
+            // Global success message handler
+            document.addEventListener("DOMContentLoaded", function () {
+                // Listen for HTMX afterRequest events (only fires after actual requests, not on load)
+                document.body.addEventListener(
+                    "htmx:afterRequest",
+                    function (event) {
+                        // Only show messages for successful POST requests
+                        if (
+                            event.detail.xhr.status === 200 &&
+                            event.detail.requestConfig.verb === "post"
+                        ) {
+                            var url = event.detail.requestConfig.path;
+
+                            if (url === "/notes") {
+                                showSuccessMessage(
+                                    "✓ Note saved successfully!",
+                                );
+                            } else if (url === "/workout_loging") {
+                                showSuccessMessage(
+                                    "✓ Workout saved successfully!",
+                                );
+                            }
+                        }
+                    },
+                );
             });
-        });
-        
-        function showSuccessMessage(message) {
-            var messageDiv = document.createElement('div');
-            messageDiv.innerHTML = message;
-            messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3); z-index: 1000; font-weight: 500; font-size: 14px;';
-            document.body.appendChild(messageDiv);
-            
-            setTimeout(function() {
-                messageDiv.style.opacity = '0';
-                messageDiv.style.transition = 'opacity 0.3s ease';
-                setTimeout(function() {
-                    if (messageDiv.parentNode) {
-                        document.body.removeChild(messageDiv);
-                    }
-                }, 300);
-            }, 2000);
-        }
+
+            function showSuccessMessage(message) {
+                var messageDiv = document.createElement("div");
+                messageDiv.innerHTML = message;
+                messageDiv.style.cssText =
+                    "position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3); z-index: 1000; font-weight: 500; font-size: 14px;";
+                document.body.appendChild(messageDiv);
+
+                setTimeout(function () {
+                    messageDiv.style.opacity = "0";
+                    messageDiv.style.transition = "opacity 0.3s ease";
+                    setTimeout(function () {
+                        if (messageDiv.parentNode) {
+                            document.body.removeChild(messageDiv);
+                        }
+                    }, 300);
+                }, 2000);
+            }
         </script>
     </head>
     <body>
@@ -135,14 +146,28 @@
                         </a>
                     </li>
                     <li>
-                        <a hx-get="/mnotes" hx-target="main" hx-swap="innerHTML">
-                            <img src="/static/images/svg/note.svg" alt="Notes" />
+                        <a
+                            hx-get="/mnotes"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/note.svg"
+                                alt="Notes"
+                            />
                             Notes
                         </a>
                     </li>
                     <li>
-                        <a hx-get="/habits" hx-target="main" hx-swap="innerHTML">
-                            <img src="/static/images/svg/habit.svg" alt="Habits" />
+                        <a
+                            hx-get="/habits"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/habit.svg"
+                                alt="Habits"
+                            />
                             Habits
                         </a>
                     </li>
@@ -160,7 +185,11 @@
                         </a>
                     </li>
                     <li>
-                        <a hx-get="/profile" hx-target="main" hx-swap="innerHTML">
+                        <a
+                            hx-get="/profile"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
                             <img
                                 src="/static/images/svg/profile.svg"
                                 alt="Profile"
@@ -184,20 +213,29 @@
                 <!-- Overlay Footer -->
                 <div class="overlay-footer">
                     <div class="overlay-socials">
-                        <a href="https://instagram.com" target="_blank">
+                        <a
+                            href="https://www.instagram.com/othman.alomair"
+                            target="_blank"
+                        >
                             <img
                                 src="/static/images/svg/instagram.svg"
                                 alt="Instagram"
                             />
                         </a>
-                        <a href="https://twitter.com" target="_blank">
+                        <a href="https://x.com/most3mr" target="_blank">
                             <img
                                 src="/static/images/svg/twitter.svg"
                                 alt="Twitter"
                             />
                         </a>
-                        <a href="https://github.com" target="_blank">
-                            <img src="/static/images/svg/github.svg" alt="GitHub" />
+                        <a
+                            href="https://github.com/othmanalomair"
+                            target="_blank"
+                        >
+                            <img
+                                src="/static/images/svg/github.svg"
+                                alt="GitHub"
+                            />
                         </a>
                     </div>
                     <p>DESIGNED BY OTHMAN ALOMAIR</p>

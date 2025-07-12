@@ -1,6 +1,46 @@
 {{ define "profile" }}
 <div id="profile-card" class="profile-card">
     <h2>Profile</h2>
+    {{ if .SuccessMessage }}
+    <div class="success-message" id="success-message">
+        {{ .SuccessMessage }}
+    </div>
+    <script>
+        // Auto-hide server-rendered success message
+        setTimeout(() => {
+            const successMsg = document.getElementById('success-message');
+            if (successMsg) {
+                successMsg.style.opacity = '0';
+                successMsg.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (successMsg && successMsg.parentNode) {
+                        successMsg.remove();
+                    }
+                }, 500);
+            }
+        }, 3000);
+    </script>
+    {{ end }}
+    {{ if .ErrorMessage }}
+    <div class="error-message" id="error-message">
+        {{ .ErrorMessage }}
+    </div>
+    <script>
+        // Auto-hide server-rendered error message
+        setTimeout(() => {
+            const errorMsg = document.getElementById('error-message');
+            if (errorMsg) {
+                errorMsg.style.opacity = '0';
+                errorMsg.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (errorMsg && errorMsg.parentNode) {
+                        errorMsg.remove();
+                    }
+                }, 500);
+            }
+        }, 4000);
+    </script>
+    {{ end }}
     <div class="profile-image" onclick="document.getElementById('profile_picture').click()">
         {{ if .User.AvatarURL }}
         <img src="{{ .User.AvatarURL }}" alt="Profile Picture" />
@@ -15,9 +55,13 @@
         </div>
     </div>
     <form
+        method="post"
+        action="/profile"
         hx-post="/profile"
         hx-target="#profile-card"
         hx-swap="outerHTML"
+        hx-on::before-request="showLoading()"
+        hx-on::after-request="showSuccess()"
         enctype="multipart/form-data"
     >
         <input
@@ -26,7 +70,7 @@
             name="profile_picture"
             accept="image/*"
             style="display: none;"
-            onchange="this.form.submit()"
+            onchange="submitImageForm()"
         />
         
         <div class="form-row">
@@ -115,5 +159,211 @@ function togglePasswordSection() {
         toggleIcon.textContent = '+';
     }
 }
+
+function compressImage(file, maxWidth, maxHeight, quality) {
+    return new Promise((resolve, reject) => {
+        // Create canvas and context
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calculate new dimensions maintaining aspect ratio
+            let { width, height } = img;
+            
+            // Scale down to fit within maxWidth x maxHeight
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+            }
+            
+            // Set canvas dimensions
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress image
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to blob with specified quality
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) {
+                        // Create a new File object with the compressed data
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    } else {
+                        reject(new Error('Canvas to Blob conversion failed'));
+                    }
+                },
+                'image/jpeg',
+                quality
+            );
+        };
+        
+        img.onerror = () => reject(new Error('Image loading failed'));
+        
+        // Load the image
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+function submitImageForm() {
+    const fileInput = document.getElementById('profile_picture');
+    const form = fileInput.closest('form');
+    
+    if (fileInput.files && fileInput.files[0]) {
+        // Show loading state
+        const overlay = document.querySelector('.profile-image-overlay span');
+        if (overlay) {
+            overlay.textContent = 'Processing...';
+        }
+        
+        // Compress image on client side before upload (150x150 for optimal avatar size)
+        const originalSize = fileInput.files[0].size;
+        compressImage(fileInput.files[0], 150, 150, 0.75).then(compressedFile => {
+            // Log compression results
+            const compressionRatio = ((originalSize - compressedFile.size) / originalSize * 100).toFixed(1);
+            console.log(`Image compressed: ${(originalSize/1024).toFixed(1)}KB → ${(compressedFile.size/1024).toFixed(1)}KB (${compressionRatio}% reduction)`);
+            
+            // Create FormData with compressed image
+            const formData = new FormData();
+            formData.append('profile_picture', compressedFile, 'profile.jpg');
+            
+            // Keep existing form values to preserve them
+            const displayName = document.getElementById('display_name').value;
+            const email = document.getElementById('email').value;
+            formData.append('display_name', displayName);
+            formData.append('email', email);
+            
+            if (overlay) {
+                overlay.textContent = 'Uploading...';
+            }
+            
+            // Submit using fetch
+            fetch('/profile', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'HX-Request': 'true'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Replace the entire profile card
+                document.getElementById('profile-card').outerHTML = html;
+                showSuccessMessage('Profile picture updated successfully!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (overlay) {
+                    overlay.textContent = 'Upload failed';
+                    setTimeout(() => {
+                        overlay.textContent = 'Click to change';
+                    }, 2000);
+                }
+            });
+        }).catch(error => {
+            console.error('Image compression failed:', error);
+            if (overlay) {
+                overlay.textContent = 'Processing failed';
+                setTimeout(() => {
+                    overlay.textContent = 'Click to change';
+                }, 2000);
+            }
+        });
+    }
+}
+
+function showLoading() {
+    const submitBtn = document.querySelector('.profile-card .btn');
+    if (submitBtn) {
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+    }
+}
+
+function showSuccess() {
+    // This will be called after HTMX request completes
+    setTimeout(() => {
+        showSuccessMessage('Profile updated successfully!');
+    }, 100);
+}
+
+function showSuccessMessage(message) {
+    // Remove existing messages
+    const existingSuccess = document.getElementById('success-message');
+    const existingError = document.getElementById('error-message');
+    if (existingSuccess) existingSuccess.remove();
+    if (existingError) existingError.remove();
+    
+    // Create and show new success message
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.id = 'success-message';
+    successDiv.textContent = message;
+    
+    // Insert after the h2 title
+    const title = document.querySelector('.profile-card h2');
+    if (title) {
+        title.parentNode.insertBefore(successDiv, title.nextSibling);
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (successDiv && successDiv.parentNode) {
+                successDiv.style.opacity = '0';
+                successDiv.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (successDiv && successDiv.parentNode) {
+                        successDiv.remove();
+                    }
+                }, 500);
+            }
+        }, 3000);
+    }
+}
+
+function showErrorMessage(message) {
+    // Remove existing messages
+    const existingSuccess = document.getElementById('success-message');
+    const existingError = document.getElementById('error-message');
+    if (existingSuccess) existingSuccess.remove();
+    if (existingError) existingError.remove();
+    
+    // Create and show new error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.id = 'error-message';
+    errorDiv.textContent = message;
+    
+    // Insert after the h2 title
+    const title = document.querySelector('.profile-card h2');
+    if (title) {
+        title.parentNode.insertBefore(errorDiv, title.nextSibling);
+        
+        // Auto-hide after 4 seconds (longer for errors)
+        setTimeout(() => {
+            if (errorDiv && errorDiv.parentNode) {
+                errorDiv.style.opacity = '0';
+                errorDiv.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (errorDiv && errorDiv.parentNode) {
+                        errorDiv.remove();
+                    }
+                }, 500);
+            }
+        }, 4000);
+    }
+}
+
 </script>
 {{ end }}
