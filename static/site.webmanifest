@@ -3,8 +3,8 @@
   "short_name": "Ohabits",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFE9D8",
-  "theme_color": "#F15F0B",
+  "background_color": "#f8fafc",
+  "theme_color": "#667eea",
   "icons": [
     {
       "src": "/static/favicon-16x16.png",
