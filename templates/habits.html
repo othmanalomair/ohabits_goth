@@ -51,7 +51,7 @@
                 <button
                     hx-post="/habits/{{ $habit.ID }}/delete"
                     hx-target="#habits-list"
-                    hx-swap="outerHTML"
+                    hx-swap="innerHTML"
                 >
                     <img src="/static/images/svg/trash-red.svg" alt="Delete" />
                 </button>
