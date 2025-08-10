@@ -49,6 +49,15 @@
         >
             Loading habits…
         </div>
+        <!-- Medications Section -->
+        <div
+            id="medications"
+            hx-get="/medications_by_day?date={{ .SelectedDate | formatDate }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            Loading medications…
+        </div>
         <!-- Todos Section -->
         <div
             id="todos"

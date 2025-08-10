@@ -1,0 +1,323 @@
+{{ define "medications" }}
+<div class="habits-container">
+    <h1>Medications</h1>
+    <!-- Add Medication Form -->
+    <form
+        id="add-medication-form"
+        hx-post="/medications"
+        hx-target="#medications-list"
+        hx-swap="innerHTML"
+    >
+        <input
+            type="text"
+            name="medication_name"
+            placeholder="Medication name (e.g., Minoxidil)"
+            required
+        />
+        <input
+            type="text"
+            name="dosage"
+            placeholder="Dosage (e.g., 125mg, 1 tablet)"
+            required
+        />
+        
+        <select name="times_per_day" required>
+            <option value="">Times per day</option>
+            <option value="1">Once daily</option>
+            <option value="2">Twice daily</option>
+            <option value="3">Three times daily</option>
+            <option value="4">Four times daily</option>
+        </select>
+        
+        <select id="duration_type" name="duration_type" required onchange="toggleEndDate()">
+            <option value="">Duration</option>
+            <option value="lifetime">Lifetime</option>
+            <option value="limited">Limited time</option>
+        </select>
+        
+        <input
+            type="date"
+            name="start_date"
+            placeholder="Start date"
+            required
+        />
+        <input
+            id="end_date"
+            type="date"
+            name="end_date"
+            placeholder="End date (if limited)"
+            style="display: none;"
+        />
+        
+        <div class="scheduled-days-section">
+            <div class="days-checkboxes">
+                <label><input type="checkbox" name="days" value="sunday"> Sun</label>
+                <label><input type="checkbox" name="days" value="monday"> Mon</label>
+                <label><input type="checkbox" name="days" value="tuesday"> Tue</label>
+                <label><input type="checkbox" name="days" value="wednesday"> Wed</label>
+                <label><input type="checkbox" name="days" value="thursday"> Thu</label>
+                <label><input type="checkbox" name="days" value="friday"> Fri</label>
+                <label><input type="checkbox" name="days" value="saturday"> Sat</label>
+            </div>
+            <div class="quick-select">
+                <button type="button" onclick="selectDaily()">Daily</button>
+                <button type="button" onclick="selectWeekends()">Weekends</button>
+                <button type="button" onclick="selectWeekdays()">Weekdays</button>
+                <button type="button" onclick="clearDays()">Clear</button>
+            </div>
+        </div>
+        
+        <textarea
+            name="notes"
+            placeholder="Additional notes (optional)"
+            rows="2"
+        ></textarea>
+        
+        <button type="submit">
+            <img src="/static/images/svg/plus.svg" alt="Add" />
+        </button>
+    </form>
+    
+    <!-- Medications List Container -->
+    <div id="medications-list">
+        {{ template "medications_list" . }}
+    </div>
+</div>
+
+<script>
+function toggleEndDate() {
+    const durationType = document.getElementById('duration_type');
+    const endDate = document.getElementById('end_date');
+    
+    if (durationType.value === 'limited') {
+        endDate.style.display = 'block';
+        endDate.required = true;
+    } else {
+        endDate.style.display = 'none';
+        endDate.required = false;
+        endDate.value = '';
+    }
+}
+
+function selectDaily() {
+    const checkboxes = document.querySelectorAll('input[name="days"]');
+    checkboxes.forEach(cb => cb.checked = true);
+}
+
+function selectWeekends() {
+    const weekends = ['friday', 'saturday'];
+    const checkboxes = document.querySelectorAll('input[name="days"]');
+    checkboxes.forEach(cb => {
+        cb.checked = weekends.includes(cb.value);
+    });
+}
+
+function selectWeekdays() {
+    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
+    const checkboxes = document.querySelectorAll('input[name="days"]');
+    checkboxes.forEach(cb => {
+        cb.checked = weekdays.includes(cb.value);
+    });
+}
+
+function clearDays() {
+    const checkboxes = document.querySelectorAll('input[name="days"]');
+    checkboxes.forEach(cb => cb.checked = false);
+}
+
+function toggleEditDateFields(medicationId) {
+    const durationType = document.getElementById('duration_type_edit_' + medicationId);
+    const dateFields = document.getElementById('date_fields_' + medicationId);
+    
+    if (durationType.value === 'limited') {
+        dateFields.style.display = 'flex';
+        // Make date fields required when limited
+        const dateInputs = dateFields.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            if (input.name === 'start_date') {
+                input.required = true;
+            }
+        });
+    } else {
+        dateFields.style.display = 'none';
+        // Remove required attribute when hidden
+        const dateInputs = dateFields.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.required = false;
+        });
+    }
+}
+</script>
+{{ end }}
+
+{{ define "medications_list" }}
+    {{ range .Medications }}
+        {{ template "medication_item" . }}
+    {{ end }}
+{{ end }}
+
+{{ define "medication_item" }}
+<div class="medication-item" id="medication-{{ .ID }}">
+    {{ $medication := . }}
+    
+    <div class="medication-card">
+        <div class="medication-actions">
+            <button
+                hx-get="/medications/{{ $medication.ID }}/edit-form"
+                hx-target="#medication-{{ $medication.ID }}"
+                hx-swap="outerHTML"
+            >
+                <img src="/static/images/svg/edit.svg" alt="Edit" />
+            </button>
+            <button
+                hx-post="/medications/{{ $medication.ID }}/delete"
+                hx-target="#medications-list"
+                hx-swap="innerHTML"
+                hx-confirm="Are you sure you want to delete this medication?"
+            >
+                <img src="/static/images/svg/trash-red.svg" alt="Delete" />
+            </button>
+        </div>
+        
+        <div class="medication-main-info">
+            <h3 class="medication-name">{{ $medication.Name }}</h3>
+            <div class="medication-details">
+                <span class="dosage-badge">{{ $medication.Dosage }}</span>
+                {{ if eq $medication.TimesPerDay 1 }}
+                    <span class="frequency-badge">Once daily</span>
+                {{ else if eq $medication.TimesPerDay 2 }}
+                    <span class="frequency-badge">Twice daily</span>
+                {{ else if eq $medication.TimesPerDay 3 }}
+                    <span class="frequency-badge">Three times daily</span>
+                {{ else if eq $medication.TimesPerDay 4 }}
+                    <span class="frequency-badge">Four times daily</span>
+                {{ end }}
+                {{ if eq $medication.DurationType "lifetime" }}
+                    <span class="duration-badge lifetime">Lifetime</span>
+                {{ else if $medication.EndDate }}
+                    <span class="duration-badge limited">Until {{ $medication.EndDate.Format "Jan 2, 2006" }}</span>
+                {{ end }}
+            </div>
+        </div>
+        
+        <div class="medication-days">
+            {{ $days := list "Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" }}
+            {{ range $i, $day := $days }}
+            <button
+                class="day-button {{ if isMedicationActiveDay $medication.ScheduledDays $i }}active{{ end }}"
+                hx-post="/medications/{{ $medication.ID }}/toggle-day?day={{ $i }}"
+                hx-target="#medication-{{ $medication.ID }}"
+                hx-swap="outerHTML"
+            >
+                {{ substr $day 0 1 }}
+            </button>
+            {{ end }}
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "medication_edit" }}
+<div class="medication-item" id="medication-{{ .ID }}">
+    {{ $medication := . }}
+    
+    <div class="medication-card">
+        <div class="medication-main-info">
+            <form
+                hx-post="/medications/{{ $medication.ID }}/edit"
+                hx-target="#medication-{{ $medication.ID }}"
+                hx-swap="outerHTML"
+                class="medication-edit-form"
+            >
+                <div class="edit-row">
+                    <input 
+                        type="text" 
+                        name="medication_name" 
+                        value="{{ $medication.Name }}" 
+                        placeholder="Medication name" 
+                        required 
+                    />
+                    <input 
+                        type="text" 
+                        name="dosage" 
+                        value="{{ $medication.Dosage }}" 
+                        placeholder="Dosage" 
+                        required 
+                    />
+                </div>
+                
+                <div class="edit-row">
+                    <select name="times_per_day" required>
+                        <option value="1" {{ if eq $medication.TimesPerDay 1 }}selected{{ end }}>Once daily</option>
+                        <option value="2" {{ if eq $medication.TimesPerDay 2 }}selected{{ end }}>Twice daily</option>
+                        <option value="3" {{ if eq $medication.TimesPerDay 3 }}selected{{ end }}>Three times daily</option>
+                        <option value="4" {{ if eq $medication.TimesPerDay 4 }}selected{{ end }}>Four times daily</option>
+                    </select>
+                    
+                    <select id="duration_type_edit_{{ $medication.ID }}" name="duration_type" required onchange="toggleEditDateFields('{{ $medication.ID }}')">
+                        <option value="lifetime" {{ if eq $medication.DurationType "lifetime" }}selected{{ end }}>Lifetime</option>
+                        <option value="limited" {{ if eq $medication.DurationType "limited" }}selected{{ end }}>Limited time</option>
+                    </select>
+                </div>
+                
+                <div class="edit-row" id="date_fields_{{ $medication.ID }}" style="{{ if eq $medication.DurationType "lifetime" }}display: none;{{ end }}">
+                    <input 
+                        type="date" 
+                        name="start_date" 
+                        value="{{ $medication.StartDate.Format "2006-01-02" }}" 
+                        placeholder="Start date"
+                    />
+                    {{ if $medication.EndDate }}
+                    <input 
+                        type="date" 
+                        name="end_date" 
+                        value="{{ $medication.EndDate.Format "2006-01-02" }}" 
+                        placeholder="End date"
+                    />
+                    {{ else }}
+                    <input 
+                        type="date" 
+                        name="end_date" 
+                        placeholder="End date"
+                    />
+                    {{ end }}
+                </div>
+                
+                <div class="edit-row notes-row">
+                    <textarea
+                        name="notes"
+                        placeholder="Additional notes (optional)"
+                        rows="3"
+                    >{{ if $medication.Notes }}{{ $medication.Notes }}{{ end }}</textarea>
+                </div>
+                
+                <div class="edit-actions">
+                    <button type="submit">
+                        <img src="/static/images/svg/check-green.svg" alt="Save" />
+                    </button>
+                    <button
+                        type="button"
+                        hx-get="/medications/{{ $medication.ID }}/cancel"
+                        hx-target="#medication-{{ $medication.ID }}"
+                        hx-swap="outerHTML"
+                    >
+                        <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="medication-days">
+            {{ $days := list "Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" }}
+            {{ range $i, $day := $days }}
+            <button
+                class="day-button {{ if isMedicationActiveDay $medication.ScheduledDays $i }}active{{ end }}"
+                disabled
+            >
+                {{ substr $day 0 1 }}
+            </button>
+            {{ end }}
+        </div>
+    </div>
+</div>
+{{ end }}

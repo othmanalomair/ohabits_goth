@@ -691,6 +691,896 @@ main {
     width: 100%;
 }
 
+/* ----------- MEDICATIONS ----------- */
+.medication-item {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.1);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+    padding: 1.5rem;
+}
+
+.medication-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(31, 38, 135, 0.15);
+}
+
+.medication-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.medication-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+.medication-actions button {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.medication-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+.medication-actions button img {
+    width: 14px;
+    height: 14px;
+}
+
+.medication-main-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-right: 4rem; /* Space for action buttons */
+}
+
+.medication-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.medication-details {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.dosage-badge,
+.frequency-badge,
+.duration-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.dosage-badge {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+.frequency-badge {
+    background: rgba(56, 178, 172, 0.1);
+    color: #38b2ac;
+    border-color: rgba(56, 178, 172, 0.2);
+}
+
+.duration-badge.lifetime {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+    border-color: rgba(72, 187, 120, 0.2);
+}
+
+.duration-badge.limited {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+    border-color: rgba(237, 137, 54, 0.2);
+}
+
+.medication-days {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.medication-days .day-button {
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.medication-days .day-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.medication-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.edit-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.edit-row input,
+.edit-row select,
+.edit-row textarea {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #2d3748;
+    transition: border-color 0.3s ease;
+}
+
+.medication-edit-form input[type="text"] {
+    font-weight: 600;
+}
+
+.medication-edit-form input:focus,
+.medication-edit-form select:focus,
+.medication-edit-form textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.medication-edit-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+.notes-row {
+    width: 100%;
+}
+
+.notes-row textarea {
+    width: 100%;
+}
+
+.medication-edit-form select {
+    cursor: pointer;
+}
+
+.medication-edit-form select option {
+    background: white;
+    color: #2d3748;
+}
+
+#date_fields_{{ .ID }} {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Date fields animation */
+.edit-row[id^="date_fields_"] {
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.edit-row[id^="date_fields_"][style*="display: none"] {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.edit-row[id^="date_fields_"]:not([style*="display: none"]) {
+    max-height: 200px;
+    opacity: 1;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.edit-actions button {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+.edit-actions button img {
+    width: 16px;
+    height: 16px;
+}
+
+#add-medication-form {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#add-medication-form input[type="text"],
+#add-medication-form input[type="date"],
+#add-medication-form select,
+#add-medication-form textarea {
+    padding: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 1rem;
+    color: #2d3748;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-sizing: border-box;
+}
+
+#add-medication-form input[type="text"]:focus,
+#add-medication-form input[type="date"]:focus,
+#add-medication-form select:focus,
+#add-medication-form textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#add-medication-form textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.scheduled-days-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.days-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.days-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #4a5568;
+    cursor: pointer;
+}
+
+.days-checkboxes input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #667eea;
+}
+
+.quick-select {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quick-select button {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.quick-select button:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateY(-1px);
+}
+
+#add-medication-form button[type="submit"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    align-self: flex-end;
+    width: 48px;
+    height: 48px;
+}
+
+#add-medication-form button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+#add-medication-form button[type="submit"] img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Grid layout for medium and large screens */
+@media (min-width: 769px) {
+    #medications-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .medication-item {
+        margin-bottom: 0;
+    }
+}
+
+/* Medium screen optimizations for medications */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .medication-header h3 {
+        font-size: 0.95rem;
+    }
+
+    .medication-actions button {
+        width: 30px;
+        height: 30px;
+    }
+
+    .medication-actions button img {
+        width: 14px;
+        height: 14px;
+    }
+
+    .medication-details span {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+    }
+}
+
+/* Mobile responsive styles for medications */
+@media (max-width: 768px) {
+    .medication-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 14px;
+    }
+
+    .medication-card {
+        gap: 1rem;
+    }
+
+    .medication-actions {
+        top: -0.25rem;
+        right: -0.25rem;
+    }
+
+    .medication-actions button {
+        width: 28px;
+        height: 28px;
+        padding: 0.4rem;
+    }
+
+    .medication-actions button img {
+        width: 12px;
+        height: 12px;
+    }
+
+    .medication-main-info {
+        padding-right: 3.5rem;
+        gap: 0.6rem;
+    }
+
+    .medication-name {
+        font-size: 1.1rem;
+        line-height: 1.25;
+    }
+
+    .medication-details {
+        gap: 0.5rem;
+    }
+
+    .dosage-badge,
+    .frequency-badge,
+    .duration-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+    }
+
+    .medication-days {
+        gap: 0.4rem;
+        padding-top: 0.75rem;
+    }
+
+    .edit-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .edit-row input,
+    .edit-row select,
+    .edit-row textarea {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+    }
+
+    .medication-edit-form textarea {
+        min-height: 70px;
+    }
+
+    #add-medication-form {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        gap: 0.75rem;
+    }
+
+    #add-medication-form input[type="text"],
+    #add-medication-form input[type="date"],
+    #add-medication-form select,
+    #add-medication-form textarea {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+
+    .days-checkboxes {
+        gap: 0.5rem;
+    }
+
+    .quick-select button {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .medication-item {
+        padding: 0.75rem;
+    }
+
+    .medication-card {
+        gap: 0.8rem;
+    }
+
+    .medication-actions {
+        top: -0.125rem;
+        right: -0.125rem;
+        gap: 0.25rem;
+    }
+
+    .medication-actions button {
+        width: 24px;
+        height: 24px;
+        padding: 0.3rem;
+    }
+
+    .medication-actions button img {
+        width: 10px;
+        height: 10px;
+    }
+
+    .medication-main-info {
+        padding-right: 3rem;
+        gap: 0.5rem;
+    }
+
+    .medication-name {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .medication-details {
+        gap: 0.4rem;
+    }
+
+    .dosage-badge,
+    .frequency-badge,
+    .duration-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .medication-days {
+        gap: 0.3rem;
+        padding-top: 0.5rem;
+    }
+
+    .day-button {
+        width: 1.3rem;
+        height: 1.3rem;
+        font-size: 0.6rem;
+    }
+
+    #add-medication-form {
+        padding: 0.75rem;
+        gap: 0.6rem;
+    }
+
+    #add-medication-form input[type="text"],
+    #add-medication-form input[type="date"],
+    #add-medication-form select,
+    #add-medication-form textarea {
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .days-checkboxes label {
+        font-size: 0.8rem;
+    }
+
+    .quick-select button {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.5rem;
+    }
+}
+
+/* ----------- MEDICATIONS DAILY VIEW ----------- */
+.medications-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.medications-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+}
+
+.medications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.medication-daily-item {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.1);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.medication-daily-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(31, 38, 135, 0.15);
+}
+
+.medication-daily-item.all-doses-taken {
+    border: 2px solid #48bb78;
+    box-shadow: 0 8px 25px rgba(72, 187, 120, 0.2);
+}
+
+.medication-daily-item.all-doses-taken:hover {
+    box-shadow: 0 12px 35px rgba(72, 187, 120, 0.25);
+}
+
+.medication-daily-left {
+    flex: 1;
+}
+
+.medication-name-with-notes {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.medication-daily-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+.notes-icon {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.notes-icon:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(1.1);
+}
+
+.notes-icon img {
+    width: 12px;
+    height: 12px;
+}
+
+.medication-notes {
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+.medication-notes p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4a5568;
+    line-height: 1.4;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.medication-daily-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.dosage-badge,
+.frequency-badge,
+.duration-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.dosage-badge {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.frequency-badge {
+    background: rgba(56, 178, 172, 0.1);
+    color: #38b2ac;
+    border: 1px solid rgba(56, 178, 172, 0.2);
+}
+
+.duration-badge.lifetime {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+    border: 1px solid rgba(72, 187, 120, 0.2);
+}
+
+.duration-badge.limited {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+    border: 1px solid rgba(237, 137, 54, 0.2);
+}
+
+.medication-daily-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.dose-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 80px;
+    height: 42px;
+}
+
+.dose-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.dose-btn.taken {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.dose-btn.taken:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+}
+
+.dose-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+.dose-btn.single {
+    min-width: 100px;
+}
+
+.no-medications {
+    text-align: center;
+    padding: 2rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.no-medications p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Mobile responsive styles for medications daily view */
+@media (max-width: 768px) {
+    .medications-section {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .medications-section h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .medication-daily-item {
+        padding: 1rem;
+        gap: 1rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .medication-daily-header h4 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .medication-daily-details {
+        gap: 0.4rem;
+    }
+
+    .dosage-badge,
+    .frequency-badge,
+    .duration-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+    }
+
+    .medication-daily-actions {
+        justify-content: center;
+        gap: 0.4rem;
+    }
+
+    .dose-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+        min-width: 70px;
+        height: 38px;
+    }
+
+    .dose-btn.single {
+        min-width: 90px;
+    }
+
+    .notes-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .notes-icon img {
+        width: 10px;
+        height: 10px;
+    }
+
+    .medication-notes {
+        padding: 0.6rem;
+    }
+
+    .medication-notes p {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .medication-daily-item {
+        padding: 0.75rem;
+    }
+
+    .medication-daily-actions {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    .dose-btn {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.75rem;
+        min-width: 60px;
+        height: 34px;
+    }
+
+    .dose-btn.single {
+        min-width: 80px;
+    }
+}
+
 /* ----------- todos ----------- */
 .todos {
     margin-bottom: 1rem;

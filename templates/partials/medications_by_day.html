@@ -1,0 +1,95 @@
+{{ define "medications_by_day" }}
+<div class="medications-section">
+    <h3>Medications</h3>
+    <div class="medications-list">
+        {{ if .Medications }} 
+        {{ range .Medications }}
+        {{ $medication := . }}
+        {{ $selectedDate := $.SelectedDate }}
+        <div class="medication-daily-item {{ if areAllDosesTaken $.Logs .ID .TimesPerDay }}all-doses-taken{{ end }}" id="medication-day-{{ .ID }}">
+            <div class="medication-daily-left">
+                <div class="medication-daily-header">
+                    <div class="medication-name-with-notes">
+                        <h4>{{ .Name }}</h4>
+                        {{ if .Notes }}
+                        <button class="notes-icon" onclick="toggleNotes('{{ .ID }}')" type="button">
+                            <img src="/static/images/svg/info.svg" alt="Notes" />
+                        </button>
+                        {{ end }}
+                    </div>
+                    {{ if .Notes }}
+                    <div class="medication-notes" id="notes-{{ .ID }}" style="display: none;">
+                        <p>{{ .Notes }}</p>
+                    </div>
+                    {{ end }}
+                    <div class="medication-daily-details">
+                        <span class="dosage-badge">{{ .Dosage }}</span>
+                        {{ if eq .TimesPerDay 1 }}
+                            <span class="frequency-badge">Once daily</span>
+                        {{ else }}
+                            <span class="frequency-badge">{{ .TimesPerDay }}x daily</span>
+                        {{ end }}
+                        {{ if eq .DurationType "lifetime" }}
+                            <span class="duration-badge lifetime">Lifetime</span>
+                        {{ else if .EndDate }}
+                            <span class="duration-badge limited">Until {{ .EndDate.Format "Jan 2" }}</span>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="medication-daily-actions">
+                {{ if gt .TimesPerDay 1 }}
+                    {{ range $i := iterate .TimesPerDay }}
+                    {{ $isTaken := isMedicationLogTaken $.Logs $medication.ID $i }}
+                    <button
+                        class="dose-btn {{ if $isTaken }}taken{{ end }}"
+                        hx-post="/medications/{{ $medication.ID }}/toggle-log?dose={{ $i }}&date={{ $selectedDate | formatDate }}"
+                        hx-target="#medications"
+                        hx-swap="innerHTML"
+                    >
+                        {{ if $isTaken }}
+                            <img src="/static/images/svg/check-white.svg" alt="Taken" />
+                        {{ else }}
+                            Dose {{ add $i 1 }}
+                        {{ end }}
+                    </button>
+                    {{ end }}
+                {{ else }}
+                    {{ $isTaken := isMedicationLogTaken $.Logs $medication.ID 0 }}
+                    <button
+                        class="dose-btn single {{ if $isTaken }}taken{{ end }}"
+                        hx-post="/medications/{{ $medication.ID }}/toggle-log?dose=0&date={{ $selectedDate | formatDate }}"
+                        hx-target="#medications"
+                        hx-swap="innerHTML"
+                    >
+                        {{ if $isTaken }}
+                            <img src="/static/images/svg/check-white.svg" alt="Taken" />
+                            Taken
+                        {{ else }}
+                            Take Now
+                        {{ end }}
+                    </button>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }} 
+        {{ else }}
+        <div class="no-medications">
+            <p>No medications scheduled for {{ .Day }}.</p>
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<script>
+function toggleNotes(medicationId) {
+    const notesDiv = document.getElementById('notes-' + medicationId);
+    if (notesDiv.style.display === 'none' || notesDiv.style.display === '') {
+        notesDiv.style.display = 'block';
+    } else {
+        notesDiv.style.display = 'none';
+    }
+}
+</script>
+{{ end }}

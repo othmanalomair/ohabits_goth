@@ -1,5 +1,5 @@
 - monthely and yearly expensess
-- med remainder
+- med remainder " done "
 - project manger
 - space for big notes
 - space for yearly or monthey goals

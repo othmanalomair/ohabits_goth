@@ -173,6 +173,19 @@
                     </li>
                     <li>
                         <a
+                            hx-get="/medications"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/plus.svg"
+                                alt="Medications"
+                            />
+                            Medications
+                        </a>
+                    </li>
+                    <li>
+                        <a
                             hx-get="/workout_plan"
                             hx-target="main"
                             hx-swap="innerHTML"

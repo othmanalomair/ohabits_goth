@@ -49,6 +49,18 @@ func Server() *http.Server {
 	protected.HandleFunc("/profile", handlers.UpdateProfileHandler).Methods("POST")
 	protected.HandleFunc("/signout", handlers.SignOutHandler).Methods("GET")
 
+	// Medications
+	protected.HandleFunc("/medications", handlers.MedicationsPage).Methods("GET")
+	protected.HandleFunc("/medications", handlers.AddMedication).Methods("POST")
+	protected.HandleFunc("/medications/{id}/edit-form", handlers.EditMedicationForm).Methods("GET")
+	protected.HandleFunc("/medications/{id}/edit", handlers.EditMedication).Methods("POST")
+	protected.HandleFunc("/medications/{id}/cancel", handlers.CancelMedicationEdit).Methods("GET")
+	protected.HandleFunc("/medications/{id}/delete", handlers.DeleteMedication).Methods("POST")
+	protected.HandleFunc("/medications/{id}/log", handlers.LogMedicationIntake).Methods("POST")
+	protected.HandleFunc("/medications/{id}/toggle-log", handlers.ToggleMedicationLog).Methods("POST")
+	protected.HandleFunc("/medications/{id}/toggle-day", handlers.ToggleMedicationDay).Methods("POST")
+	protected.HandleFunc("/medications_by_day", handlers.MedicationsByDay).Methods("GET")
+
 	// Workout Plans
 	protected.HandleFunc("/workout_plan", handlers.WorkoutPlanPage).Methods("GET")
 	protected.HandleFunc("/workout_plan", handlers.CreateWorkoutPlan).Methods("POST")

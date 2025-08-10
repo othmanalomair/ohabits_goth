@@ -98,3 +98,35 @@ type MoodRating struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// Medication entity
+type Medication struct {
+	ID            uuid.UUID       `json:"id"`
+	UserID        uuid.UUID       `json:"user_id"`
+	Name          string          `json:"name"`
+	Dosage        string          `json:"dosage"`
+	ScheduledDays json.RawMessage `json:"scheduled_days"`
+	TimesPerDay   int             `json:"times_per_day"`
+	TimeIntervals []string        `json:"time_intervals"`
+	DurationType  string          `json:"duration_type"`
+	StartDate     time.Time       `json:"start_date"`
+	EndDate       *time.Time      `json:"end_date"`
+	Notes         *string         `json:"notes"`
+	IsActive      bool            `json:"is_active"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
+}
+
+// Medication Log entity
+type MedicationLog struct {
+	ID            uuid.UUID  `json:"id"`
+	MedicationID  uuid.UUID  `json:"medication_id"`
+	UserID        uuid.UUID  `json:"user_id"`
+	Taken         bool       `json:"taken"`
+	ScheduledTime string     `json:"scheduled_time"`
+	ActualTime    *time.Time `json:"actual_time"`
+	Date          time.Time  `json:"date"`
+	Notes         *string    `json:"notes"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}

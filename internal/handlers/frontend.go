@@ -19,14 +19,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/image/draw"
 	"ohabits.com/internal/db"
 )
 
 var tmpl *template.Template
-var DB *pgxpool.Pool // reference your DB connection
+// No need for separate DB variable, use db.DB directly
 
 // Define helper functions.
 
@@ -74,6 +73,74 @@ func substr(s string, start, length int) string {
 	return string(runes[start:end])
 }
 
+// Medication helper functions
+func isMedicationActiveDay(scheduledDays json.RawMessage, uiIndex int) bool {
+	var days []string
+	if err := json.Unmarshal(scheduledDays, &days); err == nil {
+		uiWeekdays := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+		if uiIndex < 0 || uiIndex >= len(uiWeekdays) {
+			return false
+		}
+		expected := uiWeekdays[uiIndex]
+		for _, d := range days {
+			if d == expected {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isMedicationScheduledToday(scheduledDays json.RawMessage) bool {
+	var days []string
+	if err := json.Unmarshal(scheduledDays, &days); err == nil {
+		today := time.Now().Weekday()
+		weekdays := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+		todayName := weekdays[today]
+		
+		for _, d := range days {
+			if d == todayName {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func iterate(count int) []int {
+	result := make([]int, count)
+	for i := 0; i < count; i++ {
+		result[i] = i
+	}
+	return result
+}
+
+func isMedicationTaken(medicationID uuid.UUID, doseIndex int) bool {
+	// This would need to check the database for medication logs
+	// For now, return false as a placeholder
+	// In a real implementation, this would query the medication_logs table
+	return false
+}
+
+func isMedicationLogTaken(logs []db.MedicationLog, medicationID uuid.UUID, doseIndex int) bool {
+	scheduledTime := "dose_" + strconv.Itoa(doseIndex+1)
+	for _, log := range logs {
+		if log.MedicationID == medicationID && log.ScheduledTime == scheduledTime && log.Taken {
+			return true
+		}
+	}
+	return false
+}
+
+func areAllDosesTaken(logs []db.MedicationLog, medicationID uuid.UUID, timesPerDay int) bool {
+	for i := 0; i < timesPerDay; i++ {
+		if !isMedicationLogTaken(logs, medicationID, i) {
+			return false
+		}
+	}
+	return true
+}
+
 func init() {
 	tmpl = template.New("").Funcs(template.FuncMap{
 		"now": time.Now,
@@ -92,12 +159,21 @@ func init() {
 			}
 			return *p
 		},
+		"isMedicationActiveDay": isMedicationActiveDay,
+		"isMedicationScheduledToday": isMedicationScheduledToday,
+		"iterate": iterate,
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"isMedicationTaken": isMedicationTaken,
+		"isMedicationLogTaken": isMedicationLogTaken,
+		"areAllDosesTaken": areAllDosesTaken,
 		"formatCardio": func(cardio json.RawMessage) string {
 			if len(cardio) == 0 {
 				return "-"
 			}
 			var arr []interface{}
-			if err := json.Unmarshal([]byte(cardio), &arr); err != nil || len(arr) < 2 {
+			if err := json.Unmarshal(cardio, &arr); err != nil || len(arr) < 2 {
 				return "-"
 			}
 			name, ok1 := arr[0].(string)
@@ -436,7 +512,7 @@ func ToggleHabitCompletion(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Failed to create habit completion", http.StatusInternalServerError)
 				return
 			}
-			// Instead of re-fetching from the DB, use the new record.
+			// Instead of re-fetching from the db.DB, use the new record.
 			hc = &newHC
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -2512,6 +2588,756 @@ func SignOutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// For HTMX, you can issue a full-page redirect by setting the HX-Redirect header:
 	w.Header().Set("HX-Redirect", "/login")
+}
+
+// Medication Handlers
+
+// MedicationsPage renders the medications page with a list of all medications
+func MedicationsPage(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	medications, err := db.GetMedicationsByUserID(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting medications: %v", err)
+		http.Error(w, "Error loading medications", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Medications []db.Medication
+	}{
+		Medications: medications,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "medications", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// AddMedication handles adding a new medication (POST /medications)
+func AddMedication(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse form data
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	medicationName := strings.TrimSpace(r.FormValue("medication_name"))
+	dosage := strings.TrimSpace(r.FormValue("dosage"))
+	durationType := strings.TrimSpace(r.FormValue("duration_type"))
+	timesPerDayStr := strings.TrimSpace(r.FormValue("times_per_day"))
+	startDateStr := strings.TrimSpace(r.FormValue("start_date"))
+	endDateStr := strings.TrimSpace(r.FormValue("end_date"))
+	notes := strings.TrimSpace(r.FormValue("notes"))
+
+	if medicationName == "" {
+		http.Error(w, "Medication name is required", http.StatusBadRequest)
+		return
+	}
+	if dosage == "" {
+		http.Error(w, "Dosage is required", http.StatusBadRequest)
+		return
+	}
+	if durationType == "" {
+		http.Error(w, "Duration type is required", http.StatusBadRequest)
+		return
+	}
+	if timesPerDayStr == "" {
+		http.Error(w, "Times per day is required", http.StatusBadRequest)
+		return
+	}
+	if startDateStr == "" {
+		http.Error(w, "Start date is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse times per day
+	timesPerDay, err := strconv.Atoi(timesPerDayStr)
+	if err != nil || timesPerDay < 1 || timesPerDay > 4 {
+		http.Error(w, "Invalid times per day", http.StatusBadRequest)
+		return
+	}
+
+	// Parse start date
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		http.Error(w, "Invalid start date", http.StatusBadRequest)
+		return
+	}
+
+	// Parse end date (if provided and not lifetime)
+	var endDate *time.Time = nil
+	if durationType == "limited" {
+		if endDateStr == "" {
+			http.Error(w, "End date is required for limited medications", http.StatusBadRequest)
+			return
+		}
+		parsedEndDate, err := time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			http.Error(w, "Invalid end date", http.StatusBadRequest)
+			return
+		}
+		endDate = &parsedEndDate
+	}
+
+	// Parse selected days
+	selectedDays := r.Form["days"]
+	if len(selectedDays) == 0 {
+		http.Error(w, "At least one day must be selected", http.StatusBadRequest)
+		return
+	}
+
+	// Convert day names to proper case
+	scheduledDays := make([]string, len(selectedDays))
+	dayMap := map[string]string{
+		"sunday": "Sunday", "monday": "Monday", "tuesday": "Tuesday", 
+		"wednesday": "Wednesday", "thursday": "Thursday", "friday": "Friday", "saturday": "Saturday",
+	}
+	for i, day := range selectedDays {
+		if properDay, exists := dayMap[strings.ToLower(day)]; exists {
+			scheduledDays[i] = properDay
+		} else {
+			http.Error(w, "Invalid day selected", http.StatusBadRequest)
+			return
+		}
+	}
+
+	scheduledDaysJSON, err := json.Marshal(scheduledDays)
+	if err != nil {
+		http.Error(w, "Error processing scheduled days", http.StatusInternalServerError)
+		return
+	}
+
+	// Create time intervals based on times per day
+	timeIntervals := make([]string, timesPerDay)
+	for i := 0; i < timesPerDay; i++ {
+		timeIntervals[i] = "dose_" + strconv.Itoa(i+1)
+	}
+
+	medication := &db.Medication{
+		UserID:        userID,
+		Name:          medicationName,
+		Dosage:        dosage,
+		ScheduledDays: scheduledDaysJSON,
+		TimesPerDay:   timesPerDay,
+		TimeIntervals: timeIntervals,
+		DurationType:  durationType,
+		StartDate:     startDate,
+		EndDate:       endDate,
+		Notes:         func() *string { if notes == "" { return nil }; return &notes }(),
+	}
+
+	err = db.CreateMedication(db.DB, medication)
+	if err != nil {
+		log.Printf("Error creating medication: %v", err)
+		http.Error(w, "Failed to create medication", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated medications list
+	medications, err := db.GetMedicationsByUserID(db.DB, userID)
+	if err != nil {
+		http.Error(w, "Error loading medications", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Medications []db.Medication
+	}{
+		Medications: medications,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "medications_list", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// MedicationsByDay shows medications scheduled for a specific day
+func MedicationsByDay(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Use the "date" query parameter, or default to today
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
+	selectedDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		selectedDate = time.Now()
+	}
+
+	day := selectedDate.Weekday().String()
+
+	// Get all user medications
+	medications, err := db.GetMedicationsByUserID(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting medications: %v", err)
+		http.Error(w, "Error loading medications", http.StatusInternalServerError)
+		return
+	}
+
+	// Filter medications scheduled for this day
+	var todayMedications []db.Medication
+	for _, med := range medications {
+		// Check if medication is still active on the selected date
+		if selectedDate.Before(med.StartDate.Truncate(24 * time.Hour)) {
+			continue // Medication hasn't started yet
+		}
+		
+		// Check if medication has expired (for limited duration medications)
+		if med.DurationType == "limited" && med.EndDate != nil {
+			if selectedDate.After(*med.EndDate) {
+				continue // Medication has expired
+			}
+		}
+
+		var days []string
+		if err := json.Unmarshal(med.ScheduledDays, &days); err != nil {
+			log.Printf("Error unmarshaling scheduled days for medication %s: %v", med.Name, err)
+			continue
+		}
+		for _, d := range days {
+			if d == day {
+				todayMedications = append(todayMedications, med)
+				break
+			}
+		}
+	}
+
+	// Get medication logs for today
+	logs, err := db.GetMedicationLogsForDate(db.DB, userID, selectedDate)
+	if err != nil {
+		log.Printf("Error getting medication logs: %v", err)
+		// Continue without logs, don't fail completely
+		logs = []db.MedicationLog{}
+	}
+
+	data := struct {
+		Day           string
+		Medications   []db.Medication
+		Logs          []db.MedicationLog
+		SelectedDate  time.Time
+	}{
+		Day:          day,
+		Medications:  todayMedications,
+		Logs:         logs,
+		SelectedDate: selectedDate,
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "medications_by_day", data); err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
+}
+
+// ToggleMedicationLog handles toggling medication log state (POST /medications/{id}/toggle-log)
+func ToggleMedicationLog(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get dose index and date from query parameters
+	doseStr := r.URL.Query().Get("dose")
+	dateStr := r.URL.Query().Get("date")
+
+	doseIndex, err := strconv.Atoi(doseStr)
+	if err != nil {
+		http.Error(w, "Invalid dose index", http.StatusBadRequest)
+		return
+	}
+
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		http.Error(w, "Invalid date", http.StatusBadRequest)
+		return
+	}
+
+	scheduledTime := "dose_" + strconv.Itoa(doseIndex+1)
+
+	// Check if log already exists
+	exists, err := db.CheckMedicationLogExists(db.DB, medicationID, userID, date, scheduledTime)
+	if err != nil {
+		log.Printf("Error checking medication log: %v", err)
+		http.Error(w, "Error checking medication log", http.StatusInternalServerError)
+		return
+	}
+
+	if exists {
+		// Remove the log (uncheck)
+		err = db.DeleteMedicationLog(db.DB, medicationID, userID, date, scheduledTime)
+		if err != nil {
+			log.Printf("Error removing medication log: %v", err)
+			http.Error(w, "Error removing medication log", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Add the log (check)
+		now := time.Now()
+		medicationLog := &db.MedicationLog{
+			MedicationID:  medicationID,
+			UserID:        userID,
+			Taken:         true,
+			ScheduledTime: scheduledTime,
+			ActualTime:    &now,
+			Date:          date,
+		}
+
+		err = db.LogMedication(db.DB, medicationLog)
+		if err != nil {
+			log.Printf("Error logging medication: %v", err)
+			http.Error(w, "Error logging medication", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Redirect back to medications by day to refresh the view
+	MedicationsByDay(w, r)
+}
+
+// ToggleMedicationDay handles toggling a day in medication schedule (POST /medications/{id}/toggle-day)
+func ToggleMedicationDay(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	dayStr := r.URL.Query().Get("day")
+	dayIndex, err := strconv.Atoi(dayStr)
+	if err != nil || dayIndex < 0 || dayIndex > 6 {
+		http.Error(w, "Invalid day index", http.StatusBadRequest)
+		return
+	}
+
+	// Get the medication
+	medication, err := db.GetMedicationByID(db.DB, medicationID, userID)
+	if err != nil {
+		http.Error(w, "Medication not found", http.StatusNotFound)
+		return
+	}
+
+	// Parse current scheduled days
+	var scheduledDays []string
+	if err := json.Unmarshal(medication.ScheduledDays, &scheduledDays); err != nil {
+		log.Printf("Error unmarshaling scheduled days: %v", err)
+		http.Error(w, "Error processing medication days", http.StatusInternalServerError)
+		return
+	}
+
+	// Convert day index to day name
+	dayNames := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+	targetDay := dayNames[dayIndex]
+
+	// Toggle the day
+	found := false
+	for i, day := range scheduledDays {
+		if day == targetDay {
+			// Remove the day
+			scheduledDays = append(scheduledDays[:i], scheduledDays[i+1:]...)
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		// Add the day
+		scheduledDays = append(scheduledDays, targetDay)
+	}
+
+	// Update the medication
+	updatedDaysJSON, err := json.Marshal(scheduledDays)
+	if err != nil {
+		http.Error(w, "Error processing scheduled days", http.StatusInternalServerError)
+		return
+	}
+	
+	medication.ScheduledDays = updatedDaysJSON
+	err = db.UpdateMedication(db.DB, medication)
+	if err != nil {
+		log.Printf("Error updating medication: %v", err)
+		http.Error(w, "Error updating medication", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated medication item
+	data := struct {
+		*db.Medication
+	}{medication}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "medication_item", data); err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
+}
+
+// LogMedicationIntake handles logging medication intake (POST /medications/{id}/log)
+func LogMedicationIntake(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+	doseStr := r.URL.Query().Get("dose")
+	dateStr := r.URL.Query().Get("date")
+
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	doseIndex, err := strconv.Atoi(doseStr)
+	if err != nil || doseIndex < 0 {
+		http.Error(w, "Invalid dose index", http.StatusBadRequest)
+		return
+	}
+
+	var logDate time.Time
+	if dateStr == "" {
+		logDate = time.Now().Truncate(24 * time.Hour)
+	} else {
+		logDate, err = time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			http.Error(w, "Invalid date", http.StatusBadRequest)
+			return
+		}
+	}
+
+	scheduledTime := "dose_" + strconv.Itoa(doseIndex+1)
+
+	// Check if already logged
+	exists, err := db.CheckMedicationLogExists(db.DB, medicationID, userID, logDate, scheduledTime)
+	if err != nil {
+		log.Printf("Error checking medication log: %v", err)
+		http.Error(w, "Error checking medication log", http.StatusInternalServerError)
+		return
+	}
+
+	now := time.Now()
+	medLog := &db.MedicationLog{
+		MedicationID:  medicationID,
+		UserID:        userID,
+		Taken:         !exists, // Toggle the taken status
+		ScheduledTime: scheduledTime,
+		ActualTime:    &now,
+		Date:          logDate,
+	}
+
+	err = db.LogMedication(db.DB, medLog)
+	if err != nil {
+		log.Printf("Error logging medication: %v", err)
+		http.Error(w, "Failed to log medication", http.StatusInternalServerError)
+		return
+	}
+
+	// Re-render the medications by day section
+	r.URL.RawQuery = "date=" + logDate.Format("2006-01-02")
+	MedicationsByDay(w, r)
+}
+
+// EditMedicationForm shows the edit form for a medication
+func EditMedicationForm(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	medication, err := db.GetMedicationByID(db.DB, medicationID, userID)
+	if err != nil {
+		http.Error(w, "Medication not found", http.StatusNotFound)
+		return
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "medication_edit", medication); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// EditMedication handles editing a medication (POST /medications/{id}/edit)
+func EditMedication(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse form data
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	// Get existing medication
+	medication, err := db.GetMedicationByID(db.DB, medicationID, userID)
+	if err != nil {
+		http.Error(w, "Medication not found", http.StatusNotFound)
+		return
+	}
+
+	// Parse and validate form fields
+	medicationName := strings.TrimSpace(r.FormValue("medication_name"))
+	dosage := strings.TrimSpace(r.FormValue("dosage"))
+	durationType := strings.TrimSpace(r.FormValue("duration_type"))
+	timesPerDayStr := strings.TrimSpace(r.FormValue("times_per_day"))
+	notes := strings.TrimSpace(r.FormValue("notes"))
+
+	if medicationName == "" {
+		http.Error(w, "Medication name is required", http.StatusBadRequest)
+		return
+	}
+	if dosage == "" {
+		http.Error(w, "Dosage is required", http.StatusBadRequest)
+		return
+	}
+	if durationType == "" {
+		http.Error(w, "Duration type is required", http.StatusBadRequest)
+		return
+	}
+	if timesPerDayStr == "" {
+		http.Error(w, "Times per day is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse times per day
+	timesPerDay, err := strconv.Atoi(timesPerDayStr)
+	if err != nil || timesPerDay < 1 || timesPerDay > 4 {
+		http.Error(w, "Invalid times per day", http.StatusBadRequest)
+		return
+	}
+
+	// Handle dates for limited medications
+	var endDate *time.Time = nil
+	if durationType == "limited" {
+		startDateStr := strings.TrimSpace(r.FormValue("start_date"))
+		endDateStr := strings.TrimSpace(r.FormValue("end_date"))
+		
+		if startDateStr != "" {
+			startDate, err := time.Parse("2006-01-02", startDateStr)
+			if err == nil {
+				medication.StartDate = startDate
+			}
+		}
+		
+		if endDateStr != "" {
+			parsedEndDate, err := time.Parse("2006-01-02", endDateStr)
+			if err == nil {
+				endDate = &parsedEndDate
+			}
+		}
+	}
+
+	// Create time intervals based on times per day
+	timeIntervals := make([]string, timesPerDay)
+	for i := 0; i < timesPerDay; i++ {
+		timeIntervals[i] = "dose_" + strconv.Itoa(i+1)
+	}
+
+	// Update medication fields
+	medication.Name = medicationName
+	medication.Dosage = dosage
+	medication.DurationType = durationType
+	medication.TimesPerDay = timesPerDay
+	medication.TimeIntervals = timeIntervals
+	medication.EndDate = endDate
+	if notes == "" {
+		medication.Notes = nil
+	} else {
+		medication.Notes = &notes
+	}
+
+	err = db.UpdateMedication(db.DB, medication)
+	if err != nil {
+		log.Printf("Error updating medication: %v", err)
+		http.Error(w, "Failed to update medication", http.StatusInternalServerError)
+		return
+	}
+
+	// Render the updated medication item
+	if err := tmpl.ExecuteTemplate(w, "medication_item", medication); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// CancelMedicationEdit cancels editing a medication
+func CancelMedicationEdit(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	medication, err := db.GetMedicationByID(db.DB, medicationID, userID)
+	if err != nil {
+		http.Error(w, "Medication not found", http.StatusNotFound)
+		return
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "medication_item", medication); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// DeleteMedication handles deleting a medication (POST /medications/{id}/delete)
+func DeleteMedication(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	medicationIDStr := vars["id"]
+
+	medicationID, err := uuid.Parse(medicationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid medication ID", http.StatusBadRequest)
+		return
+	}
+
+	err = db.DeleteMedication(db.DB, medicationID, userID)
+	if err != nil {
+		log.Printf("Error deleting medication: %v", err)
+		http.Error(w, "Failed to delete medication", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated medications list
+	medications, err := db.GetMedicationsByUserID(db.DB, userID)
+	if err != nil {
+		http.Error(w, "Error loading medications", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Medications []db.Medication
+	}{
+		Medications: medications,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "medications_list", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // NotFoundHandler renders the 404 error page.
