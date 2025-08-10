@@ -5,10 +5,10 @@
   git pull origin main
 
   # Rebuild the Docker image with the updated code
-  docker build -t apps_app:v2.0.1 .
+  docker build -t apps_app:v2.0.2 .
 
   # Update the Docker service to use the new image
-  docker service update --image apps_app:v2.0.1 apps_app
+  docker service update --image apps_app:v2.0.2 apps_app
 
   # Check if the service is now running properly
   docker service ps apps_app

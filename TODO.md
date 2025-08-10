@@ -1,0 +1,5 @@
+- monthely and yearly expensess
+- med remainder
+- project manger
+- space for big notes
+- space for yearly or monthey goals
