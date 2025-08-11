@@ -34,6 +34,62 @@ func GetAllShows(db *pgxpool.Pool, userID uuid.UUID) ([]Show, error) {
 	return shows, nil
 }
 
+// GetAllShowsWithEpisodeCounts gets all shows for a user with episode and watched counts
+func GetAllShowsWithEpisodeCounts(db *pgxpool.Pool, userID uuid.UUID) ([]Show, error) {
+	shows := []Show{}
+
+	rows, err := db.Query(context.Background(), `
+		SELECT 
+			s.id, s.user_id, s.tvmaze_id, s.name, s.summary, s.image_url, s.status, 
+			s.premiered, s.ended, s.network, s.genres, s.rating, s.created_at, s.updated_at,
+			COALESCE(ep_counts.total_episodes, 0) as total_episodes,
+			COALESCE(ep_counts.watched_episodes, 0) as watched_episodes
+		FROM shows s
+		LEFT JOIN (
+			SELECT 
+				e.show_id,
+				COUNT(*) as total_episodes,
+				COUNT(CASE WHEN et.watched = true THEN 1 END) as watched_episodes
+			FROM episodes e
+			LEFT JOIN episode_tracking et ON e.id = et.episode_id
+			WHERE e.user_id = $1
+			GROUP BY e.show_id
+		) ep_counts ON s.id = ep_counts.show_id
+		WHERE s.user_id = $1
+		ORDER BY s.name
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var show Show
+		err := rows.Scan(
+			&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary, &show.ImageURL, &show.Status, 
+			&show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt,
+			&show.TotalEpisodes, &show.WatchedEpisodes)
+		if err != nil {
+			return nil, err
+		}
+		shows = append(shows, show)
+	}
+	return shows, nil
+}
+
+// MarkAllEpisodesWatched marks all episodes of a show as watched
+func MarkAllEpisodesWatched(db *pgxpool.Pool, showID uuid.UUID, userID uuid.UUID) error {
+	_, err := db.Exec(context.Background(), `
+		INSERT INTO episode_tracking (episode_id, user_id, watched, created_at, updated_at)
+		SELECT e.id, $2, true, NOW(), NOW()
+		FROM episodes e
+		WHERE e.show_id = $1 AND e.user_id = $2
+		ON CONFLICT (episode_id, user_id) 
+		DO UPDATE SET watched = true, updated_at = NOW()
+	`, showID, userID)
+	return err
+}
+
 func CreateShow(db *pgxpool.Pool, show Show, userID uuid.UUID) (*Show, error) {
 	var createdShow Show
 	err := db.QueryRow(context.Background(), `

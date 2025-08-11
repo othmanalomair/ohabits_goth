@@ -1,6 +1,6 @@
 {{ define "shows" }}
 <div class="shows-container">
-    <h1>TV Shows & Anime</h1>
+    <h1>TV Shows</h1>
 
     <!-- Search Form -->
     <div class="search-section">
@@ -14,11 +14,11 @@
             <input
                 type="text"
                 name="query"
-                placeholder="Search for TV shows or anime..."
+                placeholder="Search for TV shows..."
                 autocomplete="off"
             />
             <button type="submit">
-                <img src="/static/images/svg/view.svg" alt="Search" />
+                <img src="/static/images/svg/search.svg" alt="Search" />
             </button>
         </form>
 
@@ -28,10 +28,76 @@
 
     <!-- My Shows -->
     <div class="my-shows-section">
-        <h2>My Shows</h2>
         <div id="my-shows-list">{{ template "my_shows_list" . }}</div>
     </div>
 </div>
+
+<script>
+    console.log("Main shows script loaded!"); // Debug log
+    
+    // Initialize search clearing functionality
+    function initializeSearchClearing() {
+        console.log("Initializing search clearing"); // Debug log
+        const searchInput = document.querySelector('input[name="query"]');
+        const searchResults = document.getElementById("search-results");
+
+        console.log("Search input found:", !!searchInput); // Debug log
+        console.log("Search results found:", !!searchResults); // Debug log
+
+        if (searchInput && searchResults) {
+            console.log("Search clearing setup initialized"); // Debug log
+            
+            // Clear existing listeners to avoid duplicates
+            searchInput.removeEventListener("input", handleSearchInput);
+            searchInput.removeEventListener("keyup", handleSearchKeyup);
+            
+            // Add new listeners
+            searchInput.addEventListener("input", handleSearchInput);
+            searchInput.addEventListener("keyup", handleSearchKeyup);
+        } else {
+            console.log("Search elements not found! Retrying in 100ms..."); // Debug log
+            setTimeout(initializeSearchClearing, 100);
+        }
+    }
+    
+    function handleSearchInput() {
+        const query = this.value.trim();
+        console.log("Input event - query length:", query.length, "query:", query); // Debug log
+        if (query.length < 3) {
+            console.log("Clearing search results"); // Debug log
+            const searchResults = document.getElementById("search-results");
+            if (searchResults) {
+                searchResults.innerHTML = "";
+            }
+        }
+    }
+    
+    function handleSearchKeyup(e) {
+        const query = this.value.trim();
+        console.log("Keyup event - query length:", query.length, "query:", query); // Debug log
+        if (query.length < 3) {
+            console.log("Clearing search results on keyup"); // Debug log
+            const searchResults = document.getElementById("search-results");
+            if (searchResults) {
+                searchResults.innerHTML = "";
+            }
+        }
+    }
+    
+    // Initialize immediately
+    initializeSearchClearing();
+    
+    // Also initialize when DOM is ready (if it hasn't fired yet)
+    if (document.readyState === 'loading') {
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("DOMContentLoaded fired"); // Debug log
+            initializeSearchClearing();
+        });
+    } else {
+        console.log("DOM already ready"); // Debug log
+        initializeSearchClearing();
+    }
+</script>
 {{ end }} {{ define "my_shows_list" }} {{ if .Shows }} {{ range .Shows }} {{
 template "show_item" . }} {{ end }} {{ else }}
 <div class="empty-state">
@@ -51,13 +117,31 @@ template "show_item" . }} {{ end }} {{ else }}
 
     <div class="show-info">
         <h3>{{ .Name }}</h3>
-        {{ if .Network }}
-        <p class="show-network">{{ .Network }}</p>
-        {{ end }} {{ if .Status }}
-        <span class="show-status status-{{ .Status | lower }}"
-            >{{ .Status }}</span
-        >
-        {{ end }}
+        <div class="show-meta">
+            {{ if .Network }}
+            <span class="show-network">{{ .Network }}</span>
+            {{ end }} {{ if .Status }}
+            <span class="show-status status-{{ .Status | lower }}"
+                >{{ .Status }}</span
+            >
+            {{ end }}
+        </div>
+
+        <div class="episode-progress">
+            <span class="episode-count"
+                >{{ .WatchedEpisodes }}/{{ .TotalEpisodes }} episodes
+                watched</span
+            >
+            {{ if gt .TotalEpisodes 0 }}
+            <div class="progress-bar">
+                <div
+                    class="progress-fill"
+                    data-watched="{{ .WatchedEpisodes }}"
+                    data-total="{{ .TotalEpisodes }}"
+                ></div>
+            </div>
+            {{ end }}
+        </div>
 
         <div class="show-actions">
             <button
@@ -66,8 +150,20 @@ template "show_item" . }} {{ end }} {{ else }}
                 hx-swap="innerHTML"
                 class="btn-primary"
             >
-                View Episodes
+                Episodes
             </button>
+            {{ if .Status }}{{ $status := .Status | lower }}{{ if ne $status
+            "ended" }}
+            <button
+                hx-post="/shows/{{ .ID }}/sync"
+                hx-target="#show-{{ .ID }}"
+                hx-swap="outerHTML"
+                class="btn-sync"
+                title="Sync new episodes"
+            >
+                <img src="/static/images/svg/refresh.svg" alt="Sync" />
+            </button>
+            {{ end }}{{ end }}
             <button
                 hx-delete="/shows/{{ .ID }}"
                 hx-target="#show-{{ .ID }}"
@@ -80,6 +176,43 @@ template "show_item" . }} {{ end }} {{ else }}
         </div>
     </div>
 </div>
+
+<script>
+    console.log("Show item script loaded!"); // Debug log
+    
+    // Initialize progress bars when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("Show item DOMContentLoaded fired"); // Debug log
+            updateProgressBars();
+        });
+    } else {
+        console.log("Show item DOM already ready"); // Debug log
+        updateProgressBars();
+    }
+
+    // Update progress bars after HTMX requests
+    document.body.addEventListener("htmx:afterSwap", function () {
+        updateProgressBars();
+    });
+
+    function updateProgressBars() {
+        const progressFills = document.querySelectorAll(".progress-fill");
+        progressFills.forEach(function (fill) {
+            const watched = parseInt(fill.getAttribute("data-watched") || 0);
+            const total = parseInt(fill.getAttribute("data-total") || 0);
+
+            if (total > 0) {
+                const percentage = Math.round((watched / total) * 100);
+                fill.style.width = percentage + "%";
+                fill.setAttribute("data-progress", percentage.toString());
+            } else {
+                fill.style.width = "0%";
+                fill.setAttribute("data-progress", "0");
+            }
+        });
+    }
+</script>
 {{ end }} {{ define "search_results" }} {{ if .SearchResults }}
 <div class="search-results-list">
     {{ range .SearchResults }} {{ template "search_result_item" . }} {{ end }}
@@ -112,23 +245,21 @@ template "show_item" . }} {{ end }} {{ else }}
         <p class="search-result-summary">
             {{ truncate (.Show.Summary | stripHTML) 200 }}
         </p>
-        {{ end }}
-
-        {{ if .AlreadyAdded }}
-            <div class="already-added-indicator">
-                <img src="/static/images/svg/check-green.svg" alt="Added" />
-                Already in My Shows
-            </div>
+        {{ end }} {{ if .AlreadyAdded }}
+        <div class="already-added-indicator">
+            <img src="/static/images/svg/check-green.svg" alt="Added" />
+            Already in My Shows
+        </div>
         {{ else }}
-            <button
-                hx-post="/shows/add"
-                hx-vals='{"tvmaze_id": "{{ .Show.ID }}"}'
-                hx-target="#my-shows-list"
-                hx-swap="innerHTML"
-                class="btn-primary add-show-btn"
-            >
-                + Add to My Shows
-            </button>
+        <button
+            hx-post="/shows/add"
+            hx-vals='{"tvmaze_id": "{{ .Show.ID }}"}'
+            hx-target="#my-shows-list"
+            hx-swap="innerHTML"
+            class="btn-primary add-show-btn"
+        >
+            + Add to My Shows
+        </button>
         {{ end }}
     </div>
 </div>
@@ -144,15 +275,22 @@ template "show_item" . }} {{ end }} {{ else }}
                     class="back-btn-icon"
                     title="Back to Shows"
                 >
-                    <img src="/static/images/svg/arrow-left-circle.svg" alt="Back" />
+                    <img
+                        src="/static/images/svg/arrow-left-circle.svg"
+                        alt="Back"
+                    />
                 </button>
 
                 <h1>{{ .Show.Name }}</h1>
 
                 {{ if .Show.Summary }}
-                    <button class="summary-toggle-btn-icon" onclick="toggleSummary()" title="Show Summary">
-                        <img src="/static/images/svg/info.svg" alt="Summary" />
-                    </button>
+                <button
+                    class="summary-toggle-btn-icon"
+                    onclick="toggleSummary()"
+                    title="Show Summary"
+                >
+                    <img src="/static/images/svg/info.svg" alt="Summary" />
+                </button>
                 {{ end }}
             </div>
         </div>
@@ -160,7 +298,41 @@ template "show_item" . }} {{ end }} {{ else }}
 
     {{ if .Show.Summary }}
     <div class="show-summary" id="show-summary" style="display: none">
-        <p>{{ .Show.Summary | stripHTML }}</p>
+        <div class="show-summary-content">
+            <div class="show-summary-image">
+                {{ if .Show.ImageURL }}
+                <img src="{{ .Show.ImageURL }}" alt="{{ .Show.Name }}" />
+                {{ else }}
+                <div class="show-summary-image-placeholder">
+                    <img
+                        src="/static/images/svg/tv.svg"
+                        alt="{{ .Show.Name }}"
+                    />
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="show-summary-text">
+                <p>{{ .Show.Summary | stripHTML }}</p>
+
+                <div class="show-summary-actions">
+                    <button
+                        hx-post="/shows/{{ .Show.ID }}/mark-all-watched"
+                        hx-target="#episodes-content"
+                        hx-swap="innerHTML"
+                        hx-confirm="Mark all episodes as watched?"
+                        class="btn-mark-all-watched"
+                        title="Mark all episodes as watched"
+                    >
+                        <img
+                            src="/static/images/svg/check-all.svg"
+                            alt="Mark All"
+                        />
+                        Mark All Watched
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     {{ end }} {{ if .Seasons }}
     <div class="season-selector-card">
@@ -205,19 +377,19 @@ template "show_item" . }} {{ end }} {{ else }}
 </div>
 
 <script>
-// Toggle show summary - global function
-function toggleSummary() {
-    const summary = document.getElementById("show-summary");
-    const button = document.querySelector(".summary-toggle-btn-icon");
-    
-    if (summary.style.display === "none") {
-        summary.style.display = "block";
-        button.classList.add("active");
-    } else {
-        summary.style.display = "none";
-        button.classList.remove("active");
+    // Toggle show summary - global function
+    function toggleSummary() {
+        const summary = document.getElementById("show-summary");
+        const button = document.querySelector(".summary-toggle-btn-icon");
+
+        if (summary.style.display === "none") {
+            summary.style.display = "block";
+            button.classList.add("active");
+        } else {
+            summary.style.display = "none";
+            button.classList.remove("active");
+        }
     }
-}
 </script>
 
 {{ end }} {{ define "episodes_list" }}
@@ -424,5 +596,32 @@ function toggleSummary() {
             closeModal();
         }
     });
+
+    // Initialize progress bars
+    document.addEventListener("DOMContentLoaded", function () {
+        updateProgressBars();
+    });
+
+    // Update progress bars after HTMX requests
+    document.body.addEventListener("htmx:afterSwap", function () {
+        updateProgressBars();
+    });
+
+    function updateProgressBars() {
+        const progressFills = document.querySelectorAll(".progress-fill");
+        progressFills.forEach(function (fill) {
+            const watched = parseInt(fill.getAttribute("data-watched") || 0);
+            const total = parseInt(fill.getAttribute("data-total") || 0);
+
+            if (total > 0) {
+                const percentage = Math.round((watched / total) * 100);
+                fill.style.width = percentage + "%";
+                fill.setAttribute("data-progress", percentage.toString());
+            } else {
+                fill.style.width = "0%";
+                fill.setAttribute("data-progress", "0");
+            }
+        });
+    }
 </script>
 {{ end }}

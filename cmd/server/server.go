@@ -87,6 +87,8 @@ func Server() *http.Server {
 	protected.HandleFunc("/shows/add", handlers.AddShowHandler).Methods("POST")
 	protected.HandleFunc("/shows/{id}", handlers.DeleteShowHandler).Methods("DELETE")
 	protected.HandleFunc("/shows/{id}/episodes", handlers.ShowEpisodesHandler).Methods("GET")
+	protected.HandleFunc("/shows/{id}/sync", handlers.ManualSyncHandler).Methods("POST")
+	protected.HandleFunc("/shows/{id}/mark-all-watched", handlers.MarkAllEpisodesWatchedHandler).Methods("POST")
 	protected.HandleFunc("/episodes/{id}/details", handlers.EpisodeDetailsHandler).Methods("GET")
 	protected.HandleFunc("/episodes/{id}/update-tracking", handlers.UpdateEpisodeTrackingHandler).Methods("POST")
 	protected.HandleFunc("/episodes/{id}/toggle-watched", handlers.ToggleEpisodeWatchedHandler).Methods("POST")

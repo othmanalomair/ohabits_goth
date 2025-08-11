@@ -144,9 +144,13 @@ type Show struct {
 	Ended     *time.Time      `json:"ended"`
 	Network   *string         `json:"network"`
 	Genres    json.RawMessage `json:"genres"`
-	Rating    json.RawMessage `json:"rating"`
-	CreatedAt time.Time       `json:"created_at"`
-	UpdatedAt time.Time       `json:"updated_at"`
+	Rating       json.RawMessage `json:"rating"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+	
+	// Episode counts (not stored in DB, calculated in queries)
+	TotalEpisodes   int `json:"total_episodes"`
+	WatchedEpisodes int `json:"watched_episodes"`
 }
 
 // Episode entity

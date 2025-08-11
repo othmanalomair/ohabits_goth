@@ -50,49 +50,96 @@
         <script src="/static/js/htmx.min.js"></script>
 
         <script>
-            // Global success message handler
-            document.addEventListener("DOMContentLoaded", function () {
-                // Listen for HTMX afterRequest events (only fires after actual requests, not on load)
-                document.body.addEventListener(
-                    "htmx:afterRequest",
-                    function (event) {
-                        // Only show messages for successful POST requests
-                        if (
-                            event.detail.xhr.status === 200 &&
-                            event.detail.requestConfig.verb === "post"
-                        ) {
-                            var url = event.detail.requestConfig.path;
+            // Toast Notification System
+            function showToast(message, type = 'success', duration = 3000) {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const iconSvg = getToastIcon(type);
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">${iconSvg}</div>
+                    <div class="toast-message">${message}</div>
+                    <button class="toast-close" onclick="closeToast(this)">×</button>
+                `;
+                
+                toastContainer.appendChild(toast);
+                
+                // Trigger show animation
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 10);
+                
+                // Auto remove
+                setTimeout(() => {
+                    closeToast(toast.querySelector('.toast-close'));
+                }, duration);
+            }
+            
+            function closeToast(closeBtn) {
+                const toast = closeBtn.parentElement;
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+            
+            function getToastIcon(type) {
+                const icons = {
+                    success: `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>`,
+                    info: `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </svg>`,
+                    warning: `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>`,
+                    error: `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                    </svg>`
+                };
+                return icons[type] || icons.info;
+            }
 
+            // Global HTMX event handlers
+            document.addEventListener("DOMContentLoaded", function () {
+                // Listen for HTMX afterRequest events
+                document.body.addEventListener("htmx:afterRequest", function (event) {
+                    if (event.detail.xhr.status === 200) {
+                        var url = event.detail.requestConfig.path;
+                        var method = event.detail.requestConfig.verb;
+
+                        // Handle specific success messages
+                        if (method === "post") {
                             if (url === "/notes") {
-                                showSuccessMessage(
-                                    "✓ Note saved successfully!",
-                                );
+                                showToast("Note saved successfully!", "success");
                             } else if (url === "/workout_loging") {
-                                showSuccessMessage(
-                                    "✓ Workout saved successfully!",
-                                );
+                                showToast("Workout saved successfully!", "success");
+                            } else if (url.includes("/sync")) {
+                                // Sync messages are handled by custom headers
+                                const message = event.detail.xhr.getResponseHeader('X-Toast-Message');
+                                const type = event.detail.xhr.getResponseHeader('X-Toast-Type') || 'info';
+                                if (message) {
+                                    showToast(message, type);
+                                }
                             }
                         }
-                    },
-                );
+                    }
+                });
+                
+                // Listen for HTMX errors
+                document.body.addEventListener("htmx:responseError", function (event) {
+                    showToast("An error occurred. Please try again.", "error");
+                });
             });
 
+            // Legacy function for backward compatibility
             function showSuccessMessage(message) {
-                var messageDiv = document.createElement("div");
-                messageDiv.innerHTML = message;
-                messageDiv.style.cssText =
-                    "position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3); z-index: 1000; font-weight: 500; font-size: 14px;";
-                document.body.appendChild(messageDiv);
-
-                setTimeout(function () {
-                    messageDiv.style.opacity = "0";
-                    messageDiv.style.transition = "opacity 0.3s ease";
-                    setTimeout(function () {
-                        if (messageDiv.parentNode) {
-                            document.body.removeChild(messageDiv);
-                        }
-                    }, 300);
-                }, 2000);
+                showToast(message, 'success');
             }
         </script>
     </head>
@@ -270,6 +317,9 @@
         </div>
 
         <main>{{ block "content" . }}{{ end }}</main>
+        
+        <!-- Toast Container -->
+        <div id="toast-container" class="toast-container"></div>
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {

@@ -3388,7 +3388,7 @@ func ShowsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	shows, err := db.GetAllShows(db.DB, userID)
+	shows, err := db.GetAllShowsWithEpisodeCounts(db.DB, userID)
 	if err != nil {
 		log.Printf("Error getting shows: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -3518,7 +3518,7 @@ func AddShowHandler(w http.ResponseWriter, r *http.Request) {
 		// Convert episodes and save them
 		var episodes []db.Episode
 		for _, tvEpisode := range tvEpisodes {
-			episode := api.ConvertTVMazeEpisodeToEpisode(tvEpisode, createdShow.ID.String(), userID.String())
+			episode := api.ConvertTVMazeEpisodeToEpisode(tvEpisode, createdShow.ID, userID)
 			episodes = append(episodes, episode)
 		}
 		
@@ -3979,6 +3979,251 @@ func UpdateEpisodeTrackingHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.ExecuteTemplate(w, "episode_item", templateEpisode); err != nil {
 		log.Printf("Error executing episode_item template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// ManualSyncHandler triggers a manual sync for a specific show
+func ManualSyncHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	vars := mux.Vars(r)
+	showIDStr := vars["id"]
+	
+	showID, err := uuid.Parse(showIDStr)
+	if err != nil {
+		http.Error(w, "Invalid show ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the show
+	show, err := db.GetShowByID(db.DB, showID, userID)
+	if err != nil {
+		http.Error(w, "Show not found", http.StatusNotFound)
+		return
+	}
+
+	// Check if show is ended - no need to sync ended shows
+	if show.Status != nil && *show.Status == "Ended" {
+		toastMessage := fmt.Sprintf("Show '%s' has ended - no new episodes expected", show.Name)
+		w.Header().Set("X-Toast-Message", toastMessage)
+		w.Header().Set("X-Toast-Type", "info")
+		w.Header().Set("Content-Type", "text/html")
+		
+		// Return the unchanged show item
+		if err := tmpl.ExecuteTemplate(w, "show_item", show); err != nil {
+			http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Perform episode sync
+	startTime := time.Now()
+	apiEpisodes, err := api.GetAllEpisodes(show.TVMazeID)
+	if err != nil {
+		http.Error(w, "Failed to fetch episodes: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get existing episodes
+	existingEpisodes, err := db.GetEpisodesByShow(db.DB, show.ID, userID)
+	if err != nil {
+		http.Error(w, "Failed to get existing episodes: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create map of existing episodes by TVMaze ID
+	existingEpisodesMap := make(map[int]bool)
+	for _, ep := range existingEpisodes {
+		existingEpisodesMap[ep.TVMazeID] = true
+	}
+
+	// Find new episodes to add
+	var newEpisodes []db.Episode
+	for _, apiEpisode := range apiEpisodes {
+		if !existingEpisodesMap[apiEpisode.ID] {
+			episode := api.ConvertTVMazeEpisodeToEpisode(apiEpisode, show.ID, userID)
+			newEpisodes = append(newEpisodes, episode)
+		}
+	}
+
+	// Add new episodes to database
+	episodesAdded := 0
+	if len(newEpisodes) > 0 {
+		if err := db.CreateEpisodes(db.DB, newEpisodes); err != nil {
+			http.Error(w, "Failed to add episodes: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		episodesAdded = len(newEpisodes)
+		log.Printf("Manual sync: Added %d new episodes for show: %s", episodesAdded, show.Name)
+	}
+
+	// Update last sync time
+	_, err = db.DB.Exec(context.Background(),
+		"UPDATE shows SET last_episode_sync = NOW() WHERE id = $1", show.ID)
+	if err != nil {
+		log.Printf("Error updating last episode sync: %v", err)
+	}
+
+	// Create toast message for user feedback
+	syncDuration := time.Since(startTime).Milliseconds()
+	var toastMessage string
+	var toastType string
+	
+	if episodesAdded > 0 {
+		toastMessage = fmt.Sprintf("✓ Added %d new episodes for %s", episodesAdded, show.Name)
+		toastType = "success"
+		log.Printf("Manual sync: Added %d new episodes for show: %s (took %dms)", episodesAdded, show.Name, syncDuration)
+	} else {
+		toastMessage = fmt.Sprintf("No new episodes found for %s", show.Name)
+		toastType = "info"
+		log.Printf("Manual sync: No new episodes found for show: %s (took %dms)", show.Name, syncDuration)
+	}
+
+	// Get updated show with episode counts for display
+	updatedShows, err := db.GetAllShowsWithEpisodeCounts(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting updated show data: %v", err)
+		// Fallback to original show
+		updatedShows = []db.Show{*show}
+	}
+	
+	// Find our show in the updated list
+	var updatedShow *db.Show
+	for _, s := range updatedShows {
+		if s.ID == show.ID {
+			updatedShow = &s
+			break
+		}
+	}
+	if updatedShow == nil {
+		updatedShow = show // Fallback
+	}
+
+	// Set toast headers for frontend to display
+	w.Header().Set("X-Toast-Message", toastMessage)
+	w.Header().Set("X-Toast-Type", toastType)
+	w.Header().Set("Content-Type", "text/html")
+	
+	// Return the updated show item HTML
+	if err := tmpl.ExecuteTemplate(w, "show_item", updatedShow); err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
+}
+
+// MarkAllEpisodesWatchedHandler marks all episodes of a show as watched
+func MarkAllEpisodesWatchedHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	vars := mux.Vars(r)
+	showIDStr := vars["id"]
+	
+	showID, err := uuid.Parse(showIDStr)
+	if err != nil {
+		http.Error(w, "Invalid show ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the show to verify ownership
+	show, err := db.GetShowByID(db.DB, showID, userID)
+	if err != nil {
+		http.Error(w, "Show not found", http.StatusNotFound)
+		return
+	}
+
+	// Mark all episodes as watched
+	err = db.MarkAllEpisodesWatched(db.DB, showID, userID)
+	if err != nil {
+		log.Printf("Error marking all episodes as watched: %v", err)
+		http.Error(w, "Error marking episodes as watched", http.StatusInternalServerError)
+		return
+	}
+
+	// Get updated episodes for the current season (if any)
+	season := r.URL.Query().Get("season")
+	var episodes []db.EpisodeWithTracking
+	var selectedSeason int
+	
+	if season != "" {
+		if s, err := strconv.Atoi(season); err == nil {
+			selectedSeason = s
+			episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+		}
+	} else {
+		// Get latest season
+		seasons, err := db.GetSeasonsByShow(db.DB, showID, userID)
+		if err == nil && len(seasons) > 0 {
+			selectedSeason = seasons[0] // Latest season
+			episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+		}
+	}
+	
+	if err != nil {
+		log.Printf("Error getting episodes after mark all watched: %v", err)
+		episodes = []db.EpisodeWithTracking{}
+	}
+
+	// Convert episodes for template
+	var templateEpisodes []map[string]interface{}
+	for _, ep := range episodes {
+		templateEpisode := map[string]interface{}{
+			"ID":       ep.ID,
+			"Name":     ep.Name,
+			"Season":   ep.Season,
+			"Number":   ep.Number,
+			"Summary":  ep.Summary,
+			"AirDate":  ep.AirDate,
+			"ImageURL": ep.ImageURL,
+			"Watched":  ep.Watched,
+			"Rating":   nil,
+			"Notes":    "",
+		}
+		
+		if ep.Rating != nil {
+			templateEpisode["Rating"] = *ep.Rating
+		}
+		if ep.Notes != nil {
+			templateEpisode["Notes"] = *ep.Notes
+		}
+		
+		templateEpisodes = append(templateEpisodes, templateEpisode)
+	}
+
+	// Get all seasons for the template
+	seasons, err := db.GetSeasonsByShow(db.DB, showID, userID)
+	if err != nil {
+		seasons = []int{}
+	}
+
+	// Prepare template data
+	data := map[string]interface{}{
+		"Episodes":       templateEpisodes,
+		"SelectedSeason": selectedSeason,
+		"Seasons":        seasons,
+	}
+
+	// Set toast message
+	episodeCount := len(episodes)
+	toastMessage := fmt.Sprintf("✓ Marked %d episodes as watched for %s", episodeCount, show.Name)
+	w.Header().Set("X-Toast-Message", toastMessage)
+	w.Header().Set("X-Toast-Type", "success")
+	w.Header().Set("Content-Type", "text/html")
+
+	// Return the updated episodes list
+	if err := tmpl.ExecuteTemplate(w, "episodes_list", data); err != nil {
+		log.Printf("Error executing episodes template: %v", err)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
 	}
 }
 

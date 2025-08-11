@@ -14,6 +14,7 @@ import (
 
 const (
 	TVMazeBaseURL = "https://api.tvmaze.com"
+	RateLimitDelay = 500 * time.Millisecond // TVMaze allows 20 requests per 10 seconds
 )
 
 // SearchShows searches for shows using TVmaze API
@@ -135,44 +136,7 @@ func ConvertTVMazeShowToShow(tvShow db.TVMazeShow) db.Show {
 	return show
 }
 
-// ConvertTVMazeEpisodeToEpisode converts a TVMaze episode to our internal Episode model
-func ConvertTVMazeEpisodeToEpisode(tvEpisode db.TVMazeEpisode, showID string, userID string) db.Episode {
-	episode := db.Episode{
-		TVMazeID: tvEpisode.ID,
-		Name:     tvEpisode.Name,
-		Season:   tvEpisode.Season,
-		Number:   tvEpisode.Number,
-		Summary:  tvEpisode.Summary,
-		Runtime:  tvEpisode.Runtime,
-	}
 
-	// Parse showID and userID
-	if showUUID, err := parseUUID(showID); err == nil {
-		episode.ShowID = showUUID
-	}
-	if userUUID, err := parseUUID(userID); err == nil {
-		episode.UserID = userUUID
-	}
-
-	// Handle air date
-	if tvEpisode.AirDate != nil {
-		if airDate, err := time.Parse("2006-01-02", *tvEpisode.AirDate); err == nil {
-			episode.AirDate = &airDate
-		}
-	}
-
-	// Handle image URL
-	if tvEpisode.Image != nil && tvEpisode.Image.Medium != nil {
-		episode.ImageURL = tvEpisode.Image.Medium
-	}
-
-	return episode
-}
-
-// Helper function to parse UUID strings
-func parseUUID(uuidStr string) (uuid.UUID, error) {
-	return uuid.Parse(uuidStr)
-}
 
 // StripHTMLTags removes HTML tags from text (simple implementation for summaries)
 func StripHTMLTags(text string) string {
@@ -191,4 +155,90 @@ func StripHTMLTags(text string) string {
 	text = strings.ReplaceAll(text, "</i>", "")
 	
 	return strings.TrimSpace(text)
+}
+
+// GetShowDetails fetches detailed information about a show by TVMaze ID
+func GetShowDetails(tvmazeID int) (*db.TVMazeShow, error) {
+	// Rate limiting
+	time.Sleep(RateLimitDelay)
+	
+	apiURL := fmt.Sprintf("%s/shows/%d", TVMazeBaseURL, tvmazeID)
+	
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch show details: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode == 404 {
+		return nil, fmt.Errorf("show not found")
+	}
+	
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+	
+	var show db.TVMazeShow
+	if err := json.NewDecoder(resp.Body).Decode(&show); err != nil {
+		return nil, fmt.Errorf("failed to decode show response: %w", err)
+	}
+	
+	return &show, nil
+}
+
+// GetAllEpisodes fetches all episodes for a show by TVMaze ID
+func GetAllEpisodes(tvmazeID int) ([]db.TVMazeEpisode, error) {
+	// Rate limiting
+	time.Sleep(RateLimitDelay)
+	
+	apiURL := fmt.Sprintf("%s/shows/%d/episodes", TVMazeBaseURL, tvmazeID)
+	
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch episodes: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode == 404 {
+		return []db.TVMazeEpisode{}, nil // Show exists but no episodes
+	}
+	
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+	
+	var episodes []db.TVMazeEpisode
+	if err := json.NewDecoder(resp.Body).Decode(&episodes); err != nil {
+		return nil, fmt.Errorf("failed to decode episodes response: %w", err)
+	}
+	
+	return episodes, nil
+}
+
+// ConvertTVMazeEpisodeToEpisode converts a TVMaze episode to our internal Episode model
+func ConvertTVMazeEpisodeToEpisode(tvEpisode db.TVMazeEpisode, showID uuid.UUID, userID uuid.UUID) db.Episode {
+	episode := db.Episode{
+		ShowID:   showID,
+		UserID:   userID,
+		TVMazeID: tvEpisode.ID,
+		Name:     tvEpisode.Name,
+		Season:   tvEpisode.Season,
+		Number:   tvEpisode.Number,
+		Summary:  tvEpisode.Summary,
+		Runtime:  tvEpisode.Runtime,
+	}
+	
+	// Handle air date
+	if tvEpisode.AirDate != nil {
+		if airDate, err := time.Parse("2006-01-02", *tvEpisode.AirDate); err == nil {
+			episode.AirDate = &airDate
+		}
+	}
+	
+	// Handle image URL
+	if tvEpisode.Image != nil && tvEpisode.Image.Medium != nil {
+		episode.ImageURL = tvEpisode.Image.Medium
+	}
+	
+	return episode
 }

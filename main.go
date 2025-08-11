@@ -10,11 +10,17 @@ import (
 
 	"ohabits.com/cmd/server"
 	"ohabits.com/internal/db"
+	"ohabits.com/internal/services"
 )
 
 func main() {
 	db.Connect()
 	defer db.Close()
+
+	// Start the sync service for automatic episode updates
+	syncService := services.NewSyncService(db.DB)
+	syncService.Start()
+	defer syncService.Stop()
 
 	srv := server.Server() // Now returns an *http.Server
 
@@ -30,6 +36,7 @@ func main() {
 
 	<-stop
 	log.Println("Shutting down the server...")
+	syncService.Stop()
 	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Fatalf("Server Shutdown: %v", err)
 	}
