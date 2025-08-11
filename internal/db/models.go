@@ -130,3 +130,104 @@ type MedicationLog struct {
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
 }
+
+// Show entity
+type Show struct {
+	ID        uuid.UUID       `json:"id"`
+	UserID    uuid.UUID       `json:"user_id"`
+	TVMazeID  int             `json:"tvmaze_id"`
+	Name      string          `json:"name"`
+	Summary   *string         `json:"summary"`
+	ImageURL  *string         `json:"image_url"`
+	Status    *string         `json:"status"`
+	Premiered *time.Time      `json:"premiered"`
+	Ended     *time.Time      `json:"ended"`
+	Network   *string         `json:"network"`
+	Genres    json.RawMessage `json:"genres"`
+	Rating    json.RawMessage `json:"rating"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+// Episode entity
+type Episode struct {
+	ID       uuid.UUID  `json:"id"`
+	ShowID   uuid.UUID  `json:"show_id"`
+	UserID   uuid.UUID  `json:"user_id"`
+	TVMazeID int        `json:"tvmaze_id"`
+	Name     string     `json:"name"`
+	Season   int        `json:"season"`
+	Number   int        `json:"number"`
+	Summary  *string    `json:"summary"`
+	AirDate  *time.Time `json:"airdate"`
+	Runtime  *int       `json:"runtime"`
+	ImageURL *string    `json:"image_url"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Episode Tracking entity
+type EpisodeTracking struct {
+	ID        uuid.UUID  `json:"id"`
+	EpisodeID uuid.UUID  `json:"episode_id"`
+	UserID    uuid.UUID  `json:"user_id"`
+	Watched   bool       `json:"watched"`
+	Rating    *int       `json:"rating"`
+	Notes     *string    `json:"notes"`
+	WatchedAt *time.Time `json:"watched_at"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+}
+
+// Combined Episode with Tracking data for templates
+type EpisodeWithTracking struct {
+	Episode
+	Watched   bool       `json:"watched"`
+	Rating    *int       `json:"rating"`
+	Notes     *string    `json:"notes"`
+	WatchedAt *time.Time `json:"watched_at"`
+}
+
+// TVMaze API Response structs
+type TVMazeSearchResult struct {
+	Score float64      `json:"score"`
+	Show  TVMazeShow   `json:"show"`
+}
+
+type TVMazeShow struct {
+	ID         int               `json:"id"`
+	Name       string            `json:"name"`
+	Summary    *string           `json:"summary"`
+	Image      *TVMazeImage      `json:"image"`
+	Status     string            `json:"status"`
+	Premiered  *string           `json:"premiered"`
+	Ended      *string           `json:"ended"`
+	Network    *TVMazeNetwork    `json:"network"`
+	WebChannel *TVMazeNetwork    `json:"webChannel"`
+	Genres     []string          `json:"genres"`
+	Rating     *TVMazeRating     `json:"rating"`
+}
+
+type TVMazeImage struct {
+	Medium   *string `json:"medium"`
+	Original *string `json:"original"`
+}
+
+type TVMazeNetwork struct {
+	Name string `json:"name"`
+}
+
+type TVMazeRating struct {
+	Average *float64 `json:"average"`
+}
+
+type TVMazeEpisode struct {
+	ID      int          `json:"id"`
+	Name    string       `json:"name"`
+	Season  int          `json:"season"`
+	Number  int          `json:"number"`
+	Summary *string      `json:"summary"`
+	AirDate *string      `json:"airdate"`
+	Runtime *int         `json:"runtime"`
+	Image   *TVMazeImage `json:"image"`
+}

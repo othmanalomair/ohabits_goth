@@ -1,0 +1,428 @@
+{{ define "shows" }}
+<div class="shows-container">
+    <h1>TV Shows & Anime</h1>
+
+    <!-- Search Form -->
+    <div class="search-section">
+        <form
+            id="search-shows-form"
+            hx-get="/shows/search"
+            hx-target="#search-results"
+            hx-trigger="submit, keyup[target.value.length > 2] delay:500ms"
+            hx-swap="innerHTML"
+        >
+            <input
+                type="text"
+                name="query"
+                placeholder="Search for TV shows or anime..."
+                autocomplete="off"
+            />
+            <button type="submit">
+                <img src="/static/images/svg/view.svg" alt="Search" />
+            </button>
+        </form>
+
+        <!-- Search Results -->
+        <div id="search-results"></div>
+    </div>
+
+    <!-- My Shows -->
+    <div class="my-shows-section">
+        <h2>My Shows</h2>
+        <div id="my-shows-list">{{ template "my_shows_list" . }}</div>
+    </div>
+</div>
+{{ end }} {{ define "my_shows_list" }} {{ if .Shows }} {{ range .Shows }} {{
+template "show_item" . }} {{ end }} {{ else }}
+<div class="empty-state">
+    <p>No shows tracked yet. Search and add shows above!</p>
+</div>
+{{ end }} {{ end }} {{ define "show_item" }}
+<div class="show-item" id="show-{{ .ID }}">
+    <div class="show-poster">
+        {{ if .ImageURL }}
+        <img src="{{ .ImageURL }}" alt="{{ .Name }}" />
+        {{ else }}
+        <div class="show-poster-placeholder">
+            <img src="/static/images/svg/tv.svg" alt="{{ .Name }}" />
+        </div>
+        {{ end }}
+    </div>
+
+    <div class="show-info">
+        <h3>{{ .Name }}</h3>
+        {{ if .Network }}
+        <p class="show-network">{{ .Network }}</p>
+        {{ end }} {{ if .Status }}
+        <span class="show-status status-{{ .Status | lower }}"
+            >{{ .Status }}</span
+        >
+        {{ end }}
+
+        <div class="show-actions">
+            <button
+                hx-get="/shows/{{ .ID }}/episodes"
+                hx-target="main"
+                hx-swap="innerHTML"
+                class="btn-primary"
+            >
+                View Episodes
+            </button>
+            <button
+                hx-delete="/shows/{{ .ID }}"
+                hx-target="#show-{{ .ID }}"
+                hx-swap="outerHTML"
+                hx-confirm="Are you sure you want to remove this show from your list?"
+                class="btn-danger"
+            >
+                <img src="/static/images/svg/trash.svg" alt="Remove" />
+            </button>
+        </div>
+    </div>
+</div>
+{{ end }} {{ define "search_results" }} {{ if .SearchResults }}
+<div class="search-results-list">
+    {{ range .SearchResults }} {{ template "search_result_item" . }} {{ end }}
+</div>
+{{ else if .SearchQuery }}
+<div class="no-results">
+    <p>No shows found for "{{ .SearchQuery }}"</p>
+</div>
+{{ end }} {{ end }} {{ define "search_result_item" }}
+<div class="search-result-item">
+    <div class="search-result-poster">
+        {{ if .Show.Image }} {{ if .Show.Image.Medium }}
+        <img src="{{ .Show.Image.Medium }}" alt="{{ .Show.Name }}" />
+        {{ end }} {{ else }}
+        <div class="search-result-poster-placeholder">
+            <img src="/static/images/svg/tv.svg" alt="{{ .Show.Name }}" />
+        </div>
+        {{ end }}
+    </div>
+
+    <div class="search-result-info">
+        <h4>{{ .Show.Name }}</h4>
+        {{ if .Show.Network }}
+        <p class="search-result-network">{{ .Show.Network.Name }}</p>
+        {{ else if .Show.WebChannel }}
+        <p class="search-result-network">{{ .Show.WebChannel.Name }}</p>
+        {{ end }} {{ if .Show.Premiered }}
+        <p class="search-result-year">{{ .Show.Premiered }}</p>
+        {{ end }} {{ if .Show.Summary }}
+        <p class="search-result-summary">
+            {{ truncate (.Show.Summary | stripHTML) 200 }}
+        </p>
+        {{ end }}
+
+        {{ if .AlreadyAdded }}
+            <div class="already-added-indicator">
+                <img src="/static/images/svg/check-green.svg" alt="Added" />
+                Already in My Shows
+            </div>
+        {{ else }}
+            <button
+                hx-post="/shows/add"
+                hx-vals='{"tvmaze_id": "{{ .Show.ID }}"}'
+                hx-target="#my-shows-list"
+                hx-swap="innerHTML"
+                class="btn-primary add-show-btn"
+            >
+                + Add to My Shows
+            </button>
+        {{ end }}
+    </div>
+</div>
+{{ end }} {{ define "episodes" }}
+<div class="episodes-container">
+    <div class="episodes-header">
+        <div class="show-title-card">
+            <div class="header-controls">
+                <button
+                    hx-get="/shows"
+                    hx-target="main"
+                    hx-swap="innerHTML"
+                    class="back-btn-icon"
+                    title="Back to Shows"
+                >
+                    <img src="/static/images/svg/arrow-left-circle.svg" alt="Back" />
+                </button>
+
+                <h1>{{ .Show.Name }}</h1>
+
+                {{ if .Show.Summary }}
+                    <button class="summary-toggle-btn-icon" onclick="toggleSummary()" title="Show Summary">
+                        <img src="/static/images/svg/info.svg" alt="Summary" />
+                    </button>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+
+    {{ if .Show.Summary }}
+    <div class="show-summary" id="show-summary" style="display: none">
+        <p>{{ .Show.Summary | stripHTML }}</p>
+    </div>
+    {{ end }} {{ if .Seasons }}
+    <div class="season-selector-card">
+        <div class="season-selector">
+            <label for="season-select">
+                <img src="/static/images/svg/layers.svg" alt="Season" />
+                Season
+            </label>
+            <select
+                id="season-select"
+                name="season"
+                hx-get="/shows/{{ .Show.ID }}/episodes"
+                hx-target="#episodes-content"
+                hx-swap="innerHTML"
+                hx-trigger="change"
+                hx-include="this"
+            >
+                {{ range .Seasons }}
+                <option
+                    value="{{ . }}"
+                    {{
+                    if
+                    eq
+                    .
+                    $.SelectedSeason
+                    }}selected{{
+                    end
+                    }}
+                >
+                    Season {{ . }}
+                </option>
+                {{ end }}
+            </select>
+        </div>
+    </div>
+    {{ end }}
+
+    <div id="episodes-content">{{ template "episodes_list" . }}</div>
+
+    <!-- Modal container for episode details -->
+    <div id="episode-details-modal"></div>
+</div>
+
+<script>
+// Toggle show summary - global function
+function toggleSummary() {
+    const summary = document.getElementById("show-summary");
+    const button = document.querySelector(".summary-toggle-btn-icon");
+    
+    if (summary.style.display === "none") {
+        summary.style.display = "block";
+        button.classList.add("active");
+    } else {
+        summary.style.display = "none";
+        button.classList.remove("active");
+    }
+}
+</script>
+
+{{ end }} {{ define "episodes_list" }}
+<div class="episodes-list">
+    {{ if .Episodes }}
+    <div class="season-header-card">
+        <div class="season-header">
+            <div class="season-info">
+                <h2>Season {{ .SelectedSeason }}</h2>
+                <span class="episode-count">{{ len .Episodes }} episodes</span>
+            </div>
+            <div class="season-icon">
+                <img src="/static/images/svg/tv.svg" alt="Episodes" />
+            </div>
+        </div>
+    </div>
+    {{ range .Episodes }} {{ template "episode_item" . }} {{ end }} {{ else if
+    .SelectedSeason }}
+    <div class="empty-state">
+        <p>No episodes found for Season {{ .SelectedSeason }}.</p>
+    </div>
+    {{ else }}
+    <div class="empty-state">
+        <p>No episodes found for this show.</p>
+    </div>
+    {{ end }}
+</div>
+{{ end }} {{ define "episode_item" }}
+<div class="episode-item-compact" id="episode-{{ .ID }}">
+    <div class="episode-row">
+        <div class="episode-thumbnail">
+            {{ if .ImageURL }}
+            <img src="{{ .ImageURL }}" alt="{{ .Name }}" />
+            {{ else }}
+            <div class="episode-thumbnail-placeholder">
+                <span>{{ .Season }}x{{ printf "%02d" .Number }}</span>
+            </div>
+            {{ end }}
+        </div>
+
+        <div class="episode-main-info">
+            <h4 class="episode-title">{{ .Name }}</h4>
+            <div class="episode-meta-inline">
+                <span class="episode-number"
+                    >{{ .Season }}x{{ printf "%02d" .Number }}</span
+                >
+                {{ if .AirDate }}
+                <span class="episode-date"
+                    >{{ .AirDate.Format "Jan 2, 2006" }}</span
+                >
+                {{ end }}
+            </div>
+        </div>
+
+        <div class="episode-actions-compact">
+            <button
+                hx-post="/episodes/{{ .ID }}/toggle-watched"
+                hx-target="#episode-{{ .ID }}"
+                hx-swap="outerHTML"
+                class="watch-btn-compact {{ if .Watched }}watched{{ else }}not-watched{{ end }}"
+                title="{{ if .Watched }}Mark as unwatched{{ else }}Mark as watched{{ end }}"
+            >
+                {{ if .Watched }}
+                <img src="/static/images/svg/check-green.svg" alt="Watched" />
+                {{ else }}
+                <img src="/static/images/svg/check.svg" alt="Mark Watched" />
+                {{ end }}
+            </button>
+
+            <button
+                hx-get="/episodes/{{ .ID }}/details"
+                hx-target="#episode-details-modal"
+                hx-swap="innerHTML"
+                class="details-btn-compact"
+                title="Episode details"
+            >
+                <img src="/static/images/svg/info.svg" alt="Details" />
+            </button>
+        </div>
+    </div>
+
+    {{ if or .Rating .Notes }}
+    <div class="episode-user-data">
+        {{ if .Rating }}
+        <div class="user-rating">
+            <span class="rating-label">★</span>
+            <span class="rating-value">{{ .Rating }}/10</span>
+        </div>
+        {{ end }} {{ if .Notes }}
+        <div class="user-notes">
+            <p>{{ truncate .Notes 120 }}</p>
+        </div>
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+{{ end }} {{ define "episode_details_modal" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>{{ .Episode.Name }}</h3>
+            <button onclick="closeModal()" class="close-btn" type="button">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="episode-meta">
+                <span
+                    >Season {{ .Episode.Season }}, Episode {{ .Episode.Number
+                    }}</span
+                >
+                {{ if .Episode.AirDate }}
+                <span>{{ .Episode.AirDate.Format "January 2, 2006" }}</span>
+                {{ end }} {{ if .Episode.Runtime }}
+                <span>{{ .Episode.Runtime }} minutes</span>
+                {{ end }}
+            </div>
+
+            {{ if .Episode.Summary }}
+            <div class="episode-description">
+                <p>{{ .Episode.Summary | stripHTML }}</p>
+            </div>
+            {{ end }}
+
+            <div class="tracking-section">
+                <form
+                    hx-post="/episodes/{{ .Episode.ID }}/update-tracking"
+                    hx-target="#episode-{{ .Episode.ID }}"
+                    hx-swap="outerHTML"
+                    hx-on="htmx:afterRequest: closeModal()"
+                >
+                    <div class="form-group">
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="watched"
+                                value="true"
+                                {{
+                                if
+                                .Tracking.Watched
+                                }}checked{{
+                                end
+                                }}
+                            />
+                            Watched
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rating">Rating (1-10):</label>
+                        <select name="rating" id="rating">
+                            <option value="">No rating</option>
+                            {{ range $i := seq 1 10 }}
+                            <option
+                                value="{{ $i }}"
+                                {{
+                                if
+                                and
+                                $.Tracking.HasRating
+                                (eq
+                                $.Tracking.Rating
+                                $i)
+                                }}selected{{
+                                end
+                                }}
+                            >
+                                {{ $i }}
+                            </option>
+                            {{ end }}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes:</label>
+                        <textarea
+                            name="notes"
+                            id="notes"
+                            rows="3"
+                            placeholder="Your thoughts about this episode..."
+                        >
+{{ if .Tracking.HasNotes }}{{ .Tracking.Notes }}{{ end }}</textarea
+                        >
+                    </div>
+
+                    <button type="submit" class="btn-primary">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function closeModal() {
+        const modal = document.querySelector(".modal-overlay");
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Close modal on Escape key
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            closeModal();
+        }
+    });
+</script>
+{{ end }}

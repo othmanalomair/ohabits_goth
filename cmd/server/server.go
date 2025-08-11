@@ -81,6 +81,16 @@ func Server() *http.Server {
 	protected.HandleFunc("/workout_plan/{id}/exercises/{order}/edit", handlers.EditWorkoutExercise).Methods("POST")
 	protected.HandleFunc("/workout_plan/{id}/exercises/{order}/cancel", handlers.CancelWorkoutExerciseEdit).Methods("GET")
 
+	// Shows Routes
+	protected.HandleFunc("/shows", handlers.ShowsHandler).Methods("GET")
+	protected.HandleFunc("/shows/search", handlers.SearchShowsHandler).Methods("GET")
+	protected.HandleFunc("/shows/add", handlers.AddShowHandler).Methods("POST")
+	protected.HandleFunc("/shows/{id}", handlers.DeleteShowHandler).Methods("DELETE")
+	protected.HandleFunc("/shows/{id}/episodes", handlers.ShowEpisodesHandler).Methods("GET")
+	protected.HandleFunc("/episodes/{id}/details", handlers.EpisodeDetailsHandler).Methods("GET")
+	protected.HandleFunc("/episodes/{id}/update-tracking", handlers.UpdateEpisodeTrackingHandler).Methods("POST")
+	protected.HandleFunc("/episodes/{id}/toggle-watched", handlers.ToggleEpisodeWatchedHandler).Methods("POST")
+
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 

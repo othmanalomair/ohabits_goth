@@ -1,5 +1,11 @@
-- monthely and yearly expensess
-- med remainder " done "
-- project manger
-- space for big notes
-- space for yearly or monthey goals
+- [ ] monthely and yearly expensess
+- [x] med remainder
+- [ ] project manger
+- [ ] space for big notes
+- [ ] space for yearly or monthey goals
+- [ ] notification for new episods or manga releas
+- [ ] AI with ohabits
+- [ ] news
+- [ ] wish list
+- [ ] AI anilyze your stats " health & gym & money "
+- [ ] Blood work

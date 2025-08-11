@@ -199,6 +199,19 @@
                     </li>
                     <li>
                         <a
+                            hx-get="/shows"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
+                            <img
+                                src="/static/images/svg/tv.svg"
+                                alt="Shows"
+                            />
+                            Shows
+                        </a>
+                    </li>
+                    <li>
+                        <a
                             hx-get="/profile"
                             hx-target="main"
                             hx-swap="innerHTML"

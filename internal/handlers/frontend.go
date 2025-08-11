@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/image/draw"
+	"ohabits.com/internal/api"
 	"ohabits.com/internal/db"
 )
 
@@ -164,6 +165,37 @@ func init() {
 		"iterate": iterate,
 		"add": func(a, b int) int {
 			return a + b
+		},
+		"stripHTML": func(s string) string {
+			if s == "" {
+				return ""
+			}
+			// Simple HTML tag removal
+			s = strings.ReplaceAll(s, "<p>", "")
+			s = strings.ReplaceAll(s, "</p>", " ")
+			s = strings.ReplaceAll(s, "<br>", " ")
+			s = strings.ReplaceAll(s, "<br/>", " ")
+			s = strings.ReplaceAll(s, "<b>", "")
+			s = strings.ReplaceAll(s, "</b>", "")
+			s = strings.ReplaceAll(s, "<i>", "")
+			s = strings.ReplaceAll(s, "</i>", "")
+			return strings.TrimSpace(s)
+		},
+		"truncate": func(s string, length int) string {
+			if len(s) <= length {
+				return s
+			}
+			return s[:length] + "..."
+		},
+		"lower": func(s string) string {
+			return strings.ToLower(s)
+		},
+		"seq": func(start, end int) []int {
+			var result []int
+			for i := start; i <= end; i++ {
+				result = append(result, i)
+			}
+			return result
 		},
 		"isMedicationTaken": isMedicationTaken,
 		"isMedicationLogTaken": isMedicationLogTaken,
@@ -3337,6 +3369,616 @@ func DeleteMedication(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.ExecuteTemplate(w, "medications_list", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// Shows handlers
+func ShowsHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting user: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	
+	shows, err := db.GetAllShows(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting shows: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]interface{}{
+		"Shows": shows,
+		"User":  user,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "shows", data); err != nil {
+		log.Printf("Error executing shows template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func SearchShowsHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+
+	query := r.URL.Query().Get("query")
+	
+	if query == "" {
+		if err := tmpl.ExecuteTemplate(w, "search_results", map[string]interface{}{}); err != nil {
+			log.Printf("Error executing search results template: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	results, err := api.SearchShows(query)
+	if err != nil {
+		log.Printf("Error searching shows: %v", err)
+		http.Error(w, "Search failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Get user's existing shows to check which ones are already added
+	userShows, err := db.GetAllShows(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting user shows: %v", err)
+		// Continue anyway, just don't filter
+		userShows = []db.Show{}
+	}
+
+	// Create a map for quick lookup of existing shows by TVMaze ID
+	existingShows := make(map[int]bool)
+	for _, show := range userShows {
+		existingShows[show.TVMazeID] = true
+	}
+
+	// Add "AlreadyAdded" field to search results
+	type SearchResultWithStatus struct {
+		db.TVMazeSearchResult
+		AlreadyAdded bool
+	}
+
+	var resultsWithStatus []SearchResultWithStatus
+	for _, result := range results {
+		resultsWithStatus = append(resultsWithStatus, SearchResultWithStatus{
+			TVMazeSearchResult: result,
+			AlreadyAdded:       existingShows[result.Show.ID],
+		})
+	}
+
+	data := map[string]interface{}{
+		"SearchResults": resultsWithStatus,
+		"SearchQuery":   query,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "search_results", data); err != nil {
+		log.Printf("Error executing search results template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func AddShowHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	tvmazeIDStr := r.FormValue("tvmaze_id")
+	tvmazeID, err := strconv.Atoi(tvmazeIDStr)
+	if err != nil {
+		http.Error(w, "Invalid show ID", http.StatusBadRequest)
+		return
+	}
+
+	// Check if show already exists for this user
+	existingShow, _ := db.GetShowByTVMazeID(db.DB, tvmazeID, userID)
+	if existingShow != nil {
+		http.Error(w, "Show already in your list", http.StatusConflict)
+		return
+	}
+
+	// Get show details from TVmaze API
+	tvShow, err := api.GetShowByID(tvmazeID)
+	if err != nil {
+		log.Printf("Error getting show from API: %v", err)
+		http.Error(w, "Show not found", http.StatusNotFound)
+		return
+	}
+
+	// Convert and save show
+	show := api.ConvertTVMazeShowToShow(*tvShow)
+	createdShow, err := db.CreateShow(db.DB, show, userID)
+	if err != nil {
+		log.Printf("Error creating show: %v", err)
+		http.Error(w, "Failed to add show", http.StatusInternalServerError)
+		return
+	}
+
+	// Get episodes for the show
+	tvEpisodes, err := api.GetShowEpisodes(tvmazeID)
+	if err != nil {
+		log.Printf("Error getting episodes: %v", err)
+		// Continue without episodes for now
+	} else {
+		// Convert episodes and save them
+		var episodes []db.Episode
+		for _, tvEpisode := range tvEpisodes {
+			episode := api.ConvertTVMazeEpisodeToEpisode(tvEpisode, createdShow.ID.String(), userID.String())
+			episodes = append(episodes, episode)
+		}
+		
+		if len(episodes) > 0 {
+			if err := db.CreateEpisodes(db.DB, episodes); err != nil {
+				log.Printf("Error creating episodes: %v", err)
+			}
+		}
+	}
+
+	// Return updated shows list
+	shows, err := db.GetAllShows(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting shows: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]interface{}{
+		"Shows": shows,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "my_shows_list", data); err != nil {
+		log.Printf("Error executing shows list template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func DeleteShowHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	vars := mux.Vars(r)
+	showIDStr := vars["id"]
+	
+	showID, err := uuid.Parse(showIDStr)
+	if err != nil {
+		http.Error(w, "Invalid show ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.DeleteShow(db.DB, showID, userID); err != nil {
+		log.Printf("Error deleting show: %v", err)
+		http.Error(w, "Failed to delete show", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func ShowEpisodesHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		log.Printf("Error getting user: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	
+	vars := mux.Vars(r)
+	showIDStr := vars["id"]
+	
+	showID, err := uuid.Parse(showIDStr)
+	if err != nil {
+		http.Error(w, "Invalid show ID", http.StatusBadRequest)
+		return
+	}
+
+	show, err := db.GetShowByID(db.DB, showID, userID)
+	if err != nil {
+		http.Error(w, "Show not found", http.StatusNotFound)
+		return
+	}
+
+	// Get all available seasons
+	seasons, err := db.GetSeasonsByShow(db.DB, showID, userID)
+	if err != nil {
+		log.Printf("Error getting seasons: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Get selected season from query parameter, default to latest (first in DESC order)
+	var selectedSeason int
+	seasonParam := r.URL.Query().Get("season")
+	if seasonParam != "" {
+		selectedSeason, err = strconv.Atoi(seasonParam)
+		if err != nil {
+			http.Error(w, "Invalid season parameter", http.StatusBadRequest)
+			return
+		}
+	} else if len(seasons) > 0 {
+		selectedSeason = seasons[0] // Latest season
+	}
+
+	var episodes []db.EpisodeWithTracking
+	if selectedSeason > 0 {
+		episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+		if err != nil {
+			log.Printf("Error getting episodes for season: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Convert to template-friendly format
+	var templateEpisodes []map[string]interface{}
+	for _, ep := range episodes {
+		templateEp := map[string]interface{}{
+			"ID":        ep.ID,
+			"ShowID":    ep.ShowID,
+			"UserID":    ep.UserID,
+			"TVMazeID":  ep.TVMazeID,
+			"Name":      ep.Name,
+			"Season":    ep.Season,
+			"Number":    ep.Number,
+			"Summary":   ep.Summary,
+			"AirDate":   ep.AirDate,
+			"Runtime":   ep.Runtime,
+			"ImageURL":  ep.ImageURL,
+			"CreatedAt": ep.CreatedAt,
+			"UpdatedAt": ep.UpdatedAt,
+			"Watched":   ep.Watched,
+			"WatchedAt": ep.WatchedAt,
+		}
+		
+		// Handle pointers safely
+		if ep.Rating != nil {
+			templateEp["Rating"] = *ep.Rating
+		}
+		if ep.Notes != nil {
+			templateEp["Notes"] = *ep.Notes
+		}
+		
+		templateEpisodes = append(templateEpisodes, templateEp)
+	}
+
+	data := map[string]interface{}{
+		"Show":           show,
+		"Episodes":       templateEpisodes,
+		"Seasons":        seasons,
+		"SelectedSeason": selectedSeason,
+		"User":           user,
+	}
+
+	// Check if this is an HTMX request for partial content
+	if r.Header.Get("HX-Request") == "true" && seasonParam != "" {
+		// Return just the episodes list for HTMX season switching
+		if err := tmpl.ExecuteTemplate(w, "episodes_list", data); err != nil {
+			log.Printf("Error executing episodes_list template: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+	} else {
+		// Return full episodes page
+		if err := tmpl.ExecuteTemplate(w, "episodes", data); err != nil {
+			log.Printf("Error executing episodes template: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+	}
+}
+
+func ToggleEpisodeWatchedHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	vars := mux.Vars(r)
+	episodeIDStr := vars["id"]
+	
+	episodeID, err := uuid.Parse(episodeIDStr)
+	if err != nil {
+		http.Error(w, "Invalid episode ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get current tracking status
+	tracking, err := db.GetEpisodeTracking(db.DB, episodeID, userID)
+	watched := false
+	if err == nil && tracking != nil {
+		watched = !tracking.Watched
+	} else {
+		watched = true
+	}
+
+	// Update watched status
+	if err := db.MarkEpisodeWatched(db.DB, episodeID, userID, watched); err != nil {
+		log.Printf("Error updating episode watched status: %v", err)
+		http.Error(w, "Failed to update episode", http.StatusInternalServerError)
+		return
+	}
+
+	// Get updated episode data and return the episode item
+	var episode db.EpisodeWithTracking
+	err = db.DB.QueryRow(context.Background(), `
+		SELECT 
+			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
+			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
+			COALESCE(et.watched, false) as watched,
+			et.rating, et.notes, et.watched_at
+		FROM episodes e
+		LEFT JOIN episode_tracking et ON e.id = et.episode_id AND et.user_id = $2
+		WHERE e.id = $1 AND e.user_id = $2
+	`, episodeID, userID).Scan(
+		&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+		&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
+		&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
+		&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
+
+	if err != nil {
+		log.Printf("Error getting updated episode: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Create template-friendly episode data
+	templateEpisode := map[string]interface{}{
+		"ID":        episode.ID,
+		"ShowID":    episode.ShowID,
+		"UserID":    episode.UserID,
+		"TVMazeID":  episode.TVMazeID,
+		"Name":      episode.Name,
+		"Season":    episode.Season,
+		"Number":    episode.Number,
+		"Summary":   episode.Summary,
+		"AirDate":   episode.AirDate,
+		"Runtime":   episode.Runtime,
+		"ImageURL":  episode.ImageURL,
+		"CreatedAt": episode.CreatedAt,
+		"UpdatedAt": episode.UpdatedAt,
+		"Watched":   episode.Watched,
+		"WatchedAt": episode.WatchedAt,
+	}
+
+	// Handle pointers safely
+	if episode.Rating != nil {
+		templateEpisode["Rating"] = *episode.Rating
+	}
+	if episode.Notes != nil {
+		templateEpisode["Notes"] = *episode.Notes
+	}
+
+	// Return the updated episode item
+	if err := tmpl.ExecuteTemplate(w, "episode_item", templateEpisode); err != nil {
+		log.Printf("Error executing episode_item template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func EpisodeDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	vars := mux.Vars(r)
+	episodeIDStr := vars["id"]
+	
+	episodeID, err := uuid.Parse(episodeIDStr)
+	if err != nil {
+		http.Error(w, "Invalid episode ID", http.StatusBadRequest)
+		return
+	}
+
+	// First get the episode by ID - I need to create this function
+	// For now, let's use a different approach and get it from episodes table directly
+	var episode db.EpisodeWithTracking
+	err = db.DB.QueryRow(context.Background(), `
+		SELECT 
+			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
+			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
+			COALESCE(et.watched, false) as watched,
+			et.rating, et.notes, et.watched_at
+		FROM episodes e
+		LEFT JOIN episode_tracking et ON e.id = et.episode_id AND et.user_id = $2
+		WHERE e.id = $1 AND e.user_id = $2
+	`, episodeID, userID).Scan(
+		&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+		&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
+		&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
+		&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
+
+	if err != nil {
+		log.Printf("Error getting episode: %v", err)
+		http.Error(w, "Episode not found", http.StatusNotFound)
+		return
+	}
+
+	// Get tracking info separately for the modal form
+	tracking, err := db.GetEpisodeTracking(db.DB, episodeID, userID)
+	if err != nil && !strings.Contains(err.Error(), "no rows") {
+		log.Printf("Error getting episode tracking: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	
+	// If no tracking exists, create empty one
+	if tracking == nil {
+		tracking = &db.EpisodeTracking{
+			EpisodeID: episodeID,
+			UserID:    userID,
+			Watched:   episode.Watched,
+			Rating:    episode.Rating,
+			Notes:     episode.Notes,
+		}
+	}
+
+	// Prepare template-friendly data
+	var ratingValue int
+	var notesValue string
+	
+	if tracking.Rating != nil {
+		ratingValue = *tracking.Rating
+	}
+	if tracking.Notes != nil {
+		notesValue = *tracking.Notes
+	}
+
+	trackingData := map[string]interface{}{
+		"Watched":     tracking.Watched,
+		"Rating":      ratingValue,
+		"Notes":       notesValue,
+		"HasRating":   tracking.Rating != nil,
+		"HasNotes":    tracking.Notes != nil,
+		"WatchedAt":   tracking.WatchedAt,
+	}
+
+	data := map[string]interface{}{
+		"Episode":  episode,
+		"Tracking": trackingData,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "episode_details_modal", data); err != nil {
+		log.Printf("Error executing episode_details_modal template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func UpdateEpisodeTrackingHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	userID := userIDValue.(uuid.UUID)
+	
+	vars := mux.Vars(r)
+	episodeIDStr := vars["id"]
+	
+	episodeID, err := uuid.Parse(episodeIDStr)
+	if err != nil {
+		http.Error(w, "Invalid episode ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse form data
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	watched := r.FormValue("watched") == "true"
+	notes := r.FormValue("notes")
+	ratingStr := r.FormValue("rating")
+	
+	var rating *int
+	if ratingStr != "" {
+		if r, err := strconv.Atoi(ratingStr); err == nil && r >= 1 && r <= 10 {
+			rating = &r
+		}
+	}
+
+	var watchedAt *time.Time
+	if watched {
+		now := time.Now()
+		watchedAt = &now
+	}
+
+	tracking := db.EpisodeTracking{
+		EpisodeID: episodeID,
+		UserID:    userID,
+		Watched:   watched,
+		Rating:    rating,
+		Notes:     &notes,
+		WatchedAt: watchedAt,
+	}
+
+	if err := db.CreateOrUpdateEpisodeTracking(db.DB, tracking); err != nil {
+		log.Printf("Error updating episode tracking: %v", err)
+		http.Error(w, "Failed to update tracking", http.StatusInternalServerError)
+		return
+	}
+
+	// Get updated episode data and return the episode item
+	var episode db.EpisodeWithTracking
+	err = db.DB.QueryRow(context.Background(), `
+		SELECT 
+			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
+			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
+			COALESCE(et.watched, false) as watched,
+			et.rating, et.notes, et.watched_at
+		FROM episodes e
+		LEFT JOIN episode_tracking et ON e.id = et.episode_id AND et.user_id = $2
+		WHERE e.id = $1 AND e.user_id = $2
+	`, episodeID, userID).Scan(
+		&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+		&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
+		&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
+		&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
+
+	if err != nil {
+		log.Printf("Error getting updated episode: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Create template-friendly episode data
+	templateEpisode := map[string]interface{}{
+		"ID":        episode.ID,
+		"ShowID":    episode.ShowID,
+		"UserID":    episode.UserID,
+		"TVMazeID":  episode.TVMazeID,
+		"Name":      episode.Name,
+		"Season":    episode.Season,
+		"Number":    episode.Number,
+		"Summary":   episode.Summary,
+		"AirDate":   episode.AirDate,
+		"Runtime":   episode.Runtime,
+		"ImageURL":  episode.ImageURL,
+		"CreatedAt": episode.CreatedAt,
+		"UpdatedAt": episode.UpdatedAt,
+		"Watched":   episode.Watched,
+		"WatchedAt": episode.WatchedAt,
+	}
+
+	// Handle pointers safely
+	if episode.Rating != nil {
+		templateEpisode["Rating"] = *episode.Rating
+	}
+	if episode.Notes != nil {
+		templateEpisode["Notes"] = *episode.Notes
+	}
+
+	// Return the updated episode item and close modal
+	w.Header().Set("HX-Trigger", "closeModal")
+	if err := tmpl.ExecuteTemplate(w, "episode_item", templateEpisode); err != nil {
+		log.Printf("Error executing episode_item template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
 
