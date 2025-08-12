@@ -80,6 +80,46 @@
     } else {
         initializeSearchClearing();
     }
+    
+    // Handle add show button clicks with appropriate progress notifications
+    function handleAddShow(button) {
+        const showName = button.dataset.showName;
+        const showType = button.dataset.showType;
+        const episodeCount = parseInt(button.dataset.episodeCount) || 0;
+        
+        // Show appropriate toast based on show type and episode count
+        if (showType === 'anime') {
+            if (episodeCount > 50) {
+                showToast(`Adding "${showName}" with ${episodeCount} episodes. This may take a few minutes due to API rate limits...`, 'info', 15000);
+            } else if (episodeCount > 20) {
+                showToast(`Adding "${showName}" with ${episodeCount} episodes. Please wait...`, 'info', 8000);
+            } else {
+                showToast(`Adding "${showName}"...`, 'info', 5000);
+            }
+        } else {
+            showToast(`Adding "${showName}"...`, 'info', 3000);
+        }
+        
+        // Update button state
+        button.disabled = true;
+        button.textContent = 'Adding...';
+    }
+    
+    // Show success toast when anime is successfully added
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Check if this was an anime add operation that succeeded
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('search-result-anime-')) {
+            const addedIndicator = evt.detail.target.querySelector('.already-added-indicator');
+            if (addedIndicator) {
+                // Successfully added - extract anime name from the h4 title
+                const titleElement = evt.detail.target.querySelector('h4');
+                if (titleElement) {
+                    const animeTitle = titleElement.textContent.trim();
+                    showToast(`"${animeTitle}" has been added to your shows!`, 'success', 3000);
+                }
+            }
+        }
+    });
 </script>
 {{ end }} {{ define "my_shows_list" }}
 {{ if or .WatchingShows .FinishedShows }}
@@ -223,6 +263,46 @@
             }
         });
     }
+    
+    // Handle add show button clicks with appropriate progress notifications
+    function handleAddShow(button) {
+        const showName = button.dataset.showName;
+        const showType = button.dataset.showType;
+        const episodeCount = parseInt(button.dataset.episodeCount) || 0;
+        
+        // Show appropriate toast based on show type and episode count
+        if (showType === 'anime') {
+            if (episodeCount > 50) {
+                showToast(`Adding "${showName}" with ${episodeCount} episodes. This may take a few minutes due to API rate limits...`, 'info', 15000);
+            } else if (episodeCount > 20) {
+                showToast(`Adding "${showName}" with ${episodeCount} episodes. Please wait...`, 'info', 8000);
+            } else {
+                showToast(`Adding "${showName}"...`, 'info', 5000);
+            }
+        } else {
+            showToast(`Adding "${showName}"...`, 'info', 3000);
+        }
+        
+        // Update button state
+        button.disabled = true;
+        button.textContent = 'Adding...';
+    }
+    
+    // Show success toast when anime is successfully added
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Check if this was an anime add operation that succeeded
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('search-result-anime-')) {
+            const addedIndicator = evt.detail.target.querySelector('.already-added-indicator');
+            if (addedIndicator) {
+                // Successfully added - extract anime name from the h4 title
+                const titleElement = evt.detail.target.querySelector('h4');
+                if (titleElement) {
+                    const animeTitle = titleElement.textContent.trim();
+                    showToast(`"${animeTitle}" has been added to your shows!`, 'success', 3000);
+                }
+            }
+        }
+    });
 </script>
 {{ end }} {{ define "search_results" }} {{ if .SearchResults }}
 <div class="search-results-list">
@@ -233,28 +313,30 @@
     <p>No shows found for "{{ .SearchQuery }}"</p>
 </div>
 {{ end }} {{ end }} {{ define "search_result_item" }}
-<div class="search-result-item" id="search-result-{{ .Show.ID }}">
+{{ if eq .Type "tv" }}
+<div class="search-result-item" id="search-result-tv-{{ .TVShow.Show.ID }}">
     <div class="search-result-poster">
-        {{ if .Show.Image }} {{ if .Show.Image.Medium }}
-        <img src="{{ .Show.Image.Medium }}" alt="{{ .Show.Name }}" />
+        {{ if .TVShow.Show.Image }} {{ if .TVShow.Show.Image.Medium }}
+        <img src="{{ .TVShow.Show.Image.Medium }}" alt="{{ .TVShow.Show.Name }}" />
         {{ end }} {{ else }}
         <div class="search-result-poster-placeholder">
-            <img src="/static/images/svg/tv.svg" alt="{{ .Show.Name }}" />
+            <img src="/static/images/svg/tv.svg" alt="{{ .TVShow.Show.Name }}" />
         </div>
         {{ end }}
     </div>
 
     <div class="search-result-info">
-        <h4>{{ .Show.Name }}</h4>
-        {{ if .Show.Network }}
-        <p class="search-result-network">{{ .Show.Network.Name }}</p>
-        {{ else if .Show.WebChannel }}
-        <p class="search-result-network">{{ .Show.WebChannel.Name }}</p>
-        {{ end }} {{ if .Show.Premiered }}
-        <p class="search-result-year">{{ .Show.Premiered }}</p>
-        {{ end }} {{ if .Show.Summary }}
+        <div class="result-type-badge tv-badge">📺 TV Show</div>
+        <h4>{{ .TVShow.Show.Name }}</h4>
+        {{ if .TVShow.Show.Network }}
+        <p class="search-result-network">{{ .TVShow.Show.Network.Name }}</p>
+        {{ else if .TVShow.Show.WebChannel }}
+        <p class="search-result-network">{{ .TVShow.Show.WebChannel.Name }}</p>
+        {{ end }} {{ if .TVShow.Show.Premiered }}
+        <p class="search-result-year">{{ .TVShow.Show.Premiered }}</p>
+        {{ end }} {{ if .TVShow.Show.Summary }}
         <p class="search-result-summary">
-            {{ truncate (.Show.Summary | stripHTML) 200 }}
+            {{ truncate (.TVShow.Show.Summary | stripHTML) 200 }}
         </p>
         {{ end }} {{ if .AlreadyAdded }}
         <div class="already-added-indicator">
@@ -264,16 +346,78 @@
         {{ else }}
         <button
             hx-post="/shows/add"
-            hx-vals='{"tvmaze_id": "{{ .Show.ID }}"}'
-            hx-target="#search-result-{{ .Show.ID }}"
+            hx-vals='{"external_id": "{{ .TVShow.Show.ID }}", "show_type": "tv"}'
+            hx-target="#search-result-tv-{{ .TVShow.Show.ID }}"
             hx-swap="outerHTML"
             class="btn-primary add-show-btn"
+            hx-indicator="#loading-tv-{{ .TVShow.Show.ID }}"
+            data-show-name="{{ .TVShow.Show.Name }}"
+            data-show-type="tv"
+            onclick="handleAddShow(this)"
         >
             + Add to My Shows
         </button>
+        <div id="loading-tv-{{ .TVShow.Show.ID }}" class="htmx-indicator" style="display: none;">
+            <div class="spinner"></div>
+        </div>
         {{ end }}
     </div>
 </div>
+{{ else if eq .Type "anime" }}
+<div class="search-result-item" id="search-result-anime-{{ .Anime.MalID }}">
+    <div class="search-result-poster">
+        {{ if .Anime.Images.JPG.ImageURL }}
+        <img src="{{ .Anime.Images.JPG.ImageURL }}" alt="{{ .Anime.Title }}" />
+        {{ else }}
+        <div class="search-result-poster-placeholder">
+            <img src="/static/images/svg/tv.svg" alt="{{ .Anime.Title }}" />
+        </div>
+        {{ end }}
+    </div>
+
+    <div class="search-result-info">
+        <div class="result-type-badge anime-badge">🎌 Anime</div>
+        <h4>{{ .Anime.Title }}</h4>
+        {{ if .Anime.Studios }} {{ if gt (len .Anime.Studios) 0 }}
+        <p class="search-result-network">{{ (index .Anime.Studios 0).Name }}</p>
+        {{ end }} {{ end }}
+        {{ if .Anime.Year }}
+        <p class="search-result-year">{{ .Anime.Year }}</p>
+        {{ end }}
+        {{ if .Anime.Episodes }}
+        <p class="search-result-episodes">{{ .Anime.Episodes }} episodes</p>
+        {{ end }}
+        {{ if .Anime.Synopsis }}
+        <p class="search-result-summary">
+            {{ truncate (.Anime.Synopsis | stripHTML) 200 }}
+        </p>
+        {{ end }} {{ if .AlreadyAdded }}
+        <div class="already-added-indicator">
+            <img src="/static/images/svg/check-green.svg" alt="Added" />
+            Already in My Shows
+        </div>
+        {{ else }}
+        <button
+            hx-post="/shows/add"
+            hx-vals='{"external_id": "{{ .Anime.MalID }}", "show_type": "anime"}'
+            hx-target="#search-result-anime-{{ .Anime.MalID }}"
+            hx-swap="outerHTML"
+            class="btn-primary add-show-btn"
+            hx-indicator="#loading-{{ .Anime.MalID }}"
+            data-show-name="{{ .Anime.Title }}"
+            data-show-type="anime"
+            data-episode-count="{{ if .Anime.Episodes }}{{ .Anime.Episodes }}{{ else }}0{{ end }}"
+            onclick="handleAddShow(this)"
+        >
+            + Add to My Shows
+        </button>
+        <div id="loading-{{ .Anime.MalID }}" class="htmx-indicator" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+{{ end }}
 {{ end }} {{ define "episodes" }}
 <div class="episodes-container">
     <div class="episodes-header">
@@ -292,7 +436,12 @@
                     />
                 </button>
 
-                <h1>{{ .Show.Name }}</h1>
+                <div class="show-title-info" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <h1 style="margin: 0;">{{ .Show.Name }}</h1>
+                    {{ if eq .Show.ShowType "anime" }}
+                    <span class="anime-episode-count" style="font-size: 0.9em; color: #666; font-weight: normal; background: #f5f5f5; padding: 4px 8px; border-radius: 4px;">({{ .TotalEpisodes }} episodes)</span>
+                    {{ end }}
+                </div>
 
                 {{ if .Show.Summary }}
                 <button
@@ -329,7 +478,7 @@
                 <div class="show-summary-actions">
                     <button
                         hx-post="/shows/{{ .Show.ID }}/mark-all-watched"
-                        hx-target="#episodes-content"
+                        hx-target="{{ if eq .Show.ShowType "anime" }}#anime-pagination-wrapper{{ else }}#episodes-content{{ end }}"
                         hx-swap="innerHTML"
                         hx-confirm="Mark all episodes as watched?"
                         class="btn-mark-all-watched"
@@ -345,43 +494,49 @@
             </div>
         </div>
     </div>
-    {{ end }} {{ if .Seasons }}
-    <div class="season-selector-card">
-        <div class="season-selector">
-            <label for="season-select">
-                <img src="/static/images/svg/layers.svg" alt="Season" />
-                Season
-            </label>
-            <select
-                id="season-select"
-                name="season"
-                hx-get="/shows/{{ .Show.ID }}/episodes"
-                hx-target="#episodes-content"
-                hx-swap="innerHTML"
-                hx-trigger="change"
-                hx-include="this"
-            >
-                {{ range .Seasons }}
-                <option
-                    value="{{ . }}"
-                    {{
-                    if
-                    eq
-                    .
-                    $.SelectedSeason
-                    }}selected{{
-                    end
-                    }}
+    {{ end }} {{ if eq .Show.ShowType "tv" }}
+        {{ if .Seasons }}
+        <div class="season-selector-card">
+            <div class="season-selector">
+                <label for="season-select">
+                    <img src="/static/images/svg/layers.svg" alt="Season" />
+                    Season
+                </label>
+                <select
+                    id="season-select"
+                    name="season"
+                    hx-get="/shows/{{ .Show.ID }}/episodes"
+                    hx-target="#episodes-content"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="this"
                 >
-                    Season {{ . }}
-                </option>
-                {{ end }}
-            </select>
+                    {{ range .Seasons }}
+                    <option
+                        value="{{ . }}"
+                        {{
+                        if
+                        eq
+                        .
+                        $.SelectedSeason
+                        }}selected{{
+                        end
+                        }}
+                    >
+                        Season {{ . }}
+                    </option>
+                    {{ end }}
+                </select>
+            </div>
         </div>
-    </div>
+        {{ end }}
+    {{ else if eq .Show.ShowType "anime" }}
+        <div id="anime-pagination-wrapper">{{ template "anime_pagination_content" . }}</div>
     {{ end }}
 
-    <div id="episodes-content">{{ template "episodes_list" . }}</div>
+    {{ if eq .Show.ShowType "tv" }}
+    <div id="episodes-content" hx-on::after-swap="window.scrollTo({top: 0, behavior: 'smooth'})">{{ template "episodes_list" . }}</div>
+    {{ end }}
 
     <!-- Modal container for episode details -->
     <div id="episode-details-modal"></div>
@@ -403,9 +558,188 @@
     }
 </script>
 
-{{ end }} {{ define "episodes_list" }}
+{{ end }} 
+
+{{ define "anime_pagination_content" }}
+        {{ if gt .TotalPages 1 }}
+        <div class="pagination-card" style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <!-- Desktop layout -->
+            <div class="pagination-desktop" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                <span class="pagination-info" style="display: flex; align-items: center; gap: 8px; font-weight: 500; color: #333;">
+                    <img src="/static/images/svg/tv.svg" alt="Episodes" style="width: 18px; height: 18px;" />
+                    Page {{ .CurrentPage }} of {{ .TotalPages }}
+                </span>
+                <div class="pagination-controls" style="display: flex; gap: 4px; align-items: center;">
+                    <!-- Previous arrow -->
+                    {{ if .PrevPage }}
+                    <button
+                        hx-get="/shows/{{ .Show.ID }}/episodes?page={{ .PrevPage }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-arrow"
+                        title="Previous Page"
+                        style="background: #007bff; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 0.9em; display: flex; align-items: center; justify-content: center;"
+                        onmouseover="this.style.backgroundColor='#0056b3'"
+                        onmouseout="this.style.backgroundColor='#007bff'"
+                    >
+                        ←
+                    </button>
+                    {{ end }}
+                    
+                    <!-- Page numbers with ellipsis support -->
+                    {{ range .PageNumbers }}
+                    {{ if lt . 0 }}
+                    <span style="color: #666; padding: 0 4px;">...</span>
+                    {{ else }}
+                    <button
+                        hx-get="/shows/{{ $.Show.ID }}/episodes?page={{ . }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-number {{ if eq . $.CurrentPage }}current{{ end }}"
+                        style="background: {{ if eq . $.CurrentPage }}#0056b3{{ else }}#f8f9fa{{ end }}; color: {{ if eq . $.CurrentPage }}white{{ else }}#333{{ end }}; border: 1px solid {{ if eq . $.CurrentPage }}#0056b3{{ else }}#ddd{{ end }}; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 0.9em; display: flex; align-items: center; justify-content: center;"
+                        onmouseover="if({{ . }} != {{ $.CurrentPage }}) { this.style.backgroundColor='#e9ecef'; }"
+                        onmouseout="if({{ . }} != {{ $.CurrentPage }}) { this.style.backgroundColor='#f8f9fa'; }"
+                    >
+                        {{ . }}
+                    </button>
+                    {{ end }}
+                    {{ end }}
+                    
+                    <!-- Next arrow -->
+                    {{ if .NextPage }}
+                    <button
+                        hx-get="/shows/{{ .Show.ID }}/episodes?page={{ .NextPage }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-arrow"
+                        title="Next Page"
+                        style="background: #007bff; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 0.9em; display: flex; align-items: center; justify-content: center;"
+                        onmouseover="this.style.backgroundColor='#0056b3'"
+                        onmouseout="this.style.backgroundColor='#007bff'"
+                    >
+                        →
+                    </button>
+                    {{ end }}
+                </div>
+            </div>
+            
+            <!-- Mobile layout -->
+            <div class="pagination-mobile" style="display: none;">
+                <div class="pagination-info" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 500; color: #333; margin-bottom: 16px;">
+                    <img src="/static/images/svg/tv.svg" alt="Episodes" style="width: 18px; height: 18px;" />
+                    Page {{ .CurrentPage }} of {{ .TotalPages }}
+                </div>
+                
+                <!-- Navigation arrows -->
+                <div class="pagination-nav" style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px;">
+                    <button
+                        hx-get="/shows/{{ .Show.ID }}/episodes?page=1"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-first"
+                        title="First Page"
+                        style="background: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; {{ if eq .CurrentPage 1 }}opacity: 0.5; pointer-events: none;{{ end }}"
+                    >
+                        ⇤ First
+                    </button>
+                    {{ if .PrevPage }}
+                    <button
+                        hx-get="/shows/{{ .Show.ID }}/episodes?page={{ .PrevPage }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-prev"
+                        title="Previous Page"
+                        style="background: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;"
+                    >
+                        ← Prev
+                    </button>
+                    {{ end }}
+                    {{ if .NextPage }}
+                    <button
+                        hx-get="/shows/{{ .Show.ID }}/episodes?page={{ .NextPage }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-next"
+                        title="Next Page"
+                        style="background: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;"
+                    >
+                        Next →
+                    </button>
+                    {{ end }}
+                    <button
+                        hx-get="/shows/{{ .Show.ID }}/episodes?page={{ .TotalPages }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-last"
+                        title="Last Page"
+                        style="background: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; {{ if eq .CurrentPage .TotalPages }}opacity: 0.5; pointer-events: none;{{ end }}"
+                    >
+                        Last ⇥
+                    </button>
+                </div>
+                
+                <!-- Page number selector -->
+                <div class="page-selector" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; max-width: 100%; overflow-x: auto; padding: 8px;">
+                    {{ range .MobilePageNumbers }}
+                    <button
+                        hx-get="/shows/{{ $.Show.ID }}/episodes?page={{ . }}"
+                        hx-target="#anime-pagination-wrapper"
+                        hx-swap="innerHTML"
+                        class="pagination-number-mobile {{ if eq . $.CurrentPage }}current{{ end }}"
+                        style="background: {{ if eq . $.CurrentPage }}#0056b3{{ else }}#f8f9fa{{ end }}; color: {{ if eq . $.CurrentPage }}white{{ else }}#333{{ end }}; border: 1px solid {{ if eq . $.CurrentPage }}#0056b3{{ else }}#ddd{{ end }}; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 0.85em; display: flex; align-items: center; justify-content: center; font-weight: {{ if eq . $.CurrentPage }}bold{{ else }}normal{{ end }}; flex-shrink: 0;"
+                    >
+                        {{ . }}
+                    </button>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Responsive CSS for pagination -->
+        <style>
+            @media (max-width: 768px) {
+                .pagination-desktop {
+                    display: none !important;
+                }
+                .pagination-mobile {
+                    display: block !important;
+                }
+                .page-selector {
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: thin;
+                }
+                .page-selector::-webkit-scrollbar {
+                    height: 4px;
+                }
+                .page-selector::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 2px;
+                }
+                .page-selector::-webkit-scrollbar-thumb {
+                    background: #ccc;
+                    border-radius: 2px;
+                }
+            }
+            
+            @media (min-width: 769px) {
+                .pagination-desktop {
+                    display: flex !important;
+                }
+                .pagination-mobile {
+                    display: none !important;
+                }
+            }
+        </style>
+        {{ end }}
+        
+        <div id="episodes-content" hx-on::after-swap="window.scrollTo({top: 0, behavior: 'smooth'})">{{ template "episodes_list" . }}</div>
+{{ end }}
+
+{{ define "episodes_list" }}
 <div class="episodes-list">
     {{ if .Episodes }}
+    {{ if eq .Show.ShowType "tv" }}
     <div class="season-header-card">
         <div class="season-header">
             <div class="season-info">
@@ -417,6 +751,7 @@
             </div>
         </div>
     </div>
+    {{ end }}
     {{ range .Episodes }} {{ template "episode_item" . }} {{ end }} {{ else if
     .SelectedSeason }}
     <div class="empty-state">
@@ -443,14 +778,20 @@
 
         <div class="episode-main-info">
             <h4 class="episode-title">{{ .Name }}</h4>
-            <div class="episode-meta-inline">
-                <span class="episode-number"
-                    >{{ .Season }}x{{ printf "%02d" .Number }}</span
-                >
+            <div class="episode-meta-inline" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                {{ if eq $.Show.ShowType "anime" }}
+                <span class="episode-number" style="font-weight: 500;">{{ .Number }}</span>
+                {{ else }}
+                <span class="episode-number" style="font-weight: 500;">{{ .Season }}x{{ printf "%02d" .Number }}</span>
+                {{ end }}
                 {{ if .AirDate }}
-                <span class="episode-date"
-                    >{{ .AirDate.Format "Jan 2, 2006" }}</span
-                >
+                <span class="episode-date" style="color: #666; font-size: 0.9em;">{{ .AirDate.Format "Jan 2, 2006" }}</span>
+                {{ end }}
+                {{ if .Filler }}
+                <span class="episode-type filler-type" title="Filler Episode" style="background: #ff9800; color: white; font-size: 0.7em; padding: 2px 5px; border-radius: 3px; font-weight: bold; display: inline-block; white-space: nowrap;">FILLER</span>
+                {{ end }}
+                {{ if .Recap }}
+                <span class="episode-type recap-type" title="Recap Episode" style="background: #2196f3; color: white; font-size: 0.7em; padding: 2px 5px; border-radius: 3px; font-weight: bold; display: inline-block; white-space: nowrap;">RECAP</span>
                 {{ end }}
             </div>
         </div>
@@ -509,14 +850,22 @@
 
         <div class="modal-body">
             <div class="episode-meta">
-                <span
-                    >Season {{ .Episode.Season }}, Episode {{ .Episode.Number
-                    }}</span
-                >
+                {{ if eq .Show.ShowType "anime" }}
+                <span>Episode {{ .Episode.Number }}</span>
+                {{ else }}
+                <span>Season {{ .Episode.Season }}, Episode {{ .Episode.Number }}</span>
+                {{ end }}
                 {{ if .Episode.AirDate }}
                 <span>{{ .Episode.AirDate.Format "January 2, 2006" }}</span>
-                {{ end }} {{ if .Episode.Runtime }}
+                {{ end }}
+                {{ if .Episode.Runtime }}
                 <span>{{ .Episode.Runtime }} minutes</span>
+                {{ end }}
+                {{ if .Episode.Filler }}
+                <span class="episode-type filler-type" style="background: #ff9800; color: white; font-size: 0.9em; padding: 3px 8px; border-radius: 4px; margin-left: 6px; font-weight: bold; display: inline-block;">FILLER EPISODE</span>
+                {{ end }}
+                {{ if .Episode.Recap }}
+                <span class="episode-type recap-type" style="background: #2196f3; color: white; font-size: 0.9em; padding: 3px 8px; border-radius: 4px; margin-left: 6px; font-weight: bold; display: inline-block;">RECAP EPISODE</span>
                 {{ end }}
             </div>
 
@@ -634,5 +983,45 @@
             }
         });
     }
+    
+    // Handle add show button clicks with appropriate progress notifications
+    function handleAddShow(button) {
+        const showName = button.dataset.showName;
+        const showType = button.dataset.showType;
+        const episodeCount = parseInt(button.dataset.episodeCount) || 0;
+        
+        // Show appropriate toast based on show type and episode count
+        if (showType === 'anime') {
+            if (episodeCount > 50) {
+                showToast(`Adding "${showName}" with ${episodeCount} episodes. This may take a few minutes due to API rate limits...`, 'info', 15000);
+            } else if (episodeCount > 20) {
+                showToast(`Adding "${showName}" with ${episodeCount} episodes. Please wait...`, 'info', 8000);
+            } else {
+                showToast(`Adding "${showName}"...`, 'info', 5000);
+            }
+        } else {
+            showToast(`Adding "${showName}"...`, 'info', 3000);
+        }
+        
+        // Update button state
+        button.disabled = true;
+        button.textContent = 'Adding...';
+    }
+    
+    // Show success toast when anime is successfully added
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Check if this was an anime add operation that succeeded
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('search-result-anime-')) {
+            const addedIndicator = evt.detail.target.querySelector('.already-added-indicator');
+            if (addedIndicator) {
+                // Successfully added - extract anime name from the h4 title
+                const titleElement = evt.detail.target.querySelector('h4');
+                if (titleElement) {
+                    const animeTitle = titleElement.textContent.trim();
+                    showToast(`"${animeTitle}" has been added to your shows!`, 'success', 3000);
+                }
+            }
+        }
+    });
 </script>
 {{ end }}

@@ -157,6 +157,20 @@
                         );
                     },
                 );
+
+                // Auto-scroll to top for main content navigation
+                document.body.addEventListener(
+                    "htmx:afterSwap",
+                    function (event) {
+                        // Check if the swap target is the main element (page navigation)
+                        if (event.target && event.target.tagName === "MAIN") {
+                            // Delay scroll to ensure content is fully rendered
+                            setTimeout(function() {
+                                window.scrollTo({top: 0, behavior: 'smooth'});
+                            }, 50);
+                        }
+                    },
+                );
             });
 
             // Legacy function for backward compatibility

@@ -91,10 +91,12 @@ func GetShowEpisodes(tvmazeID int) ([]db.TVMazeEpisode, error) {
 // ConvertTVMazeShowToShow converts a TVMaze show to our internal Show model
 func ConvertTVMazeShowToShow(tvShow db.TVMazeShow) db.Show {
 	show := db.Show{
-		TVMazeID: tvShow.ID,
-		Name:     tvShow.Name,
-		Summary:  tvShow.Summary,
-		Status:   &tvShow.Status,
+		ExternalID: tvShow.ID, // TVMaze ID for TV shows
+		ShowType:   "tv",
+		Name:       tvShow.Name,
+		Summary:    tvShow.Summary,
+		Status:     &tvShow.Status,
+		TVMazeID:   tvShow.ID, // Legacy field for backward compatibility
 	}
 
 	// Handle image URL
@@ -218,14 +220,16 @@ func GetAllEpisodes(tvmazeID int) ([]db.TVMazeEpisode, error) {
 // ConvertTVMazeEpisodeToEpisode converts a TVMaze episode to our internal Episode model
 func ConvertTVMazeEpisodeToEpisode(tvEpisode db.TVMazeEpisode, showID uuid.UUID, userID uuid.UUID) db.Episode {
 	episode := db.Episode{
-		ShowID:   showID,
-		UserID:   userID,
-		TVMazeID: tvEpisode.ID,
-		Name:     tvEpisode.Name,
-		Season:   tvEpisode.Season,
-		Number:   tvEpisode.Number,
-		Summary:  tvEpisode.Summary,
-		Runtime:  tvEpisode.Runtime,
+		ShowID:     showID,
+		UserID:     userID,
+		ExternalID: tvEpisode.ID, // TVMaze episode ID
+		ShowType:   "tv",
+		Name:       tvEpisode.Name,
+		Season:     tvEpisode.Season,
+		Number:     tvEpisode.Number,
+		Summary:    tvEpisode.Summary,
+		Runtime:    tvEpisode.Runtime,
+		TVMazeID:   tvEpisode.ID, // Legacy field for backward compatibility
 	}
 	
 	// Handle air date

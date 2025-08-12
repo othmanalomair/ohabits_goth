@@ -208,10 +208,10 @@ func (s *SyncService) getSyncSettings() (*SyncSettings, error) {
 // getShowsNeedingEpisodeSync gets shows that need episode updates
 func (s *SyncService) getShowsNeedingEpisodeSync(intervalHours int) ([]db.Show, error) {
 	query := `
-		SELECT id, user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at
+		SELECT id, user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at
 		FROM shows 
 		WHERE (last_episode_sync IS NULL OR last_episode_sync < NOW() - INTERVAL '%d hours')
-		AND status != 'Ended'
+		AND status != 'Ended' AND (show_type = 'tv' OR show_type = 'anime')
 		ORDER BY last_episode_sync ASC NULLS FIRST
 		LIMIT 20`
 
@@ -224,7 +224,7 @@ func (s *SyncService) getShowsNeedingEpisodeSync(intervalHours int) ([]db.Show, 
 	var shows []db.Show
 	for rows.Next() {
 		var show db.Show
-		err := rows.Scan(&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary,
+		err := rows.Scan(&show.ID, &show.UserID, &show.ExternalID, &show.ShowType, &show.Name, &show.Summary,
 			&show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network,
 			&show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
 		if err != nil {
@@ -240,9 +240,10 @@ func (s *SyncService) getShowsNeedingEpisodeSync(intervalHours int) ([]db.Show, 
 // getShowsNeedingInfoSync gets shows that need info updates
 func (s *SyncService) getShowsNeedingInfoSync(intervalHours int) ([]db.Show, error) {
 	query := `
-		SELECT id, user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at
+		SELECT id, user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at
 		FROM shows 
 		WHERE (last_info_sync IS NULL OR last_info_sync < NOW() - INTERVAL '%d hours')
+		AND show_type = 'tv'
 		ORDER BY last_info_sync ASC NULLS FIRST
 		LIMIT 10`
 
@@ -255,7 +256,7 @@ func (s *SyncService) getShowsNeedingInfoSync(intervalHours int) ([]db.Show, err
 	var shows []db.Show
 	for rows.Next() {
 		var show db.Show
-		err := rows.Scan(&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary,
+		err := rows.Scan(&show.ID, &show.UserID, &show.ExternalID, &show.ShowType, &show.Name, &show.Summary,
 			&show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network,
 			&show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
 		if err != nil {
@@ -277,37 +278,20 @@ func (s *SyncService) syncEpisodes(show db.Show) SyncResult {
 		Status:   "success",
 	}
 
-	// Fetch episodes from API
-	apiEpisodes, err := api.GetAllEpisodes(show.TVMazeID)
-	if err != nil {
-		result.Status = "error"
-		result.ErrorMessage = err.Error()
-		result.SyncDurationMs = time.Since(startTime).Milliseconds()
-		return result
-	}
-
-	// Get existing episodes
-	existingEpisodes, err := db.GetEpisodesByShow(s.db, show.ID, show.UserID)
-	if err != nil {
-		result.Status = "error"
-		result.ErrorMessage = err.Error()
-		result.SyncDurationMs = time.Since(startTime).Milliseconds()
-		return result
-	}
-
-	// Create map of existing episodes by TVMaze ID
-	existingEpisodesMap := make(map[int]bool)
-	for _, ep := range existingEpisodes {
-		existingEpisodesMap[ep.TVMazeID] = true
-	}
-
-	// Find new episodes to add
 	var newEpisodes []db.Episode
-	for _, apiEpisode := range apiEpisodes {
-		if !existingEpisodesMap[apiEpisode.ID] {
-			episode := api.ConvertTVMazeEpisodeToEpisode(apiEpisode, show.ID, show.UserID)
-			newEpisodes = append(newEpisodes, episode)
-		}
+	var err error
+
+	if show.ShowType == "anime" {
+		newEpisodes, err = s.syncAnimeEpisodes(show)
+	} else {
+		newEpisodes, err = s.syncTVEpisodes(show)
+	}
+
+	if err != nil {
+		result.Status = "error"
+		result.ErrorMessage = err.Error()
+		result.SyncDurationMs = time.Since(startTime).Milliseconds()
+		return result
 	}
 
 	// Add new episodes to database
@@ -336,6 +320,81 @@ func (s *SyncService) syncEpisodes(show db.Show) SyncResult {
 	return result
 }
 
+// syncTVEpisodes handles episode sync for TV shows
+func (s *SyncService) syncTVEpisodes(show db.Show) ([]db.Episode, error) {
+	// Fetch episodes from TVMaze API
+	apiEpisodes, err := api.GetAllEpisodes(show.ExternalID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get existing episodes
+	existingEpisodes, err := db.GetEpisodesByShow(s.db, show.ID, show.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create map of existing episodes by TVMaze ID
+	existingEpisodesMap := make(map[int]bool)
+	for _, ep := range existingEpisodes {
+		existingEpisodesMap[ep.TVMazeID] = true
+	}
+
+	// Find new episodes to add
+	var newEpisodes []db.Episode
+	for _, apiEpisode := range apiEpisodes {
+		if !existingEpisodesMap[apiEpisode.ID] {
+			episode := api.ConvertTVMazeEpisodeToEpisode(apiEpisode, show.ID, show.UserID)
+			newEpisodes = append(newEpisodes, episode)
+		}
+	}
+
+	return newEpisodes, nil
+}
+
+// syncAnimeEpisodes handles episode sync for anime
+func (s *SyncService) syncAnimeEpisodes(show db.Show) ([]db.Episode, error) {
+	// Fetch episodes from Jikan API
+	jikanEpisodes, err := api.GetAnimeEpisodes(show.ExternalID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch episode images
+	episodeImages, err := api.GetAnimeEpisodeVideos(show.ExternalID)
+	if err != nil {
+		log.Printf("Warning: Failed to fetch episode images for anime %s: %v", show.Name, err)
+		episodeImages = make(map[int]string) // Continue without images
+	}
+
+	// Get existing episodes
+	existingEpisodes, err := db.GetEpisodesByShow(s.db, show.ID, show.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create map of existing episodes by MAL ID (using ExternalID field)
+	existingEpisodesMap := make(map[int]bool)
+	for _, ep := range existingEpisodes {
+		existingEpisodesMap[ep.ExternalID] = true
+	}
+
+	// Find new episodes to add
+	var newEpisodes []db.Episode
+	for _, jikanEpisode := range jikanEpisodes {
+		if !existingEpisodesMap[jikanEpisode.MalID] {
+			var imageURL *string
+			if img, exists := episodeImages[jikanEpisode.MalID]; exists {
+				imageURL = &img
+			}
+			episode := api.ConvertJikanEpisodeToEpisode(jikanEpisode, show.ID, show.UserID, imageURL)
+			newEpisodes = append(newEpisodes, episode)
+		}
+	}
+
+	return newEpisodes, nil
+}
+
 // syncShowInfo synchronizes show information
 func (s *SyncService) syncShowInfo(show db.Show) SyncResult {
 	startTime := time.Now()
@@ -345,8 +404,15 @@ func (s *SyncService) syncShowInfo(show db.Show) SyncResult {
 		Status:   "success",
 	}
 
-	// Fetch show info from API
-	apiShow, err := api.GetShowDetails(show.TVMazeID)
+	var updatedShow db.Show
+	var err error
+
+	if show.ShowType == "anime" {
+		updatedShow, err = s.syncAnimeInfo(show)
+	} else {
+		updatedShow, err = s.syncTVInfo(show)
+	}
+
 	if err != nil {
 		result.Status = "error"
 		result.ErrorMessage = err.Error()
@@ -356,13 +422,19 @@ func (s *SyncService) syncShowInfo(show db.Show) SyncResult {
 
 	// Check if status or other info changed
 	statusChanged := false
-	if show.Status == nil || *show.Status != apiShow.Status {
+	imageChanged := false
+	
+	if show.Status == nil || *show.Status != *updatedShow.Status {
 		statusChanged = true
 	}
+	
+	if (show.ImageURL == nil && updatedShow.ImageURL != nil) || 
+	   (show.ImageURL != nil && updatedShow.ImageURL != nil && *show.ImageURL != *updatedShow.ImageURL) {
+		imageChanged = true
+	}
 
-	if statusChanged {
+	if statusChanged || imageChanged {
 		// Update show info in database
-		updatedShow := api.ConvertTVMazeShowToShow(*apiShow)
 		updatedShow.ID = show.ID
 		updatedShow.UserID = show.UserID
 
@@ -371,7 +443,17 @@ func (s *SyncService) syncShowInfo(show db.Show) SyncResult {
 			result.ErrorMessage = err.Error()
 		} else {
 			result.InfoUpdated = true
-			log.Printf("Updated info for show: %s (status: %s)", show.Name, apiShow.Status)
+			updateDetails := ""
+			if statusChanged {
+				updateDetails += fmt.Sprintf("status: %s", *updatedShow.Status)
+			}
+			if imageChanged {
+				if updateDetails != "" {
+					updateDetails += ", "
+				}
+				updateDetails += "image updated"
+			}
+			log.Printf("Updated info for show: %s (%s)", show.Name, updateDetails)
 		}
 	}
 
@@ -380,6 +462,32 @@ func (s *SyncService) syncShowInfo(show db.Show) SyncResult {
 
 	result.SyncDurationMs = time.Since(startTime).Milliseconds()
 	return result
+}
+
+// syncTVInfo handles info sync for TV shows
+func (s *SyncService) syncTVInfo(show db.Show) (db.Show, error) {
+	// Fetch show info from TVMaze API
+	apiShow, err := api.GetShowDetails(show.ExternalID)
+	if err != nil {
+		return db.Show{}, err
+	}
+
+	// Convert and return updated show
+	updatedShow := api.ConvertTVMazeShowToShow(*apiShow)
+	return updatedShow, nil
+}
+
+// syncAnimeInfo handles info sync for anime
+func (s *SyncService) syncAnimeInfo(show db.Show) (db.Show, error) {
+	// Fetch anime info from Jikan API
+	anime, err := api.GetAnimeByID(show.ExternalID)
+	if err != nil {
+		return db.Show{}, err
+	}
+
+	// Convert and return updated show
+	updatedShow := api.ConvertJikanAnimeToShow(*anime)
+	return updatedShow, nil
 }
 
 // updateLastEpisodeSync updates the last episode sync timestamp

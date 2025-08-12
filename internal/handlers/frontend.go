@@ -3474,7 +3474,7 @@ func SearchShowsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := api.SearchShows(query)
+	results, err := api.UnifiedSearch(query)
 	if err != nil {
 		log.Printf("Error searching shows: %v", err)
 		http.Error(w, "Search failed", http.StatusInternalServerError)
@@ -3489,28 +3489,33 @@ func SearchShowsHandler(w http.ResponseWriter, r *http.Request) {
 		userShows = []db.Show{}
 	}
 
-	// Create a map for quick lookup of existing shows by TVMaze ID
-	existingShows := make(map[int]bool)
+	// Create maps for quick lookup of existing shows by external ID and type
+	existingTVShows := make(map[int]bool)
+	existingAnime := make(map[int]bool)
 	for _, show := range userShows {
-		existingShows[show.TVMazeID] = true
+		if show.ShowType == "tv" {
+			existingTVShows[show.ExternalID] = true
+		} else if show.ShowType == "anime" {
+			existingAnime[show.ExternalID] = true
+		}
+		// Legacy support
+		if show.TVMazeID != 0 {
+			existingTVShows[show.TVMazeID] = true
+		}
 	}
 
 	// Add "AlreadyAdded" field to search results
-	type SearchResultWithStatus struct {
-		db.TVMazeSearchResult
-		AlreadyAdded bool
-	}
-
-	var resultsWithStatus []SearchResultWithStatus
-	for _, result := range results {
-		resultsWithStatus = append(resultsWithStatus, SearchResultWithStatus{
-			TVMazeSearchResult: result,
-			AlreadyAdded:       existingShows[result.Show.ID],
-		})
+	for i := range results {
+		externalID := api.GetExternalIDFromResult(results[i])
+		if results[i].Type == "tv" {
+			results[i].AlreadyAdded = existingTVShows[externalID]
+		} else if results[i].Type == "anime" {
+			results[i].AlreadyAdded = existingAnime[externalID]
+		}
 	}
 
 	data := map[string]interface{}{
-		"SearchResults": resultsWithStatus,
+		"SearchResults": results,
 		"SearchQuery":   query,
 	}
 
@@ -3528,30 +3533,63 @@ func AddShowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := userIDValue.(uuid.UUID)
 	
-	tvmazeIDStr := r.FormValue("tvmaze_id")
-	tvmazeID, err := strconv.Atoi(tvmazeIDStr)
+	externalIDStr := r.FormValue("external_id")
+	showType := r.FormValue("show_type")
+	
+	// Legacy support - check for tvmaze_id
+	if externalIDStr == "" {
+		externalIDStr = r.FormValue("tvmaze_id")
+		if externalIDStr != "" {
+			showType = "tv"
+		}
+	}
+	
+	if externalIDStr == "" {
+		http.Error(w, "Missing show ID", http.StatusBadRequest)
+		return
+	}
+	
+	externalID, err := strconv.Atoi(externalIDStr)
 	if err != nil {
 		http.Error(w, "Invalid show ID", http.StatusBadRequest)
 		return
 	}
-
+	
+	if showType == "" {
+		showType = "tv" // Default to TV for backward compatibility
+	}
+	
 	// Check if show already exists for this user
-	existingShow, _ := db.GetShowByTVMazeID(db.DB, tvmazeID, userID)
+	existingShow, _ := db.GetShowByExternalID(db.DB, externalID, showType, userID)
 	if existingShow != nil {
 		http.Error(w, "Show already in your list", http.StatusConflict)
 		return
 	}
-
-	// Get show details from TVmaze API
-	tvShow, err := api.GetShowByID(tvmazeID)
-	if err != nil {
-		log.Printf("Error getting show from API: %v", err)
-		http.Error(w, "Show not found", http.StatusNotFound)
+	
+	var show db.Show
+	if showType == "tv" {
+		// Get show details from TVmaze API
+		tvShow, err := api.GetShowByID(externalID)
+		if err != nil {
+			log.Printf("Error getting TV show from API: %v", err)
+			http.Error(w, "Show not found", http.StatusNotFound)
+			return
+		}
+		show = api.ConvertTVMazeShowToShow(*tvShow)
+	} else if showType == "anime" {
+		// Get anime details from Jikan API
+		anime, err := api.GetAnimeByID(externalID)
+		if err != nil {
+			log.Printf("Error getting anime from API: %v", err)
+			http.Error(w, "Anime not found", http.StatusNotFound)
+			return
+		}
+		show = api.ConvertJikanAnimeToShow(*anime)
+	} else {
+		http.Error(w, "Invalid show type", http.StatusBadRequest)
 		return
 	}
-
-	// Convert and save show
-	show := api.ConvertTVMazeShowToShow(*tvShow)
+	
 	createdShow, err := db.CreateShow(db.DB, show, userID)
 	if err != nil {
 		log.Printf("Error creating show: %v", err)
@@ -3560,37 +3598,82 @@ func AddShowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get episodes for the show
-	tvEpisodes, err := api.GetShowEpisodes(tvmazeID)
-	if err != nil {
-		log.Printf("Error getting episodes: %v", err)
-		// Continue without episodes for now
-	} else {
-		// Convert episodes and save them
-		var episodes []db.Episode
-		for _, tvEpisode := range tvEpisodes {
-			episode := api.ConvertTVMazeEpisodeToEpisode(tvEpisode, createdShow.ID, userID)
-			episodes = append(episodes, episode)
-		}
+	if showType == "tv" {
+		tvEpisodes, err := api.GetShowEpisodes(externalID)
+		if err != nil {
+			log.Printf("Error getting TV episodes: %v", err)
+			// Continue without episodes for now
+		} else {
+			// Convert episodes and save them
+			var episodes []db.Episode
+			for _, tvEpisode := range tvEpisodes {
+				episode := api.ConvertTVMazeEpisodeToEpisode(tvEpisode, createdShow.ID, userID)
+				episodes = append(episodes, episode)
+			}
 		
-		if len(episodes) > 0 {
-			if err := db.CreateEpisodes(db.DB, episodes); err != nil {
-				log.Printf("Error creating episodes: %v", err)
+			if len(episodes) > 0 {
+				if err := db.CreateEpisodes(db.DB, episodes); err != nil {
+					log.Printf("Error creating TV episodes: %v", err)
+				}
+			}
+		}
+	} else if showType == "anime" {
+		// Show progress notifications for anime episode fetching
+		animeEpisodes, err := api.GetAnimeEpisodesWithProgress(externalID, func(message string, current, total int) {
+			// Log progress for now - we could implement websocket later for real-time updates
+			log.Printf("Anime %d progress: %s (page %d/%d)", externalID, message, current, total)
+		})
+		if err != nil {
+			log.Printf("Error getting anime episodes: %v", err)
+			// Continue without episodes for now
+		} else {
+			// Get episode images with progress
+			episodeImages, err := api.GetAnimeEpisodeVideosWithProgress(externalID, func(message string, current, total int) {
+				log.Printf("Anime %d images progress: %s (page %d/%d)", externalID, message, current, total)
+			})
+			if err != nil {
+				log.Printf("Error getting anime episode images: %v", err)
+				// Continue without images
+				episodeImages = make(map[int]string)
+			}
+			
+			// Convert episodes and save them
+			var episodes []db.Episode
+			for _, animeEpisode := range animeEpisodes {
+				var imageURL *string
+				if imgURL, exists := episodeImages[animeEpisode.MalID]; exists {
+					imageURL = &imgURL
+				}
+				episode := api.ConvertJikanEpisodeToEpisode(animeEpisode, createdShow.ID, userID, imageURL)
+				episodes = append(episodes, episode)
+			}
+		
+			if len(episodes) > 0 {
+				if err := db.CreateEpisodes(db.DB, episodes); err != nil {
+					log.Printf("Error creating anime episodes: %v", err)
+				}
 			}
 		}
 	}
 
-	// Return the updated search result item showing it's been added
-	type SearchResultWithStatus struct {
-		db.TVMazeSearchResult
-		AlreadyAdded bool
-	}
-
-	// Create search result structure from the tvShow data
-	searchResult := SearchResultWithStatus{
-		TVMazeSearchResult: db.TVMazeSearchResult{
-			Show: *tvShow,
-		},
-		AlreadyAdded: true,
+	// Create unified search result structure to show it's been added
+	var searchResult db.UnifiedSearchResult
+	if showType == "tv" {
+		tvShow, _ := api.GetShowByID(externalID)
+		searchResult = db.UnifiedSearchResult{
+			Type: "tv",
+			TVShow: &db.TVMazeSearchResult{
+				Show: *tvShow,
+			},
+			AlreadyAdded: true,
+		}
+	} else if showType == "anime" {
+		anime, _ := api.GetAnimeByID(externalID)
+		searchResult = db.UnifiedSearchResult{
+			Type: "anime",
+			Anime: anime,
+			AlreadyAdded: true,
+		}
 	}
 
 	// Get updated shows list for OOB swap
@@ -3689,34 +3772,73 @@ func ShowEpisodesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get all available seasons
-	seasons, err := db.GetSeasonsByShow(db.DB, showID, userID)
-	if err != nil {
-		log.Printf("Error getting seasons: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Get selected season from query parameter, default to latest (first in DESC order)
-	var selectedSeason int
-	seasonParam := r.URL.Query().Get("season")
-	if seasonParam != "" {
-		selectedSeason, err = strconv.Atoi(seasonParam)
-		if err != nil {
-			http.Error(w, "Invalid season parameter", http.StatusBadRequest)
-			return
-		}
-	} else if len(seasons) > 0 {
-		selectedSeason = seasons[0] // Latest season
-	}
-
 	var episodes []db.EpisodeWithTracking
-	if selectedSeason > 0 {
-		episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+	var seasons []int
+	var selectedSeason int
+	var currentPage, totalPages, totalEpisodes int
+
+	if show.ShowType == "anime" {
+		// For anime, use pagination instead of seasons
+		pageParam := r.URL.Query().Get("page")
+		currentPage = 1
+		if pageParam != "" {
+			currentPage, err = strconv.Atoi(pageParam)
+			if err != nil || currentPage < 1 {
+				currentPage = 1
+			}
+		}
+
+		// Get all episodes for the show to calculate pagination
+		allEpisodes, err := db.GetEpisodesWithTrackingByShow(db.DB, showID, userID)
 		if err != nil {
-			log.Printf("Error getting episodes for season: %v", err)
+			log.Printf("Error getting episodes: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
+		}
+
+		// Calculate pagination
+		const episodesPerPage = 50
+		totalEpisodes = len(allEpisodes)
+		totalPages = (totalEpisodes + episodesPerPage - 1) / episodesPerPage
+
+		// Get episodes for current page
+		startIdx := (currentPage - 1) * episodesPerPage
+		endIdx := startIdx + episodesPerPage
+		if endIdx > totalEpisodes {
+			endIdx = totalEpisodes
+		}
+
+		if startIdx < totalEpisodes {
+			episodes = allEpisodes[startIdx:endIdx]
+		}
+	} else {
+		// For TV shows, use traditional season-based approach
+		seasons, err = db.GetSeasonsByShow(db.DB, showID, userID)
+		if err != nil {
+			log.Printf("Error getting seasons: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		// Get selected season from query parameter, default to latest (first in DESC order)
+		seasonParam := r.URL.Query().Get("season")
+		if seasonParam != "" {
+			selectedSeason, err = strconv.Atoi(seasonParam)
+			if err != nil {
+				http.Error(w, "Invalid season parameter", http.StatusBadRequest)
+				return
+			}
+		} else if len(seasons) > 0 {
+			selectedSeason = seasons[0] // Latest season
+		}
+
+		if selectedSeason > 0 {
+			episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+			if err != nil {
+				log.Printf("Error getting episodes for season: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 
@@ -3735,6 +3857,8 @@ func ShowEpisodesHandler(w http.ResponseWriter, r *http.Request) {
 			"AirDate":   ep.AirDate,
 			"Runtime":   ep.Runtime,
 			"ImageURL":  ep.ImageURL,
+			"Filler":    ep.Filler,
+			"Recap":     ep.Recap,
 			"CreatedAt": ep.CreatedAt,
 			"UpdatedAt": ep.UpdatedAt,
 			"Watched":   ep.Watched,
@@ -3752,20 +3876,124 @@ func ShowEpisodesHandler(w http.ResponseWriter, r *http.Request) {
 		templateEpisodes = append(templateEpisodes, templateEp)
 	}
 
+	// Calculate prev/next pages and page numbers for pagination
+	var prevPage, nextPage int
+	var pageNumbers []int
+	
+	if currentPage > 1 {
+		prevPage = currentPage - 1
+	}
+	if currentPage < totalPages {
+		nextPage = currentPage + 1
+	}
+	
+	// Generate page numbers for pagination
+	var mobilePageNumbers []int
+	
+	if totalPages > 0 {
+		// Desktop: show more pages for better navigation
+		if totalPages <= 7 {
+			// Show all pages when there are 7 or fewer
+			for i := 1; i <= totalPages; i++ {
+				pageNumbers = append(pageNumbers, i)
+			}
+		} else {
+			// For more than 7 pages, show first, last, and middle range
+			pageNumbers = append(pageNumbers, 1) // Always show first page
+			
+			// Calculate middle range around current page
+			var start, end int
+			if currentPage <= 4 {
+				// Near beginning: show 2,3,4,5
+				start = 2
+				end = 5
+			} else if currentPage >= totalPages-3 {
+				// Near end: show last 4 middle pages
+				start = totalPages - 4
+				end = totalPages - 1
+			} else {
+				// In middle: show current page ± 2
+				start = currentPage - 2
+				end = currentPage + 2
+			}
+			
+			// Add ellipsis before middle range if needed
+			if start > 2 {
+				pageNumbers = append(pageNumbers, -1) // -1 represents ellipsis
+			}
+			
+			// Add middle range
+			for i := start; i <= end; i++ {
+				if i > 1 && i < totalPages {
+					pageNumbers = append(pageNumbers, i)
+				}
+			}
+			
+			// Add ellipsis after middle range if needed
+			if end < totalPages-1 {
+				pageNumbers = append(pageNumbers, -2) // -2 represents ellipsis
+			}
+			
+			// Always show last page
+			if totalPages > 1 {
+				pageNumbers = append(pageNumbers, totalPages)
+			}
+		}
+		
+		// Mobile: show 10 pages around current
+		mobileStart := 1
+		mobileEnd := totalPages
+		
+		if totalPages > 10 {
+			if currentPage <= 5 {
+				mobileStart = 1
+				mobileEnd = 10
+			} else if currentPage >= totalPages-4 {
+				mobileStart = totalPages - 9
+				mobileEnd = totalPages
+			} else {
+				mobileStart = currentPage - 4
+				mobileEnd = currentPage + 5
+			}
+		}
+		
+		for i := mobileStart; i <= mobileEnd; i++ {
+			mobilePageNumbers = append(mobilePageNumbers, i)
+		}
+	}
+
+
 	data := map[string]interface{}{
-		"Show":           show,
-		"Episodes":       templateEpisodes,
-		"Seasons":        seasons,
-		"SelectedSeason": selectedSeason,
-		"User":           user,
+		"Show":              show,
+		"Episodes":          templateEpisodes,
+		"Seasons":           seasons,
+		"SelectedSeason":    selectedSeason,
+		"CurrentPage":       currentPage,
+		"TotalPages":        totalPages,
+		"PrevPage":          prevPage,
+		"NextPage":         nextPage,
+		"TotalEpisodes":     totalEpisodes,
+		"PageNumbers":       pageNumbers,
+		"MobilePageNumbers": mobilePageNumbers,
+		"User":              user,
 	}
 
 	// Check if this is an HTMX request for partial content
-	if r.Header.Get("HX-Request") == "true" && seasonParam != "" {
-		// Return just the episodes list for HTMX season switching
-		if err := tmpl.ExecuteTemplate(w, "episodes_list", data); err != nil {
-			log.Printf("Error executing episodes_list template: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+	seasonParam := r.URL.Query().Get("season")
+	pageParam := r.URL.Query().Get("page")
+	if r.Header.Get("HX-Request") == "true" && (seasonParam != "" || pageParam != "") {
+		// For anime pagination, return the anime_pagination_content template
+		// For TV season switching, return just the episodes list
+		if show.ShowType == "anime" && pageParam != "" {
+			if err := tmpl.ExecuteTemplate(w, "anime_pagination_content", data); err != nil {
+				log.Printf("Error executing anime_pagination_content template: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
+		} else {
+			if err := tmpl.ExecuteTemplate(w, "episodes_list", data); err != nil {
+				log.Printf("Error executing episodes_list template: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
 		}
 	} else {
 		// Return full episodes page
@@ -3812,7 +4040,7 @@ func ToggleEpisodeWatchedHandler(w http.ResponseWriter, r *http.Request) {
 	var episode db.EpisodeWithTracking
 	err = db.DB.QueryRow(context.Background(), `
 		SELECT 
-			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
+			e.id, e.show_id, e.user_id, e.external_id, e.show_type, e.name, e.season, e.number, 
 			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
 			COALESCE(et.watched, false) as watched,
 			et.rating, et.notes, et.watched_at
@@ -3820,7 +4048,7 @@ func ToggleEpisodeWatchedHandler(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN episode_tracking et ON e.id = et.episode_id AND et.user_id = $2
 		WHERE e.id = $1 AND e.user_id = $2
 	`, episodeID, userID).Scan(
-		&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+		&episode.ID, &episode.ShowID, &episode.UserID, &episode.ExternalID, &episode.ShowType, &episode.Name, 
 		&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
 		&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
 		&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
@@ -3887,7 +4115,7 @@ func EpisodeDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	var episode db.EpisodeWithTracking
 	err = db.DB.QueryRow(context.Background(), `
 		SELECT 
-			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
+			e.id, e.show_id, e.user_id, e.external_id, e.show_type, e.name, e.season, e.number, 
 			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
 			COALESCE(et.watched, false) as watched,
 			et.rating, et.notes, et.watched_at
@@ -3895,7 +4123,7 @@ func EpisodeDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN episode_tracking et ON e.id = et.episode_id AND et.user_id = $2
 		WHERE e.id = $1 AND e.user_id = $2
 	`, episodeID, userID).Scan(
-		&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+		&episode.ID, &episode.ShowID, &episode.UserID, &episode.ExternalID, &episode.ShowType, &episode.Name, 
 		&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
 		&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
 		&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
@@ -4015,7 +4243,7 @@ func UpdateEpisodeTrackingHandler(w http.ResponseWriter, r *http.Request) {
 	var episode db.EpisodeWithTracking
 	err = db.DB.QueryRow(context.Background(), `
 		SELECT 
-			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
+			e.id, e.show_id, e.user_id, e.external_id, e.show_type, e.name, e.season, e.number, 
 			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
 			COALESCE(et.watched, false) as watched,
 			et.rating, et.notes, et.watched_at
@@ -4023,7 +4251,7 @@ func UpdateEpisodeTrackingHandler(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN episode_tracking et ON e.id = et.episode_id AND et.user_id = $2
 		WHERE e.id = $1 AND e.user_id = $2
 	`, episodeID, userID).Scan(
-		&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+		&episode.ID, &episode.ShowID, &episode.UserID, &episode.ExternalID, &episode.ShowType, &episode.Name, 
 		&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
 		&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
 		&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
@@ -4108,38 +4336,25 @@ func ManualSyncHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Perform episode sync
+	// Perform episode sync based on show type
 	startTime := time.Now()
-	apiEpisodes, err := api.GetAllEpisodes(show.TVMazeID)
-	if err != nil {
-		http.Error(w, "Failed to fetch episodes: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Get existing episodes
-	existingEpisodes, err := db.GetEpisodesByShow(db.DB, show.ID, userID)
-	if err != nil {
-		http.Error(w, "Failed to get existing episodes: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Create map of existing episodes by TVMaze ID
-	existingEpisodesMap := make(map[int]bool)
-	for _, ep := range existingEpisodes {
-		existingEpisodesMap[ep.TVMazeID] = true
-	}
-
-	// Find new episodes to add
 	var newEpisodes []db.Episode
-	for _, apiEpisode := range apiEpisodes {
-		if !existingEpisodesMap[apiEpisode.ID] {
-			episode := api.ConvertTVMazeEpisodeToEpisode(apiEpisode, show.ID, userID)
-			newEpisodes = append(newEpisodes, episode)
-		}
+	var episodesAdded int
+
+	if show.ShowType == "anime" {
+		// Sync anime episodes
+		newEpisodes, err = syncAnimeEpisodesManual(*show, userID)
+	} else {
+		// Sync TV episodes  
+		newEpisodes, err = syncTVEpisodesManual(*show, userID)
+	}
+
+	if err != nil {
+		http.Error(w, "Failed to sync episodes: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Add new episodes to database
-	episodesAdded := 0
 	if len(newEpisodes) > 0 {
 		if err := db.CreateEpisodes(db.DB, newEpisodes); err != nil {
 			http.Error(w, "Failed to add episodes: "+err.Error(), http.StatusInternalServerError)
@@ -4236,22 +4451,185 @@ func MarkAllEpisodesWatchedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get updated episodes for the current season (if any)
-	season := r.URL.Query().Get("season")
-	var episodes []db.EpisodeWithTracking
-	var selectedSeason int
-	
-	if season != "" {
-		if s, err := strconv.Atoi(season); err == nil {
-			selectedSeason = s
-			episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+	// Handle response based on show type
+	if show.ShowType == "anime" {
+		// For anime, get current page or default to page 1
+		pageParam := r.URL.Query().Get("page")
+		currentPage := 1
+		if pageParam != "" {
+			if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
+				currentPage = p
+			}
 		}
+
+		// Get all episodes for pagination calculation
+		allEpisodes, err := db.GetEpisodesWithTrackingByShow(db.DB, showID, userID)
+		if err != nil {
+			log.Printf("Error getting episodes: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		// Calculate pagination
+		const episodesPerPage = 50
+		totalEpisodes := len(allEpisodes)
+		totalPages := (totalEpisodes + episodesPerPage - 1) / episodesPerPage
+
+		// Get episodes for current page
+		startIdx := (currentPage - 1) * episodesPerPage
+		endIdx := startIdx + episodesPerPage
+		if endIdx > totalEpisodes {
+			endIdx = totalEpisodes
+		}
+
+		var episodes []db.EpisodeWithTracking
+		if startIdx < totalEpisodes {
+			episodes = allEpisodes[startIdx:endIdx]
+		}
+
+		// Convert to template-friendly format and include pagination data
+		var templateEpisodes []map[string]interface{}
+		for _, ep := range episodes {
+			templateEp := map[string]interface{}{
+				"ID":        ep.ID,
+				"ShowID":    ep.ShowID,
+				"UserID":    ep.UserID,
+				"Name":      ep.Name,
+				"Season":    ep.Season,
+				"Number":    ep.Number,
+				"Summary":   ep.Summary,
+				"AirDate":   ep.AirDate,
+				"Runtime":   ep.Runtime,
+				"ImageURL":  ep.ImageURL,
+				"Filler":    ep.Filler,
+				"Recap":     ep.Recap,
+				"CreatedAt": ep.CreatedAt,
+				"UpdatedAt": ep.UpdatedAt,
+				"Watched":   ep.Watched,
+				"WatchedAt": ep.WatchedAt,
+			}
+			
+			// Handle pointers safely
+			if ep.Rating != nil {
+				templateEp["Rating"] = *ep.Rating
+			}
+			if ep.Notes != nil {
+				templateEp["Notes"] = *ep.Notes
+			}
+			
+			templateEpisodes = append(templateEpisodes, templateEp)
+		}
+
+		// Calculate pagination data (reuse logic from ShowEpisodesHandler)
+		var prevPage, nextPage int
+		var pageNumbers, mobilePageNumbers []int
+		
+		if currentPage > 1 {
+			prevPage = currentPage - 1
+		}
+		if currentPage < totalPages {
+			nextPage = currentPage + 1
+		}
+		
+		// Generate page numbers for pagination
+		if totalPages > 0 {
+			// Desktop pagination logic
+			if totalPages <= 7 {
+				for i := 1; i <= totalPages; i++ {
+					pageNumbers = append(pageNumbers, i)
+				}
+			} else {
+				pageNumbers = append(pageNumbers, 1)
+				
+				var start, end int
+				if currentPage <= 4 {
+					start = 2
+					end = 5
+				} else if currentPage >= totalPages-3 {
+					start = totalPages - 4
+					end = totalPages - 1
+				} else {
+					start = currentPage - 2
+					end = currentPage + 2
+				}
+				
+				if start > 2 {
+					pageNumbers = append(pageNumbers, -1)
+				}
+				
+				for i := start; i <= end; i++ {
+					if i > 1 && i < totalPages {
+						pageNumbers = append(pageNumbers, i)
+					}
+				}
+				
+				if end < totalPages-1 {
+					pageNumbers = append(pageNumbers, -2)
+				}
+				
+				if totalPages > 1 {
+					pageNumbers = append(pageNumbers, totalPages)
+				}
+			}
+			
+			// Mobile pagination logic
+			mobileStart := 1
+			mobileEnd := totalPages
+			
+			if totalPages > 10 {
+				if currentPage <= 5 {
+					mobileStart = 1
+					mobileEnd = 10
+				} else if currentPage >= totalPages-4 {
+					mobileStart = totalPages - 9
+					mobileEnd = totalPages
+				} else {
+					mobileStart = currentPage - 4
+					mobileEnd = currentPage + 5
+				}
+			}
+			
+			for i := mobileStart; i <= mobileEnd; i++ {
+				mobilePageNumbers = append(mobilePageNumbers, i)
+			}
+		}
+
+		// Prepare template data for anime
+		data := map[string]interface{}{
+			"Show":              show,
+			"Episodes":          templateEpisodes,
+			"CurrentPage":       currentPage,
+			"TotalPages":        totalPages,
+			"PrevPage":          prevPage,
+			"NextPage":         nextPage,
+			"TotalEpisodes":     totalEpisodes,
+			"PageNumbers":       pageNumbers,
+			"MobilePageNumbers": mobilePageNumbers,
+		}
+
+		// Return anime pagination template
+		if err := tmpl.ExecuteTemplate(w, "anime_pagination_content", data); err != nil {
+			log.Printf("Error executing anime pagination template: %v", err)
+			http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		}
+		
 	} else {
-		// Get latest season
-		seasons, err := db.GetSeasonsByShow(db.DB, showID, userID)
-		if err == nil && len(seasons) > 0 {
-			selectedSeason = seasons[0] // Latest season
-			episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+		// For TV shows, get current season or default to latest
+		season := r.URL.Query().Get("season")
+		var episodes []db.EpisodeWithTracking
+		var selectedSeason int
+		
+		if season != "" {
+			if s, err := strconv.Atoi(season); err == nil {
+				selectedSeason = s
+				episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
+			}
+		} else {
+			// Get latest season
+			seasons, err := db.GetSeasonsByShow(db.DB, showID, userID)
+			if err == nil && len(seasons) > 0 {
+				selectedSeason = seasons[0] // Latest season
+				episodes, err = db.GetEpisodesWithTrackingByShowAndSeason(db.DB, showID, userID, selectedSeason)
 		}
 	}
 	
@@ -4292,26 +4670,110 @@ func MarkAllEpisodesWatchedHandler(w http.ResponseWriter, r *http.Request) {
 		seasons = []int{}
 	}
 
-	// Prepare template data
-	data := map[string]interface{}{
-		"Episodes":       templateEpisodes,
-		"SelectedSeason": selectedSeason,
-		"Seasons":        seasons,
+		// Prepare template data for TV shows
+		data := map[string]interface{}{
+			"Episodes":       templateEpisodes,
+			"SelectedSeason": selectedSeason,
+			"Seasons":        seasons,
+			"Show":           show,
+		}
+
+		// Return episodes list template for TV shows
+		if err := tmpl.ExecuteTemplate(w, "episodes_list", data); err != nil {
+			log.Printf("Error executing episodes template: %v", err)
+			http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		}
 	}
 
-	// Set toast message
-	episodeCount := len(episodes)
-	toastMessage := fmt.Sprintf("✓ Marked %d episodes as watched for %s", episodeCount, show.Name)
+	// Get total episode count for toast message (ALL episodes, not just current page/season)
+	allEpisodes, err := db.GetEpisodesByShow(db.DB, showID, userID)
+	totalEpisodes := 0
+	if err != nil {
+		log.Printf("Error getting total episodes for toast: %v", err)
+	} else {
+		totalEpisodes = len(allEpisodes)
+	}
+
+	// Set toast message showing ALL episodes marked
+	toastMessage := fmt.Sprintf("✓ Marked all %d episodes as watched for %s", totalEpisodes, show.Name)
 	w.Header().Set("X-Toast-Message", toastMessage)
 	w.Header().Set("X-Toast-Type", "success")
 	w.Header().Set("Content-Type", "text/html")
+}
 
-	// Return the updated episodes list
-	if err := tmpl.ExecuteTemplate(w, "episodes_list", data); err != nil {
-		log.Printf("Error executing episodes template: %v", err)
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
+// syncTVEpisodesManual handles manual episode sync for TV shows
+func syncTVEpisodesManual(show db.Show, userID uuid.UUID) ([]db.Episode, error) {
+	// Fetch episodes from TVMaze API
+	apiEpisodes, err := api.GetAllEpisodes(show.TVMazeID)
+	if err != nil {
+		return nil, err
 	}
+
+	// Get existing episodes
+	existingEpisodes, err := db.GetEpisodesByShow(db.DB, show.ID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create map of existing episodes by TVMaze ID
+	existingEpisodesMap := make(map[int]bool)
+	for _, ep := range existingEpisodes {
+		existingEpisodesMap[ep.TVMazeID] = true
+	}
+
+	// Find new episodes to add
+	var newEpisodes []db.Episode
+	for _, apiEpisode := range apiEpisodes {
+		if !existingEpisodesMap[apiEpisode.ID] {
+			episode := api.ConvertTVMazeEpisodeToEpisode(apiEpisode, show.ID, userID)
+			newEpisodes = append(newEpisodes, episode)
+		}
+	}
+
+	return newEpisodes, nil
+}
+
+// syncAnimeEpisodesManual handles manual episode sync for anime
+func syncAnimeEpisodesManual(show db.Show, userID uuid.UUID) ([]db.Episode, error) {
+	// Fetch episodes from Jikan API
+	jikanEpisodes, err := api.GetAnimeEpisodes(show.ExternalID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch episode images
+	episodeImages, err := api.GetAnimeEpisodeVideos(show.ExternalID)
+	if err != nil {
+		log.Printf("Warning: Failed to fetch episode images for anime %s: %v", show.Name, err)
+		episodeImages = make(map[int]string) // Continue without images
+	}
+
+	// Get existing episodes
+	existingEpisodes, err := db.GetEpisodesByShow(db.DB, show.ID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create map of existing episodes by MAL ID (using ExternalID field)
+	existingEpisodesMap := make(map[int]bool)
+	for _, ep := range existingEpisodes {
+		existingEpisodesMap[ep.ExternalID] = true
+	}
+
+	// Find new episodes to add
+	var newEpisodes []db.Episode
+	for _, jikanEpisode := range jikanEpisodes {
+		if !existingEpisodesMap[jikanEpisode.MalID] {
+			var imageURL *string
+			if img, exists := episodeImages[jikanEpisode.MalID]; exists {
+				imageURL = &img
+			}
+			episode := api.ConvertJikanEpisodeToEpisode(jikanEpisode, show.ID, userID, imageURL)
+			newEpisodes = append(newEpisodes, episode)
+		}
+	}
+
+	return newEpisodes, nil
 }
 
 // NotFoundHandler renders the 404 error page.

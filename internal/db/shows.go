@@ -13,7 +13,7 @@ func GetAllShows(db *pgxpool.Pool, userID uuid.UUID) ([]Show, error) {
 	shows := []Show{}
 
 	rows, err := db.Query(context.Background(), `
-		SELECT id, user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at 
+		SELECT id, user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at 
 		FROM shows 
 		WHERE user_id = $1
 		ORDER BY name
@@ -25,10 +25,12 @@ func GetAllShows(db *pgxpool.Pool, userID uuid.UUID) ([]Show, error) {
 
 	for rows.Next() {
 		var show Show
-		err := rows.Scan(&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary, &show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
+		err := rows.Scan(&show.ID, &show.UserID, &show.ExternalID, &show.ShowType, &show.Name, &show.Summary, &show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
+		// Set legacy field for backward compatibility
+		show.TVMazeID = show.ExternalID
 		shows = append(shows, show)
 	}
 	return shows, nil
@@ -40,7 +42,7 @@ func GetAllShowsWithEpisodeCounts(db *pgxpool.Pool, userID uuid.UUID) ([]Show, e
 
 	rows, err := db.Query(context.Background(), `
 		SELECT 
-			s.id, s.user_id, s.tvmaze_id, s.name, s.summary, s.image_url, s.status, 
+			s.id, s.user_id, s.external_id, s.show_type, s.name, s.summary, s.image_url, s.status, 
 			s.premiered, s.ended, s.network, s.genres, s.rating, s.created_at, s.updated_at,
 			COALESCE(ep_counts.total_episodes, 0) as total_episodes,
 			COALESCE(ep_counts.watched_episodes, 0) as watched_episodes
@@ -66,12 +68,14 @@ func GetAllShowsWithEpisodeCounts(db *pgxpool.Pool, userID uuid.UUID) ([]Show, e
 	for rows.Next() {
 		var show Show
 		err := rows.Scan(
-			&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary, &show.ImageURL, &show.Status, 
+			&show.ID, &show.UserID, &show.ExternalID, &show.ShowType, &show.Name, &show.Summary, &show.ImageURL, &show.Status, 
 			&show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt,
 			&show.TotalEpisodes, &show.WatchedEpisodes)
 		if err != nil {
 			return nil, err
 		}
+		// Set legacy field for backward compatibility
+		show.TVMazeID = show.ExternalID
 		shows = append(shows, show)
 	}
 	return shows, nil
@@ -93,11 +97,11 @@ func MarkAllEpisodesWatched(db *pgxpool.Pool, showID uuid.UUID, userID uuid.UUID
 func CreateShow(db *pgxpool.Pool, show Show, userID uuid.UUID) (*Show, error) {
 	var createdShow Show
 	err := db.QueryRow(context.Background(), `
-		INSERT INTO shows (user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id, user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at
-	`, userID, show.TVMazeID, show.Name, show.Summary, show.ImageURL, show.Status, show.Premiered, show.Ended, show.Network, show.Genres, show.Rating).Scan(
-		&createdShow.ID, &createdShow.UserID, &createdShow.TVMazeID, &createdShow.Name, &createdShow.Summary, 
+		INSERT INTO shows (user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		RETURNING id, user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at
+	`, userID, show.ExternalID, show.ShowType, show.Name, show.Summary, show.ImageURL, show.Status, show.Premiered, show.Ended, show.Network, show.Genres, show.Rating).Scan(
+		&createdShow.ID, &createdShow.UserID, &createdShow.ExternalID, &createdShow.ShowType, &createdShow.Name, &createdShow.Summary, 
 		&createdShow.ImageURL, &createdShow.Status, &createdShow.Premiered, &createdShow.Ended, &createdShow.Network, 
 		&createdShow.Genres, &createdShow.Rating, &createdShow.CreatedAt, &createdShow.UpdatedAt)
 	
@@ -107,13 +111,13 @@ func CreateShow(db *pgxpool.Pool, show Show, userID uuid.UUID) (*Show, error) {
 	return &createdShow, nil
 }
 
-func GetShowByTVMazeID(db *pgxpool.Pool, tvmazeID int, userID uuid.UUID) (*Show, error) {
+func GetShowByExternalID(db *pgxpool.Pool, externalID int, showType string, userID uuid.UUID) (*Show, error) {
 	var show Show
 	err := db.QueryRow(context.Background(), `
-		SELECT id, user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at 
+		SELECT id, user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at 
 		FROM shows 
-		WHERE tvmaze_id = $1 AND user_id = $2
-	`, tvmazeID, userID).Scan(&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary, &show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
+		WHERE external_id = $1 AND show_type = $2 AND user_id = $3
+	`, externalID, showType, userID).Scan(&show.ID, &show.UserID, &show.ExternalID, &show.ShowType, &show.Name, &show.Summary, &show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
 	
 	if err != nil {
 		return nil, err
@@ -121,13 +125,18 @@ func GetShowByTVMazeID(db *pgxpool.Pool, tvmazeID int, userID uuid.UUID) (*Show,
 	return &show, nil
 }
 
+// Backward compatibility function for existing code
+func GetShowByTVMazeID(db *pgxpool.Pool, tvmazeID int, userID uuid.UUID) (*Show, error) {
+	return GetShowByExternalID(db, tvmazeID, "tv", userID)
+}
+
 func GetShowByID(db *pgxpool.Pool, showID uuid.UUID, userID uuid.UUID) (*Show, error) {
 	var show Show
 	err := db.QueryRow(context.Background(), `
-		SELECT id, user_id, tvmaze_id, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at 
+		SELECT id, user_id, external_id, show_type, name, summary, image_url, status, premiered, ended, network, genres, rating, created_at, updated_at 
 		FROM shows 
 		WHERE id = $1 AND user_id = $2
-	`, showID, userID).Scan(&show.ID, &show.UserID, &show.TVMazeID, &show.Name, &show.Summary, &show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
+	`, showID, userID).Scan(&show.ID, &show.UserID, &show.ExternalID, &show.ShowType, &show.Name, &show.Summary, &show.ImageURL, &show.Status, &show.Premiered, &show.Ended, &show.Network, &show.Genres, &show.Rating, &show.CreatedAt, &show.UpdatedAt)
 	
 	if err != nil {
 		return nil, err
@@ -147,7 +156,7 @@ func GetEpisodesByShow(db *pgxpool.Pool, showID uuid.UUID, userID uuid.UUID) ([]
 	episodes := []Episode{}
 
 	rows, err := db.Query(context.Background(), `
-		SELECT id, show_id, user_id, tvmaze_id, name, season, number, summary, airdate, runtime, image_url, created_at, updated_at 
+		SELECT id, show_id, user_id, external_id, show_type, name, season, number, summary, airdate, runtime, image_url, filler, recap, created_at, updated_at 
 		FROM episodes 
 		WHERE show_id = $1 AND user_id = $2
 		ORDER BY season, number
@@ -159,10 +168,12 @@ func GetEpisodesByShow(db *pgxpool.Pool, showID uuid.UUID, userID uuid.UUID) ([]
 
 	for rows.Next() {
 		var episode Episode
-		err := rows.Scan(&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, &episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, &episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt)
+		err := rows.Scan(&episode.ID, &episode.ShowID, &episode.UserID, &episode.ExternalID, &episode.ShowType, &episode.Name, &episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, &episode.ImageURL, &episode.Filler, &episode.Recap, &episode.CreatedAt, &episode.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
+		// Set legacy field for backward compatibility
+		episode.TVMazeID = episode.ExternalID
 		episodes = append(episodes, episode)
 	}
 	return episodes, nil
@@ -170,9 +181,9 @@ func GetEpisodesByShow(db *pgxpool.Pool, showID uuid.UUID, userID uuid.UUID) ([]
 
 func CreateEpisode(db *pgxpool.Pool, episode Episode) error {
 	_, err := db.Exec(context.Background(), `
-		INSERT INTO episodes (show_id, user_id, tvmaze_id, name, season, number, summary, airdate, runtime, image_url)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`, episode.ShowID, episode.UserID, episode.TVMazeID, episode.Name, episode.Season, episode.Number, episode.Summary, episode.AirDate, episode.Runtime, episode.ImageURL)
+		INSERT INTO episodes (show_id, user_id, external_id, show_type, name, season, number, summary, airdate, runtime, image_url, filler, recap)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+	`, episode.ShowID, episode.UserID, episode.ExternalID, episode.ShowType, episode.Name, episode.Season, episode.Number, episode.Summary, episode.AirDate, episode.Runtime, episode.ImageURL, episode.Filler, episode.Recap)
 	return err
 }
 
@@ -196,8 +207,8 @@ func GetEpisodesWithTrackingByShow(db *pgxpool.Pool, showID uuid.UUID, userID uu
 
 	rows, err := db.Query(context.Background(), `
 		SELECT 
-			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
-			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
+			e.id, e.show_id, e.user_id, e.external_id, e.show_type, e.name, e.season, e.number, 
+			e.summary, e.airdate, e.runtime, e.image_url, e.filler, e.recap, e.created_at, e.updated_at,
 			COALESCE(et.watched, false) as watched,
 			et.rating, et.notes, et.watched_at
 		FROM episodes e
@@ -213,13 +224,15 @@ func GetEpisodesWithTrackingByShow(db *pgxpool.Pool, showID uuid.UUID, userID uu
 	for rows.Next() {
 		var episode EpisodeWithTracking
 		err := rows.Scan(
-			&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+			&episode.ID, &episode.ShowID, &episode.UserID, &episode.ExternalID, &episode.ShowType, &episode.Name, 
 			&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
-			&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
+			&episode.ImageURL, &episode.Filler, &episode.Recap, &episode.CreatedAt, &episode.UpdatedAt,
 			&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
 		if err != nil {
 			return nil, err
 		}
+		// Set legacy field for backward compatibility
+		episode.TVMazeID = episode.ExternalID
 		episodes = append(episodes, episode)
 	}
 	return episodes, nil
@@ -306,8 +319,8 @@ func GetEpisodesWithTrackingByShowAndSeason(db *pgxpool.Pool, showID uuid.UUID, 
 
 	rows, err := db.Query(context.Background(), `
 		SELECT 
-			e.id, e.show_id, e.user_id, e.tvmaze_id, e.name, e.season, e.number, 
-			e.summary, e.airdate, e.runtime, e.image_url, e.created_at, e.updated_at,
+			e.id, e.show_id, e.user_id, e.external_id, e.show_type, e.name, e.season, e.number, 
+			e.summary, e.airdate, e.runtime, e.image_url, e.filler, e.recap, e.created_at, e.updated_at,
 			COALESCE(et.watched, false) as watched,
 			et.rating, et.notes, et.watched_at
 		FROM episodes e
@@ -323,13 +336,15 @@ func GetEpisodesWithTrackingByShowAndSeason(db *pgxpool.Pool, showID uuid.UUID, 
 	for rows.Next() {
 		var episode EpisodeWithTracking
 		err := rows.Scan(
-			&episode.ID, &episode.ShowID, &episode.UserID, &episode.TVMazeID, &episode.Name, 
+			&episode.ID, &episode.ShowID, &episode.UserID, &episode.ExternalID, &episode.ShowType, &episode.Name, 
 			&episode.Season, &episode.Number, &episode.Summary, &episode.AirDate, &episode.Runtime, 
-			&episode.ImageURL, &episode.CreatedAt, &episode.UpdatedAt,
+			&episode.ImageURL, &episode.Filler, &episode.Recap, &episode.CreatedAt, &episode.UpdatedAt,
 			&episode.Watched, &episode.Rating, &episode.Notes, &episode.WatchedAt)
 		if err != nil {
 			return nil, err
 		}
+		// Set legacy field for backward compatibility
+		episode.TVMazeID = episode.ExternalID
 		episodes = append(episodes, episode)
 	}
 	return episodes, nil

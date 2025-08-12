@@ -133,41 +133,51 @@ type MedicationLog struct {
 
 // Show entity
 type Show struct {
-	ID        uuid.UUID       `json:"id"`
-	UserID    uuid.UUID       `json:"user_id"`
-	TVMazeID  int             `json:"tvmaze_id"`
-	Name      string          `json:"name"`
-	Summary   *string         `json:"summary"`
-	ImageURL  *string         `json:"image_url"`
-	Status    *string         `json:"status"`
-	Premiered *time.Time      `json:"premiered"`
-	Ended     *time.Time      `json:"ended"`
-	Network   *string         `json:"network"`
-	Genres    json.RawMessage `json:"genres"`
-	Rating       json.RawMessage `json:"rating"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
+	ID         uuid.UUID       `json:"id"`
+	UserID     uuid.UUID       `json:"user_id"`
+	ExternalID int             `json:"external_id"` // TVMaze ID for TV shows, MAL ID for anime
+	ShowType   string          `json:"show_type"`   // "tv" or "anime"
+	Name       string          `json:"name"`
+	Summary    *string         `json:"summary"`
+	ImageURL   *string         `json:"image_url"`
+	Status     *string         `json:"status"`
+	Premiered  *time.Time      `json:"premiered"`
+	Ended      *time.Time      `json:"ended"`
+	Network    *string         `json:"network"`
+	Genres     json.RawMessage `json:"genres"`
+	Rating     json.RawMessage `json:"rating"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
 	
 	// Episode counts (not stored in DB, calculated in queries)
 	TotalEpisodes   int `json:"total_episodes"`
 	WatchedEpisodes int `json:"watched_episodes"`
+	
+	// Legacy field for backward compatibility - will be removed later
+	TVMazeID int `json:"tvmaze_id,omitempty"`
 }
 
 // Episode entity
 type Episode struct {
-	ID       uuid.UUID  `json:"id"`
-	ShowID   uuid.UUID  `json:"show_id"`
-	UserID   uuid.UUID  `json:"user_id"`
-	TVMazeID int        `json:"tvmaze_id"`
-	Name     string     `json:"name"`
-	Season   int        `json:"season"`
-	Number   int        `json:"number"`
-	Summary  *string    `json:"summary"`
-	AirDate  *time.Time `json:"airdate"`
-	Runtime  *int       `json:"runtime"`
-	ImageURL *string    `json:"image_url"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uuid.UUID  `json:"id"`
+	ShowID     uuid.UUID  `json:"show_id"`
+	UserID     uuid.UUID  `json:"user_id"`
+	ExternalID int        `json:"external_id"` // TVMaze ID for TV shows, MAL ID for anime
+	ShowType   string     `json:"show_type"`   // "tv" or "anime"
+	Name       string     `json:"name"`
+	Season     int        `json:"season"`
+	Number     int        `json:"number"`
+	Summary    *string    `json:"summary"`
+	AirDate    *time.Time `json:"airdate"`
+	Runtime    *int       `json:"runtime"`
+	ImageURL   *string    `json:"image_url"`
+	Filler     bool       `json:"filler"`      // For anime episodes - indicates filler content
+	Recap      bool       `json:"recap"`       // For anime episodes - indicates recap content
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	
+	// Legacy field for backward compatibility - will be removed later
+	TVMazeID int `json:"tvmaze_id,omitempty"`
 }
 
 // Episode Tracking entity
@@ -234,4 +244,77 @@ type TVMazeEpisode struct {
 	AirDate *string      `json:"airdate"`
 	Runtime *int         `json:"runtime"`
 	Image   *TVMazeImage `json:"image"`
+}
+
+// Combined search result that can hold both TV shows and anime
+type UnifiedSearchResult struct {
+	Type         string                 `json:"type"`         // "tv" or "anime"
+	TVShow       *TVMazeSearchResult    `json:"tv_show,omitempty"`
+	Anime        *JikanAnime           `json:"anime,omitempty"`
+	AlreadyAdded bool                   `json:"already_added"`
+}
+
+// Jikan API Response structs (moved from api package for better organization)
+type JikanAnime struct {
+	MalID         int             `json:"mal_id"`
+	URL           string          `json:"url"`
+	Images        JikanImages     `json:"images"`
+	Title         string          `json:"title"`
+	TitleEnglish  *string         `json:"title_english"`
+	TitleJapanese *string         `json:"title_japanese"`
+	Type          string          `json:"type"`
+	Source        string          `json:"source"`
+	Episodes      *int            `json:"episodes"`
+	Status        string          `json:"status"`
+	Airing        bool            `json:"airing"`
+	Synopsis      *string         `json:"synopsis"`
+	Score         *float64        `json:"score"`
+	Year          *int            `json:"year"`
+	Studios       []JikanMalItem  `json:"studios"`
+	Genres        []JikanMalItem  `json:"genres"`
+}
+
+type JikanImages struct {
+	JPG  JikanImageFormat `json:"jpg"`
+	WebP JikanImageFormat `json:"webp"`
+}
+
+type JikanImageFormat struct {
+	ImageURL      string `json:"image_url"`
+	SmallImageURL string `json:"small_image_url"`
+	LargeImageURL string `json:"large_image_url"`
+}
+
+type JikanMalItem struct {
+	MalID int    `json:"mal_id"`
+	Type  string `json:"type"`
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+}
+
+// Jikan Episode struct
+type JikanEpisode struct {
+	MalID         int     `json:"mal_id"`
+	URL           *string `json:"url"`
+	Title         string  `json:"title"`
+	TitleJapanese *string `json:"title_japanese"`
+	TitleRomanji  *string `json:"title_romanji"`
+	Aired         *string `json:"aired"`
+	Score         *float64 `json:"score"`
+	Filler        bool    `json:"filler"`
+	Recap         bool    `json:"recap"`
+	ForumURL      *string `json:"forum_url"`
+}
+
+// Jikan Episode Videos struct
+type JikanEpisodeVideo struct {
+	MalID   int    `json:"mal_id"`
+	Title   string `json:"title"`
+	Episode string `json:"episode"`
+	URL     string `json:"url"`
+	Images  struct {
+		JPG struct {
+			ImageURL string `json:"image_url"`
+		} `json:"jpg"`
+	} `json:"images"`
 }
