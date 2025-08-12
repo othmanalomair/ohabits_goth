@@ -51,42 +51,43 @@
 
         <script>
             // Toast Notification System
-            function showToast(message, type = 'success', duration = 3000) {
-                const toastContainer = document.getElementById('toast-container');
-                const toast = document.createElement('div');
+            function showToast(message, type = "success", duration = 3000) {
+                const toastContainer =
+                    document.getElementById("toast-container");
+                const toast = document.createElement("div");
                 toast.className = `toast ${type}`;
-                
+
                 const iconSvg = getToastIcon(type);
-                
+
                 toast.innerHTML = `
                     <div class="toast-icon">${iconSvg}</div>
                     <div class="toast-message">${message}</div>
                     <button class="toast-close" onclick="closeToast(this)">×</button>
                 `;
-                
+
                 toastContainer.appendChild(toast);
-                
+
                 // Trigger show animation
                 setTimeout(() => {
-                    toast.classList.add('show');
+                    toast.classList.add("show");
                 }, 10);
-                
+
                 // Auto remove
                 setTimeout(() => {
-                    closeToast(toast.querySelector('.toast-close'));
+                    closeToast(toast.querySelector(".toast-close"));
                 }, duration);
             }
-            
+
             function closeToast(closeBtn) {
                 const toast = closeBtn.parentElement;
-                toast.classList.remove('show');
+                toast.classList.remove("show");
                 setTimeout(() => {
                     if (toast.parentNode) {
                         toast.parentNode.removeChild(toast);
                     }
                 }, 300);
             }
-            
+
             function getToastIcon(type) {
                 const icons = {
                     success: `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -100,7 +101,7 @@
                     </svg>`,
                     error: `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-                    </svg>`
+                    </svg>`,
                 };
                 return icons[type] || icons.info;
             }
@@ -108,38 +109,59 @@
             // Global HTMX event handlers
             document.addEventListener("DOMContentLoaded", function () {
                 // Listen for HTMX afterRequest events
-                document.body.addEventListener("htmx:afterRequest", function (event) {
-                    if (event.detail.xhr.status === 200) {
-                        var url = event.detail.requestConfig.path;
-                        var method = event.detail.requestConfig.verb;
+                document.body.addEventListener(
+                    "htmx:afterRequest",
+                    function (event) {
+                        if (event.detail.xhr.status === 200) {
+                            var url = event.detail.requestConfig.path;
+                            var method = event.detail.requestConfig.verb;
 
-                        // Handle specific success messages
-                        if (method === "post") {
-                            if (url === "/notes") {
-                                showToast("Note saved successfully!", "success");
-                            } else if (url === "/workout_loging") {
-                                showToast("Workout saved successfully!", "success");
-                            } else if (url.includes("/sync")) {
-                                // Sync messages are handled by custom headers
-                                const message = event.detail.xhr.getResponseHeader('X-Toast-Message');
-                                const type = event.detail.xhr.getResponseHeader('X-Toast-Type') || 'info';
-                                if (message) {
-                                    showToast(message, type);
+                            // Handle specific success messages
+                            if (method === "post") {
+                                if (url === "/notes") {
+                                    showToast(
+                                        "Note saved successfully!",
+                                        "success",
+                                    );
+                                } else if (url === "/workout_loging") {
+                                    showToast(
+                                        "Workout saved successfully!",
+                                        "success",
+                                    );
+                                } else if (url.includes("/sync")) {
+                                    // Sync messages are handled by custom headers
+                                    const message =
+                                        event.detail.xhr.getResponseHeader(
+                                            "X-Toast-Message",
+                                        );
+                                    const type =
+                                        event.detail.xhr.getResponseHeader(
+                                            "X-Toast-Type",
+                                        ) || "info";
+                                    if (message) {
+                                        showToast(message, type);
+                                    }
                                 }
                             }
                         }
-                    }
-                });
-                
+                    },
+                );
+
                 // Listen for HTMX errors
-                document.body.addEventListener("htmx:responseError", function (event) {
-                    showToast("An error occurred. Please try again.", "error");
-                });
+                document.body.addEventListener(
+                    "htmx:responseError",
+                    function (event) {
+                        showToast(
+                            "An error occurred. Please try again.",
+                            "error",
+                        );
+                    },
+                );
             });
 
             // Legacy function for backward compatibility
             function showSuccessMessage(message) {
-                showToast(message, 'success');
+                showToast(message, "success");
             }
         </script>
     </head>
@@ -153,13 +175,59 @@
             <div class="logo">
                 <a href="/">Ohabits</a>
             </div>
-            <div class="profile">
+            <div
+                class="profile"
+                onclick="toggleNotificationPanel(event)"
+                title="Notifications"
+            >
                 <img
                     class="avatar-img"
                     src="{{ if .User.AvatarURL }}{{ .User.AvatarURL }}{{ else }}/static/images/profile/default.jpg{{ end }}"
                     alt="{{ .User.DisplayName }}"
                 />
                 <span>{{ .User.DisplayName }}</span>
+
+                <!-- Notification Bell Badge -->
+                <div class="notification-bell" id="notification-bell">
+                    <img
+                        src="/static/images/svg/bell.svg"
+                        alt="Notifications"
+                    />
+                    <span
+                        id="notification-badge"
+                        class="notification-badge"
+                        hx-get="/notifications/count"
+                        hx-trigger="load, every 30s"
+                        hx-swap="innerHTML"
+                    ></span>
+                </div>
+
+                <!-- Notification Panel -->
+                <div
+                    class="notification-panel"
+                    id="notification-panel"
+                    style="display: none"
+                >
+                    <div class="notification-header">
+                        <h3>Notifications</h3>
+                        <button
+                            onclick="closeNotificationPanel(); event.stopPropagation();"
+                            class="close-btn"
+                            title="Close"
+                        >
+                            <img src="/static/images/svg/x-dark.svg" alt="Close" />
+                        </button>
+                    </div>
+                    <div
+                        class="notification-list"
+                        id="notification-list"
+                        hx-get="/notifications/list"
+                        hx-trigger="load"
+                        hx-swap="innerHTML"
+                    >
+                        Loading notifications...
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -245,15 +313,8 @@
                         </a>
                     </li>
                     <li>
-                        <a
-                            hx-get="/shows"
-                            hx-target="main"
-                            hx-swap="innerHTML"
-                        >
-                            <img
-                                src="/static/images/svg/tv.svg"
-                                alt="Shows"
-                            />
+                        <a hx-get="/shows" hx-target="main" hx-swap="innerHTML">
+                            <img src="/static/images/svg/tv.svg" alt="Shows" />
                             Shows
                         </a>
                     </li>
@@ -317,11 +378,153 @@
         </div>
 
         <main>{{ block "content" . }}{{ end }}</main>
-        
+
         <!-- Toast Container -->
         <div id="toast-container" class="toast-container"></div>
 
         <script>
+            // Notification Panel Functions
+            function toggleNotificationPanel(event) {
+                // Stop event from bubbling to prevent multiple triggers
+                if (event) {
+                    event.stopPropagation();
+                }
+
+                const panel = document.getElementById("notification-panel");
+                const isVisible = panel.style.display !== "none";
+
+                if (isVisible) {
+                    closeNotificationPanel();
+                } else {
+                    openNotificationPanel();
+                }
+            }
+
+            function openNotificationPanel() {
+                const panel = document.getElementById("notification-panel");
+                panel.style.display = "block";
+
+                // Refresh notification list and update badge count
+                htmx.trigger("#notification-list", "load");
+                
+                // Update badge count after a short delay to ensure list is loaded
+                setTimeout(() => {
+                    updateNotificationBadge();
+                }, 500);
+
+                // Close panel when clicking outside
+                setTimeout(() => {
+                    document.addEventListener("click", closeOnOutsideClick);
+                }, 100);
+            }
+
+            function closeNotificationPanel() {
+                const panel = document.getElementById("notification-panel");
+                panel.style.display = "none";
+                document.removeEventListener("click", closeOnOutsideClick);
+            }
+
+            function closeOnOutsideClick(event) {
+                const panel = document.getElementById("notification-panel");
+                const profile = document.querySelector(".profile");
+
+                if (
+                    !panel.contains(event.target) &&
+                    !profile.contains(event.target)
+                ) {
+                    closeNotificationPanel();
+                }
+            }
+
+            function dismissNotification(notificationId, event) {
+                // Stop event from bubbling to prevent panel from closing
+                if (event) {
+                    event.stopPropagation();
+                }
+                
+                // Get the notification element before removing it
+                const notificationElement = document.getElementById("notification-" + notificationId);
+                if (!notificationElement) return;
+                
+                // Mark notification as read and remove from list
+                htmx.ajax("DELETE", "/notifications/" + notificationId, {
+                    target: "#notification-" + notificationId,
+                    swap: "outerHTML",
+                }).then(() => {
+                    // Immediately update the badge count based on remaining notifications
+                    updateNotificationBadge();
+                    
+                    // If no notifications left, refresh the list to show empty state
+                    const remainingNotifications = document.querySelectorAll('.notification-item').length;
+                    if (remainingNotifications === 0) {
+                        htmx.trigger("#notification-list", "load");
+                    }
+                }).catch((error) => {
+                    console.error("Error dismissing notification:", error);
+                });
+            }
+            
+            // Function to manually update notification badge count
+            function updateNotificationBadge() {
+                const badge = document.getElementById("notification-badge");
+                const remainingNotifications = document.querySelectorAll('.notification-item').length;
+                
+                if (badge) {
+                    if (remainingNotifications === 0) {
+                        badge.innerHTML = "";
+                    } else if (remainingNotifications > 99) {
+                        badge.innerHTML = "99+";
+                    } else {
+                        badge.innerHTML = remainingNotifications.toString();
+                    }
+                    // Update bell icon immediately
+                    updateBellIcon();
+                }
+            }
+
+            // Update bell icon based on notification count
+            function updateBellIcon() {
+                const badge = document.getElementById("notification-badge");
+                const bellImg = document.querySelector(
+                    ".notification-bell img",
+                );
+                const hasNotifications =
+                    badge && badge.textContent.trim() !== "";
+
+                if (bellImg) {
+                    if (hasNotifications) {
+                        bellImg.src = "/static/images/svg/bell-filled.svg";
+                    } else {
+                        bellImg.src = "/static/images/svg/bell.svg";
+                    }
+                }
+            }
+
+            // Update badge when notification list changes
+            document.addEventListener("htmx:afterSwap", function (event) {
+                if (event.target && event.target.id === "notification-badge") {
+                    setTimeout(updateBellIcon, 100);
+                } else if (event.target && event.target.id === "notification-list") {
+                    // Update badge when notification list is refreshed
+                    setTimeout(updateNotificationBadge, 100);
+                }
+            });
+            
+            // Also listen for htmx afterSettle to catch all updates
+            document.addEventListener("htmx:afterSettle", function (event) {
+                if (event.target && event.target.id === "notification-badge") {
+                    updateBellIcon();
+                } else if (event.target && event.target.id === "notification-list") {
+                    // Update badge after notification list settles
+                    updateNotificationBadge();
+                }
+            });
+
+            // Update bell icon on initial load
+            document.addEventListener("DOMContentLoaded", function () {
+                setTimeout(updateBellIcon, 500);
+            });
+
             document.addEventListener("DOMContentLoaded", function () {
                 var menuBtn = document.querySelector(".menu-btn");
                 var overlayMenu = document.getElementById("overlay-menu");

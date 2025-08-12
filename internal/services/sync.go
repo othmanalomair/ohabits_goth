@@ -155,6 +155,12 @@ func (s *SyncService) performSync() {
 	}
 
 	wg.Wait()
+	
+	// Cleanup old notifications (run once per sync cycle)
+	if err := db.CleanupOldNotifications(s.db); err != nil {
+		log.Printf("Failed to cleanup old notifications: %v", err)
+	}
+	
 	log.Println("Sync check completed")
 }
 
@@ -312,8 +318,16 @@ func (s *SyncService) syncEpisodes(show db.Show) SyncResult {
 		} else {
 			result.EpisodesAdded = len(newEpisodes)
 			log.Printf("Added %d new episodes for show: %s", len(newEpisodes), show.Name)
+			
+			// Create notification for new episodes
+			if err := db.CreateEpisodeNotification(s.db, show.UserID, show.Name, len(newEpisodes), show.ID); err != nil {
+				log.Printf("Failed to create notification for new episodes: %v", err)
+			}
 		}
 	}
+	
+	// Add testing notifications (simulating new episodes from different shows)
+	s.addTestNotifications(show.UserID)
 
 	// Update last sync time
 	s.updateLastEpisodeSync(show.ID)
@@ -408,5 +422,31 @@ func (s *SyncService) logSyncResult(result SyncResult) {
 		result.InfoUpdated, result.ErrorMessage, result.SyncDurationMs)
 	if err != nil {
 		log.Printf("Error logging sync result: %v", err)
+	}
+}
+
+// addTestNotifications adds testing notifications to simulate new episodes
+func (s *SyncService) addTestNotifications(userID uuid.UUID) {
+	testShows := []struct {
+		name         string
+		episodeCount int
+	}{
+		{"Attack on Titan", 2},
+		{"One Piece", 3},
+		{"Breaking Bad", 1},
+		{"The Mandalorian", 1},
+		{"Stranger Things", 4},
+	}
+	
+	for _, show := range testShows {
+		// Generate a random show ID for testing
+		showID := uuid.New()
+		
+		// Only add notifications occasionally to avoid spam
+		if time.Now().Unix()%7 == 0 { // Every 7th call approximately
+			if err := db.CreateEpisodeNotification(s.db, userID, show.name, show.episodeCount, showID); err != nil {
+				log.Printf("Failed to create test notification for %s: %v", show.name, err)
+			}
+		}
 	}
 }

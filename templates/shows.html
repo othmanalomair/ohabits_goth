@@ -33,20 +33,12 @@
 </div>
 
 <script>
-    console.log("Main shows script loaded!"); // Debug log
-    
     // Initialize search clearing functionality
     function initializeSearchClearing() {
-        console.log("Initializing search clearing"); // Debug log
         const searchInput = document.querySelector('input[name="query"]');
         const searchResults = document.getElementById("search-results");
 
-        console.log("Search input found:", !!searchInput); // Debug log
-        console.log("Search results found:", !!searchResults); // Debug log
-
         if (searchInput && searchResults) {
-            console.log("Search clearing setup initialized"); // Debug log
-            
             // Clear existing listeners to avoid duplicates
             searchInput.removeEventListener("input", handleSearchInput);
             searchInput.removeEventListener("keyup", handleSearchKeyup);
@@ -55,16 +47,13 @@
             searchInput.addEventListener("input", handleSearchInput);
             searchInput.addEventListener("keyup", handleSearchKeyup);
         } else {
-            console.log("Search elements not found! Retrying in 100ms..."); // Debug log
             setTimeout(initializeSearchClearing, 100);
         }
     }
     
     function handleSearchInput() {
         const query = this.value.trim();
-        console.log("Input event - query length:", query.length, "query:", query); // Debug log
         if (query.length < 3) {
-            console.log("Clearing search results"); // Debug log
             const searchResults = document.getElementById("search-results");
             if (searchResults) {
                 searchResults.innerHTML = "";
@@ -74,9 +63,7 @@
     
     function handleSearchKeyup(e) {
         const query = this.value.trim();
-        console.log("Keyup event - query length:", query.length, "query:", query); // Debug log
         if (query.length < 3) {
-            console.log("Clearing search results on keyup"); // Debug log
             const searchResults = document.getElementById("search-results");
             if (searchResults) {
                 searchResults.innerHTML = "";
@@ -89,12 +76,8 @@
     
     // Also initialize when DOM is ready (if it hasn't fired yet)
     if (document.readyState === 'loading') {
-        document.addEventListener("DOMContentLoaded", function () {
-            console.log("DOMContentLoaded fired"); // Debug log
-            initializeSearchClearing();
-        });
+        document.addEventListener("DOMContentLoaded", initializeSearchClearing);
     } else {
-        console.log("DOM already ready"); // Debug log
         initializeSearchClearing();
     }
 </script>
@@ -178,23 +161,15 @@ template "show_item" . }} {{ end }} {{ else }}
 </div>
 
 <script>
-    console.log("Show item script loaded!"); // Debug log
-    
     // Initialize progress bars when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener("DOMContentLoaded", function () {
-            console.log("Show item DOMContentLoaded fired"); // Debug log
-            updateProgressBars();
-        });
+        document.addEventListener("DOMContentLoaded", updateProgressBars);
     } else {
-        console.log("Show item DOM already ready"); // Debug log
         updateProgressBars();
     }
 
     // Update progress bars after HTMX requests
-    document.body.addEventListener("htmx:afterSwap", function () {
-        updateProgressBars();
-    });
+    document.body.addEventListener("htmx:afterSwap", updateProgressBars);
 
     function updateProgressBars() {
         const progressFills = document.querySelectorAll(".progress-fill");

@@ -93,6 +93,12 @@ func Server() *http.Server {
 	protected.HandleFunc("/episodes/{id}/update-tracking", handlers.UpdateEpisodeTrackingHandler).Methods("POST")
 	protected.HandleFunc("/episodes/{id}/toggle-watched", handlers.ToggleEpisodeWatchedHandler).Methods("POST")
 
+	// Notification Routes
+	protected.HandleFunc("/notifications/count", handlers.NotificationCountHandler).Methods("GET")
+	protected.HandleFunc("/notifications/list", handlers.NotificationListHandler).Methods("GET") 
+	protected.HandleFunc("/notifications/{id}", handlers.DismissNotificationHandler).Methods("DELETE")
+	protected.HandleFunc("/api/notifications", handlers.NotificationAPIHandler).Methods("GET")
+
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
