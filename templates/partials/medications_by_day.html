@@ -45,8 +45,8 @@
                     <button
                         class="dose-btn {{ if $isTaken }}taken{{ end }}"
                         hx-post="/medications/{{ $medication.ID }}/toggle-log?dose={{ $i }}&date={{ $selectedDate | formatDate }}"
-                        hx-target="#medications"
-                        hx-swap="innerHTML"
+                        hx-target="#medication-day-{{ $medication.ID }}"
+                        hx-swap="outerHTML swap:0.2s"
                     >
                         {{ if $isTaken }}
                             <img src="/static/images/svg/check-white.svg" alt="Taken" />
@@ -60,8 +60,8 @@
                     <button
                         class="dose-btn single {{ if $isTaken }}taken{{ end }}"
                         hx-post="/medications/{{ $medication.ID }}/toggle-log?dose=0&date={{ $selectedDate | formatDate }}"
-                        hx-target="#medications"
-                        hx-swap="innerHTML"
+                        hx-target="#medication-day-{{ $medication.ID }}"
+                        hx-swap="outerHTML swap:0.2s"
                     >
                         {{ if $isTaken }}
                             <img src="/static/images/svg/check-white.svg" alt="Taken" />
@@ -91,5 +91,7 @@ function toggleNotes(medicationId) {
         notesDiv.style.display = 'none';
     }
 }
+
+// No longer needed - we're only updating individual medication items
 </script>
 {{ end }}

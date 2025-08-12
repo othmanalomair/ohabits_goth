@@ -81,8 +81,44 @@
         initializeSearchClearing();
     }
 </script>
-{{ end }} {{ define "my_shows_list" }} {{ if .Shows }} {{ range .Shows }} {{
-template "show_item" . }} {{ end }} {{ else }}
+{{ end }} {{ define "my_shows_list" }}
+{{ if or .WatchingShows .FinishedShows }}
+    
+    <!-- Watching Section -->
+    {{ if .WatchingShows }}
+    <div class="shows-section watching-section">
+        <div class="section-header">
+            <div class="section-title">
+                <h2>📺 Currently Watching</h2>
+                <span class="section-count">{{ len .WatchingShows }} {{ if eq (len .WatchingShows) 1 }}show{{ else }}shows{{ end }}</span>
+            </div>
+        </div>
+        <div class="shows-grid">
+            {{ range .WatchingShows }}
+                {{ template "show_item" . }}
+            {{ end }}
+        </div>
+    </div>
+    {{ end }}
+    
+    <!-- Finished Section -->
+    {{ if .FinishedShows }}
+    <div class="shows-section finished-section">
+        <div class="section-header">
+            <div class="section-title">
+                <h2>✅ Finished Shows</h2>
+                <span class="section-count">{{ len .FinishedShows }} {{ if eq (len .FinishedShows) 1 }}show{{ else }}shows{{ end }}</span>
+            </div>
+        </div>
+        <div class="shows-grid">
+            {{ range .FinishedShows }}
+                {{ template "show_item" . }}
+            {{ end }}
+        </div>
+    </div>
+    {{ end }}
+    
+{{ else }}
 <div class="empty-state">
     <p>No shows tracked yet. Search and add shows above!</p>
 </div>
@@ -197,7 +233,7 @@ template "show_item" . }} {{ end }} {{ else }}
     <p>No shows found for "{{ .SearchQuery }}"</p>
 </div>
 {{ end }} {{ end }} {{ define "search_result_item" }}
-<div class="search-result-item">
+<div class="search-result-item" id="search-result-{{ .Show.ID }}">
     <div class="search-result-poster">
         {{ if .Show.Image }} {{ if .Show.Image.Medium }}
         <img src="{{ .Show.Image.Medium }}" alt="{{ .Show.Name }}" />
@@ -229,8 +265,8 @@ template "show_item" . }} {{ end }} {{ else }}
         <button
             hx-post="/shows/add"
             hx-vals='{"tvmaze_id": "{{ .Show.ID }}"}'
-            hx-target="#my-shows-list"
-            hx-swap="innerHTML"
+            hx-target="#search-result-{{ .Show.ID }}"
+            hx-swap="outerHTML"
             class="btn-primary add-show-btn"
         >
             + Add to My Shows

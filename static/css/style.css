@@ -1661,6 +1661,7 @@ main {
     box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
     margin-bottom: 2rem;
     border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: opacity 0.2s ease-in-out;
 }
 
 .medications-section h3 {
@@ -5849,10 +5850,64 @@ main {
     font-weight: 600;
 }
 
-#my-shows-list {
+/* Show sections styling */
+.shows-section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.section-title h2 {
+    margin: 0;
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.shows-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+}
+
+/* Section-specific styling */
+.watching-section .section-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+}
+
+.finished-section .section-header {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.2) 100%);
+}
+
+#my-shows-list {
+    display: block;
 }
 
 .show-item {
@@ -7270,8 +7325,43 @@ main {
     }
 }
 
-/* Mobile responsiveness for show items */
+/* Mobile responsiveness for show sections and items */
 @media (max-width: 768px) {
+    .shows-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-header {
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+    }
+    
+    .section-title {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .section-title h2 {
+        font-size: 18px;
+        gap: 6px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .section-count {
+        font-size: 11px;
+        padding: 3px 8px;
+        flex-shrink: 0;
+    }
+    
+    .shows-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    /* Legacy support for old structure */
     #my-shows-list {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -7346,6 +7436,26 @@ main {
 }
 
 @media (max-width: 480px) {
+    .shows-section {
+        margin-bottom: 25px;
+    }
+    
+    .section-header {
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+    }
+    
+    .section-title h2 {
+        font-size: 16px;
+        gap: 5px;
+    }
+    
+    .section-count {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+    
     .show-item {
         padding: 10px;
         gap: 10px;

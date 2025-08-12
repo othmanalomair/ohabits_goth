@@ -2970,8 +2970,43 @@ func ToggleMedicationLog(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Redirect back to medications by day to refresh the view
-	MedicationsByDay(w, r)
+	// Return just the updated medication item
+	SingleMedicationItem(w, r, medicationID, userID, date)
+}
+
+// SingleMedicationItem renders just a single medication item for HTMX updates
+func SingleMedicationItem(w http.ResponseWriter, r *http.Request, medicationID uuid.UUID, userID uuid.UUID, date time.Time) {
+	// Get the specific medication
+	medication, err := db.GetMedicationByID(db.DB, medicationID, userID)
+	if err != nil {
+		log.Printf("Error getting medication: %v", err)
+		http.Error(w, "Error loading medication", http.StatusInternalServerError)
+		return
+	}
+
+	// Get logs for this date
+	logs, err := db.GetMedicationLogsForDate(db.DB, userID, date)
+	if err != nil {
+		log.Printf("Error getting medication logs: %v", err)
+		http.Error(w, "Error loading medication logs", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Medication   *db.Medication
+		Logs         []db.MedicationLog
+		SelectedDate time.Time
+	}{
+		Medication:   medication,
+		Logs:         logs,
+		SelectedDate: date,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "medication_item", data); err != nil {
+		log.Printf("Error executing medication item template: %v", err)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
 }
 
 // ToggleMedicationDay handles toggling a day in medication schedule (POST /medications/{id}/toggle-day)
@@ -3395,9 +3430,24 @@ func ShowsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Categorize shows into "Watching" and "Finished"
+	var watchingShows, finishedShows []db.Show
+	
+	for _, show := range shows {
+		isFullyWatched := show.TotalEpisodes > 0 && show.WatchedEpisodes == show.TotalEpisodes
+		isEnded := show.Status != nil && strings.ToLower(*show.Status) == "ended"
+		
+		if isEnded && isFullyWatched {
+			finishedShows = append(finishedShows, show)
+		} else {
+			watchingShows = append(watchingShows, show)
+		}
+	}
+
 	data := map[string]interface{}{
-		"Shows": shows,
-		"User":  user,
+		"WatchingShows": watchingShows,
+		"FinishedShows": finishedShows,
+		"User":         user,
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "shows", data); err != nil {
@@ -3529,22 +3579,59 @@ func AddShowHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Return updated shows list
-	shows, err := db.GetAllShows(db.DB, userID)
+	// Return the updated search result item showing it's been added
+	type SearchResultWithStatus struct {
+		db.TVMazeSearchResult
+		AlreadyAdded bool
+	}
+
+	// Create search result structure from the tvShow data
+	searchResult := SearchResultWithStatus{
+		TVMazeSearchResult: db.TVMazeSearchResult{
+			Show: *tvShow,
+		},
+		AlreadyAdded: true,
+	}
+
+	// Get updated shows list for OOB swap
+	shows, err := db.GetAllShowsWithEpisodeCounts(db.DB, userID)
 	if err != nil {
 		log.Printf("Error getting shows: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	data := map[string]interface{}{
-		"Shows": shows,
+	// Execute search result item template
+	if err := tmpl.ExecuteTemplate(w, "search_result_item", searchResult); err != nil {
+		log.Printf("Error executing search result item template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "my_shows_list", data); err != nil {
-		log.Printf("Error executing shows list template: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// Categorize shows for OOB swap
+	var watchingShows, finishedShows []db.Show
+	
+	for _, show := range shows {
+		isFullyWatched := show.TotalEpisodes > 0 && show.WatchedEpisodes == show.TotalEpisodes
+		isEnded := show.Status != nil && strings.ToLower(*show.Status) == "ended"
+		
+		if isEnded && isFullyWatched {
+			finishedShows = append(finishedShows, show)
+		} else {
+			watchingShows = append(watchingShows, show)
+		}
 	}
+
+	// Add OOB swap for shows list
+	w.Write([]byte(`<div id="my-shows-list" hx-swap-oob="innerHTML">`))
+	showsData := map[string]interface{}{
+		"WatchingShows": watchingShows,
+		"FinishedShows": finishedShows,
+	}
+	if err := tmpl.ExecuteTemplate(w, "my_shows_list", showsData); err != nil {
+		log.Printf("Error executing shows list template for OOB: %v", err)
+	}
+	w.Write([]byte(`</div>`))
 }
 
 func DeleteShowHandler(w http.ResponseWriter, r *http.Request) {

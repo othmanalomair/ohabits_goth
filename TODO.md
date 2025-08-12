@@ -3,7 +3,7 @@
 - [ ] project manger
 - [ ] space for big notes
 - [ ] space for yearly or monthey goals
-- [ ] notification for new episods or manga releas
+- [x] notification for new episods or manga releas
 - [ ] AI with ohabits
 - [ ] news
 - [ ] wish list
