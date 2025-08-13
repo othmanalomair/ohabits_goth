@@ -152,11 +152,11 @@ function toggleEditDateFields(medicationId) {
 
 {{ define "medications_list" }}
     {{ range .Medications }}
-        {{ template "medication_item" . }}
+        {{ template "medication_item_simple" . }}
     {{ end }}
 {{ end }}
 
-{{ define "medication_item" }}
+{{ define "medication_item_simple" }}
 <div class="medication-item" id="medication-{{ .ID }}">
     {{ $medication := . }}
     
@@ -217,7 +217,7 @@ function toggleEditDateFields(medicationId) {
 </div>
 {{ end }}
 
-{{ define "medication_edit" }}
+{{ define "medication_edit_simple" }}
 <div class="medication-item" id="medication-{{ .ID }}">
     {{ $medication := . }}
     

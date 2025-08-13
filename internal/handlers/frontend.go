@@ -2644,14 +2644,27 @@ func MedicationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get medication logs for today to show current status
+	today := time.Now()
+	logs, err := db.GetMedicationLogsForDate(db.DB, userID, today)
+	if err != nil {
+		log.Printf("Error getting medication logs: %v", err)
+		// Continue without logs, don't fail completely
+		logs = []db.MedicationLog{}
+	}
+
 	data := struct {
 		Medications []db.Medication
+		Logs        []db.MedicationLog
 	}{
 		Medications: medications,
+		Logs:        logs,
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "medications", data); err != nil {
+		log.Printf("Template execution error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -3087,13 +3100,13 @@ func ToggleMedicationDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return updated medication item
+	// Return updated medication item using the simple template
 	data := struct {
 		*db.Medication
 	}{medication}
 
 	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "medication_item", data); err != nil {
+	if err := tmpl.ExecuteTemplate(&buf, "medication_item_simple", data); err != nil {
 		log.Printf("Template execution error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -3202,7 +3215,7 @@ func EditMedicationForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "medication_edit", medication); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "medication_edit_simple", medication); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -3321,8 +3334,8 @@ func EditMedication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Render the updated medication item
-	if err := tmpl.ExecuteTemplate(w, "medication_item", medication); err != nil {
+	// Render the updated medication item using the simple template
+	if err := tmpl.ExecuteTemplate(w, "medication_item_simple", medication); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -3355,7 +3368,8 @@ func CancelMedicationEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "medication_item", medication); err != nil {
+	// Render the medication item using the simple template
+	if err := tmpl.ExecuteTemplate(w, "medication_item_simple", medication); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
