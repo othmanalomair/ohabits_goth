@@ -5,13 +5,16 @@
   git pull origin main
 
   # Rebuild the Docker image with the updated code
-  docker build -t apps_app:v2.0.2 .
+  docker build -t apps_app:v2.0.8 .
 
   # Update the Docker service to use the new image
-  docker service update --image apps_app:v2.0.2 apps_app
+  docker service update --image apps_app:v2.0.8 apps_app
 
   # Check if the service is now running properly
   docker service ps apps_app
 
   # Check the logs to make sure it's working
   docker service logs apps_app
+
+
+docker exec -i fe3497b3f90a psql -U most3mr -d ohabits < add_task_collapsed_field.sql

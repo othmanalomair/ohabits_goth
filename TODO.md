@@ -1,6 +1,6 @@
 - [ ] monthely and yearly expensess
 - [x] med remainder
-- [ ] project manger
+- [x] project manger
 - [ ] space for big notes
 - [ ] space for yearly or monthey goals
 - [x] notification for new episods
