@@ -1,0 +1,15 @@
+{{ if . }}
+    {{ range . }}
+    <div class="comment-item">
+        <div class="comment-meta">
+            <span class="comment-user">User</span>
+            <span class="comment-date">{{ .CreatedAt.Format "Jan 2, 2006 at 3:04 PM" }}</span>
+        </div>
+        <div class="comment-text">{{ .Comment }}</div>
+    </div>
+    {{ end }}
+{{ else }}
+    <div class="no-comments">
+        <p>No comments yet.</p>
+    </div>
+{{ end }}

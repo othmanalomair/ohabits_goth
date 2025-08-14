@@ -1,0 +1,49 @@
+<div class="habit-item" id="task-{{ .Task.ID }}">
+    <div class="habit-left">
+        <form
+            hx-post="/tasks/{{ .Task.ID }}/edit"
+            hx-target="#task-{{ .Task.ID }}"
+            hx-swap="outerHTML"
+        >
+            <input type="text" name="title" value="{{ .Task.Title }}" required placeholder="Task title" />
+            <input type="text" name="description" value="{{ if .Task.Description }}{{ .Task.Description }}{{ end }}" placeholder="Description (optional)" />
+            <select name="status">
+                <option value="Not Started" {{ if eq .Task.Status "Not Started" }}selected{{ end }}>Not Started</option>
+                <option value="In Progress" {{ if eq .Task.Status "In Progress" }}selected{{ end }}>In Progress</option>
+                <option value="Blocked" {{ if eq .Task.Status "Blocked" }}selected{{ end }}>Blocked</option>
+                <option value="In Review" {{ if eq .Task.Status "In Review" }}selected{{ end }}>In Review</option>
+                <option value="Completed" {{ if eq .Task.Status "Completed" }}selected{{ end }}>Completed</option>
+            </select>
+            <select name="priority">
+                <option value="None" {{ if eq .Task.Priority "None" }}selected{{ end }}>None</option>
+                <option value="Low" {{ if eq .Task.Priority "Low" }}selected{{ end }}>Low</option>
+                <option value="Medium" {{ if eq .Task.Priority "Medium" }}selected{{ end }}>Medium</option>
+                <option value="High" {{ if eq .Task.Priority "High" }}selected{{ end }}>High</option>
+            </select>
+            <input type="date" name="due_date" {{ if .Task.DueDate }}value="{{ .Task.DueDate.Format "2006-01-02" }}"{{ end }} />
+            <button type="submit">
+                <img src="/static/images/svg/check-green.svg" alt="Save" />
+            </button>
+            <button
+                type="button"
+                hx-get="/tasks/{{ .Task.ID }}/cancel"
+                hx-target="#task-{{ .Task.ID }}"
+                hx-swap="outerHTML"
+            >
+                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+            </button>
+        </form>
+    </div>
+    
+    <div class="habit-days">
+        <button
+            hx-post="/tasks/{{ .Task.ID }}/toggle"
+            hx-target="#task-list"
+            hx-swap="innerHTML"
+            class="day-button {{ if .Task.Completed }}active{{ end }}"
+            title="Toggle Completion"
+        >
+            {{ if .Task.Completed }}✓{{ else }}○{{ end }}
+        </button>
+    </div>
+</div>

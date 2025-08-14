@@ -20,6 +20,19 @@ func GetUser(db *pgxpool.Pool, userID uuid.UUID) (User, error) {
 	return user, nil
 }
 
+func GetUserByID(db *pgxpool.Pool, userID uuid.UUID) (*User, error) {
+	var user User
+	err := db.QueryRow(context.Background(), `
+        SELECT id, email, display_name, avatar_url, created_at, updated_at
+        FROM users
+        WHERE id = $1
+    `, userID).Scan(&user.ID, &user.Email, &user.DisplayName, &user.AvatarURL, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func GetUserWithPassword(db *pgxpool.Pool, userID uuid.UUID) (User, error) {
 	var user User
 	err := db.QueryRow(context.Background(), `

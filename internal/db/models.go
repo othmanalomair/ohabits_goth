@@ -318,3 +318,86 @@ type JikanEpisodeVideo struct {
 		} `json:"jpg"`
 	} `json:"images"`
 }
+
+// Project Management Models
+
+// Project entity
+type Project struct {
+	ID          uuid.UUID `json:"id"`
+	UserID      uuid.UUID `json:"user_id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	
+	// Calculated fields (not stored in DB)
+	MainTasks      int `json:"main_tasks"`
+	SubTasks       int `json:"sub_tasks"`
+	CompletedTasks int `json:"completed_tasks"`
+}
+
+// Task entity
+type Task struct {
+	ID           uuid.UUID  `json:"id"`
+	UserID       uuid.UUID  `json:"user_id"`
+	ProjectID    uuid.UUID  `json:"project_id"`
+	ParentTaskID *uuid.UUID `json:"parent_task_id"`
+	Title        string     `json:"title"`
+	Description  *string    `json:"description"`
+	Status       string     `json:"status"`
+	Priority     string     `json:"priority"`
+	DueDate      *time.Time `json:"due_date"`
+	Completed    bool       `json:"completed"`
+	Collapsed    bool       `json:"collapsed"`
+	DisplayOrder int        `json:"display_order"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	
+	// Related data (not stored in DB)
+	Subtasks     []Task           `json:"subtasks,omitempty"`
+	Dependencies []TaskDependency `json:"dependencies,omitempty"`
+	Comments     []TaskComment    `json:"comments,omitempty"`
+	Attachments  []TaskAttachment `json:"attachments,omitempty"`
+	IsBlocked    bool             `json:"is_blocked"`
+}
+
+// Task dependency entity
+type TaskDependency struct {
+	ID              uuid.UUID `json:"id"`
+	TaskID          uuid.UUID `json:"task_id"`
+	DependsOnTaskID uuid.UUID `json:"depends_on_task_id"`
+	CreatedAt       time.Time `json:"created_at"`
+	
+	// Related data
+	DependsOnTask *Task `json:"depends_on_task,omitempty"`
+}
+
+// Task comment entity
+type TaskComment struct {
+	ID        uuid.UUID `json:"id"`
+	TaskID    uuid.UUID `json:"task_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Comment   string    `json:"comment"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Task attachment entity
+type TaskAttachment struct {
+	ID        uuid.UUID `json:"id"`
+	TaskID    uuid.UUID `json:"task_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Filename  string    `json:"filename"`
+	FilePath  string    `json:"file_path"`
+	FileSize  int64     `json:"file_size"`
+	MimeType  string    `json:"mime_type"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Task hierarchy with nested structure for templates
+type TaskHierarchy struct {
+	Task
+	Level       int             `json:"level"`
+	HasChildren bool            `json:"has_children"`
+	Children    []TaskHierarchy `json:"children,omitempty"`
+}

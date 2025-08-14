@@ -99,6 +99,28 @@ func Server() *http.Server {
 	protected.HandleFunc("/notifications/{id}", handlers.DismissNotificationHandler).Methods("DELETE")
 	protected.HandleFunc("/api/notifications", handlers.NotificationAPIHandler).Methods("GET")
 
+	// Project Management Routes
+	protected.HandleFunc("/projects", handlers.ProjectsPage).Methods("GET")
+	protected.HandleFunc("/projects", handlers.CreateProject).Methods("POST")
+	protected.HandleFunc("/projects/{id}/edit-form", handlers.EditProjectForm).Methods("GET")
+	protected.HandleFunc("/projects/{id}/edit", handlers.EditProject).Methods("POST")
+	protected.HandleFunc("/projects/{id}/cancel", handlers.CancelProjectEdit).Methods("GET")
+	protected.HandleFunc("/projects/{id}/delete", handlers.DeleteProject).Methods("POST")
+	protected.HandleFunc("/projects/{id}", handlers.ProjectDetails).Methods("GET")
+	
+	// Task Routes
+	protected.HandleFunc("/projects/{id}/tasks", handlers.CreateTask).Methods("POST")
+	protected.HandleFunc("/projects/{id}/tasks/form", handlers.GetSubTaskForm).Methods("GET")
+	protected.HandleFunc("/tasks/{taskId}/toggle", handlers.ToggleTaskCompletion).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/toggle-collapsed", handlers.ToggleTaskCollapsed).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/move-up", handlers.MoveTaskUp).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/move-down", handlers.MoveTaskDown).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/edit-form", handlers.EditTaskForm).Methods("GET")
+	protected.HandleFunc("/tasks/{taskId}/edit", handlers.EditTask).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/cancel", handlers.CancelTaskEdit).Methods("GET")
+	protected.HandleFunc("/tasks/{taskId}/delete", handlers.DeleteTask).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/comments", handlers.AddTaskComment).Methods("POST")
+
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
