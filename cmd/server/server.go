@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"ohabits.com/internal/api"
 	"ohabits.com/internal/handlers"
 	"ohabits.com/internal/util"
 )
@@ -98,6 +99,7 @@ func Server() *http.Server {
 	protected.HandleFunc("/notifications/list", handlers.NotificationListHandler).Methods("GET") 
 	protected.HandleFunc("/notifications/{id}", handlers.DismissNotificationHandler).Methods("DELETE")
 	protected.HandleFunc("/api/notifications", handlers.NotificationAPIHandler).Methods("GET")
+	protected.HandleFunc("/api/projects/{id}/stats", api.GetProjectStats).Methods("GET")
 
 	// Project Management Routes
 	protected.HandleFunc("/projects", handlers.ProjectsPage).Methods("GET")
@@ -120,9 +122,13 @@ func Server() *http.Server {
 	protected.HandleFunc("/tasks/{taskId}/cancel", handlers.CancelTaskEdit).Methods("GET")
 	protected.HandleFunc("/tasks/{taskId}/delete", handlers.DeleteTask).Methods("POST")
 	protected.HandleFunc("/tasks/{taskId}/comments", handlers.AddTaskComment).Methods("POST")
+	protected.HandleFunc("/tasks/{taskId}/attachments/{attachmentId}/delete", handlers.DeleteTaskAttachment).Methods("POST")
 
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	
+	// Serve uploaded files (task attachments)
+	protected.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
 	// 404 handler - must be last
 	r.NotFoundHandler = http.HandlerFunc(handlers.NotFoundHandler)

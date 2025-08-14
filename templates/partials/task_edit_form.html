@@ -2,36 +2,102 @@
     <div class="habit-left">
         <form
             hx-post="/tasks/{{ .Task.ID }}/edit"
-            hx-target="#task-{{ .Task.ID }}"
-            hx-swap="outerHTML"
+            hx-target="#task-list"
+            hx-swap="innerHTML"
+            enctype="multipart/form-data"
+            class="task-edit-form"
+            onsubmit="captureCollapseStates(event); return true;"
+            hx-on:after-request="if(event.detail.xhr.status === 200) { closeTaskEditModal(); showToast('Task updated successfully!', 'success'); }"
         >
-            <input type="text" name="title" value="{{ .Task.Title }}" required placeholder="Task title" />
-            <input type="text" name="description" value="{{ if .Task.Description }}{{ .Task.Description }}{{ end }}" placeholder="Description (optional)" />
-            <select name="status">
-                <option value="Not Started" {{ if eq .Task.Status "Not Started" }}selected{{ end }}>Not Started</option>
-                <option value="In Progress" {{ if eq .Task.Status "In Progress" }}selected{{ end }}>In Progress</option>
-                <option value="Blocked" {{ if eq .Task.Status "Blocked" }}selected{{ end }}>Blocked</option>
-                <option value="In Review" {{ if eq .Task.Status "In Review" }}selected{{ end }}>In Review</option>
-                <option value="Completed" {{ if eq .Task.Status "Completed" }}selected{{ end }}>Completed</option>
-            </select>
-            <select name="priority">
-                <option value="None" {{ if eq .Task.Priority "None" }}selected{{ end }}>None</option>
-                <option value="Low" {{ if eq .Task.Priority "Low" }}selected{{ end }}>Low</option>
-                <option value="Medium" {{ if eq .Task.Priority "Medium" }}selected{{ end }}>Medium</option>
-                <option value="High" {{ if eq .Task.Priority "High" }}selected{{ end }}>High</option>
-            </select>
-            <input type="date" name="due_date" {{ if .Task.DueDate }}value="{{ .Task.DueDate.Format "2006-01-02" }}"{{ end }} />
-            <button type="submit">
-                <img src="/static/images/svg/check-green.svg" alt="Save" />
-            </button>
-            <button
-                type="button"
-                hx-get="/tasks/{{ .Task.ID }}/cancel"
-                hx-target="#task-{{ .Task.ID }}"
-                hx-swap="outerHTML"
-            >
-                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
-            </button>
+            <div class="form-row">
+                <label for="title">Task Title</label>
+                <input type="text" name="title" value="{{ .Task.Title }}" required placeholder="Task title" />
+            </div>
+            
+            <div class="form-row">
+                <label for="description">Description</label>
+                <textarea name="description" placeholder="Description (optional)" rows="3">{{ if .Task.Description }}{{ .Task.Description }}{{ end }}</textarea>
+            </div>
+            
+            <div class="form-row-group">
+                <div class="form-row">
+                    <label for="status">Status</label>
+                    <select name="status">
+                        <option value="Not Started" {{ if eq .Task.Status "Not Started" }}selected{{ end }}>Not Started</option>
+                        <option value="In Progress" {{ if eq .Task.Status "In Progress" }}selected{{ end }}>In Progress</option>
+                        <option value="Blocked" {{ if eq .Task.Status "Blocked" }}selected{{ end }}>Blocked</option>
+                        <option value="In Review" {{ if eq .Task.Status "In Review" }}selected{{ end }}>In Review</option>
+                        <option value="Completed" {{ if eq .Task.Status "Completed" }}selected{{ end }}>Completed</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label for="priority">Priority</label>
+                    <select name="priority">
+                        <option value="None" {{ if eq .Task.Priority "None" }}selected{{ end }}>None</option>
+                        <option value="Low" {{ if eq .Task.Priority "Low" }}selected{{ end }}>Low</option>
+                        <option value="Medium" {{ if eq .Task.Priority "Medium" }}selected{{ end }}>Medium</option>
+                        <option value="High" {{ if eq .Task.Priority "High" }}selected{{ end }}>High</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label for="due_date">Due Date</label>
+                    <input type="date" name="due_date" {{ if .Task.DueDate }}value="{{ .Task.DueDate.Format "2006-01-02" }}"{{ end }} />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="attachment">Attachment (Photo, Screenshot, PDF)</label>
+                <input type="file" name="attachment" accept="image/*,.pdf" class="file-input" />
+                <small class="file-help">Upload images (JPG, PNG, GIF) or PDF files (max 10MB)</small>
+            </div>
+            
+            {{ if .Task.Attachments }}
+            <div class="current-attachments">
+                <label>Current Attachments:</label>
+                {{ range .Task.Attachments }}
+                <div class="attachment-item">
+                    <span class="attachment-name">{{ .Filename }}</span>
+                    <div class="attachment-actions">
+                        {{ if hasPrefix .MimeType "image/" }}
+                        <button type="button" 
+                                onclick="viewAttachment('/uploads/tasks/{{ basename .FilePath }}', '{{ .Filename }}')"
+                                class="view-attachment-btn"
+                                title="View Image">
+                            👁️
+                        </button>
+                        {{ end }}
+                        <a href="/uploads/tasks/{{ basename .FilePath }}" 
+                           download="{{ .Filename }}" 
+                           class="download-attachment-btn"
+                           title="Download File">
+                            📥
+                        </a>
+                        <button type="button" 
+                                hx-post="/tasks/{{ $.Task.ID }}/attachments/{{ .ID }}/delete"
+                                hx-target="#task-edit-form-container"
+                                hx-swap="innerHTML"
+                                hx-confirm="Delete this attachment?"
+                                class="delete-attachment-btn"
+                                title="Delete Attachment">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+            {{ end }}
+            <div class="form-buttons">
+                <button type="submit" class="btn-save">
+                    <img src="/static/images/svg/check-green.svg" alt="Save" />
+                    Save
+                </button>
+                <button type="button" class="btn-cancel" onclick="closeTaskEditModal()">
+                    <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+                    Cancel
+                </button>
+            </div>
         </form>
     </div>
     
@@ -47,3 +113,222 @@
         </button>
     </div>
 </div>
+
+<style>
+.task-edit-form {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 25px rgba(31, 38, 135, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.form-row label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+}
+
+.form-row input,
+.form-row textarea,
+.form-row select {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: #111827;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.form-row input:focus,
+.form-row textarea:focus,
+.form-row select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: #ffffff;
+}
+
+.form-row textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+.form-row-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.file-input {
+    border: 2px dashed #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+    padding: 0.75rem !important;
+    text-align: center;
+    border-radius: 8px !important;
+}
+
+.file-help {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.current-attachments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.current-attachments label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.attachment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.attachment-name {
+    flex: 1;
+    margin-right: 1rem;
+    font-weight: 500;
+}
+
+.attachment-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.view-attachment-btn,
+.download-attachment-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.view-attachment-btn:hover,
+.download-attachment-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(1.1);
+}
+
+.delete-attachment-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #e53e3e;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-attachment-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.1);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.form-buttons button {
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: none;
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    min-width: 100px;
+}
+
+.btn-save:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(56, 161, 105, 0.3);
+}
+
+.btn-cancel {
+    background: rgba(239, 68, 68, 0.1);
+    color: #e53e3e;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    min-width: 100px;
+}
+
+.btn-cancel:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.task-edit-form button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.task-edit-form button img {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 767px) {
+    .form-row-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .task-edit-form {
+        padding: 1rem;
+    }
+}
+</style>

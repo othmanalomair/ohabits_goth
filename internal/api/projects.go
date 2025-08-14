@@ -33,6 +33,61 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func GetProjectStats(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	params := mux.Vars(r)
+	projectID, err := uuid.Parse(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid project ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get all tasks for this project
+	tasks, err := db.GetTasksByProject(db.DB, projectID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate stats
+	mainTasks := 0
+	subTasks := 0
+	completedTasks := 0
+
+	for _, task := range tasks {
+		if task.ParentTaskID == nil {
+			mainTasks++
+		} else {
+			subTasks++
+		}
+		if task.Completed {
+			completedTasks++
+		}
+	}
+
+	totalTasks := mainTasks + subTasks
+
+	stats := struct {
+		MainTasks      int `json:"main_tasks"`
+		SubTasks       int `json:"sub_tasks"`
+		CompletedTasks int `json:"completed_tasks"`
+		TotalTasks     int `json:"total_tasks"`
+	}{
+		MainTasks:      mainTasks,
+		SubTasks:       subTasks,
+		CompletedTasks: completedTasks,
+		TotalTasks:     totalTasks,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
+}
+
 func CreateProject(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {

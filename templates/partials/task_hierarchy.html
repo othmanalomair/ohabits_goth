@@ -4,6 +4,7 @@
     {{ $task := .Task }}
     
     <div class="habit-left">
+        <!-- Row 1: Task name and action buttons -->
         <div class="habit-header">
             <div class="task-hierarchy-indicator">
                 {{ if .HasChildren }}
@@ -19,7 +20,14 @@
                 {{ else }}
                 <span class="collapse-btn-spacer"></span>
                 {{ end }}
-                <h3>{{ $task.Title }}</h3>
+                <h3 class="task-title priority-{{ $task.Priority }}">{{ $task.Title }}</h3>
+                {{ if or $task.Description $task.Attachments }}
+                <button class="details-icon" 
+                        onclick="openTaskDetailsModal('{{ $task.ID }}')"
+                        title="Show Details">
+                    <img src="/static/images/svg/info.svg" alt="Details" />
+                </button>
+                {{ end }}
             </div>
             <div class="habit-actions">
                 <button
@@ -47,12 +55,13 @@
                     class="add-subtask-btn"
                     title="Add Sub-task"
                 >
-                    <img src="/static/images/svg/plus.svg" alt="Add Sub-task" />
+                    +
                 </button>
                 <button
                     hx-get="/tasks/{{ $task.ID }}/edit-form"
-                    hx-target="#task-{{ $task.ID }}"
-                    hx-swap="outerHTML"
+                    hx-target="#task-edit-form-container"
+                    hx-swap="innerHTML"
+                    onclick="openTaskEditModal()"
                 >
                     <img src="/static/images/svg/edit.svg" alt="Edit" />
                 </button>
@@ -66,30 +75,43 @@
                 </button>
             </div>
         </div>
-        {{ if $task.Description }}
-        <p class="project-description">{{ $task.Description }}</p>
-        {{ end }}
-        <div class="project-stats">
-            <span>Status: {{ $task.Status }}</span>
-            {{ if ne $task.Priority "None" }}
-            <span>Priority: {{ $task.Priority }}</span>
+        
+        <!-- Row 2: Status info and completion area -->
+        <div class="task-bottom-row">
+            <div class="project-stats">
+                <span>Status: {{ $task.Status }}</span>
+                {{ if $task.DueDate }}
+                <span>Due: {{ $task.DueDate.Format "Jan 2" }}</span>
+                {{ end }}
+            </div>
+            <div class="task-completion-area"
+                 hx-post="/tasks/{{ $task.ID }}/toggle"
+                 hx-target="#task-list"
+                 hx-swap="innerHTML"
+                 hx-on:after-request="updateProjectStats()"
+                 title="Click to toggle completion">
+                {{ if $task.Completed }}✓{{ else }}○{{ end }}
+            </div>
+        </div>
+        
+        <!-- Task details data for modal (hidden) -->
+        <div id="task-details-data-{{ $task.ID }}" style="display: none;">
+            <div class="task-title-data">{{ $task.Title }}</div>
+            {{ if $task.Description }}
+            <div class="task-description-data">{{ $task.Description }}</div>
             {{ end }}
-            {{ if $task.DueDate }}
-            <span>Due: {{ $task.DueDate.Format "Jan 2" }}</span>
+            {{ if $task.Attachments }}
+            <div class="task-attachments-data">
+                {{ range $task.Attachments }}
+                <div class="attachment-data" 
+                     data-filename="{{ .Filename }}" 
+                     data-filepath="{{ basename .FilePath }}" 
+                     data-mimetype="{{ .MimeType }}">
+                </div>
+                {{ end }}
+            </div>
             {{ end }}
         </div>
-    </div>
-    
-    <div class="habit-days">
-        <button
-            hx-post="/tasks/{{ $task.ID }}/toggle"
-            hx-target="#task-list"
-            hx-swap="innerHTML"
-            class="day-button {{ if $task.Completed }}active{{ end }}"
-            title="Toggle Completion"
-        >
-            {{ if $task.Completed }}✓{{ else }}○{{ end }}
-        </button>
     </div>
 </div>
 

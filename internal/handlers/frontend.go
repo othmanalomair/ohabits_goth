@@ -237,6 +237,12 @@ func init() {
 			}
 			return result
 		},
+		"hasPrefix": func(s, prefix string) bool {
+			return strings.HasPrefix(s, prefix)
+		},
+		"basename": func(path string) string {
+			return filepath.Base(path)
+		},
 	})
 	var err error
 	tmpl, err = tmpl.ParseGlob("templates/*.html")

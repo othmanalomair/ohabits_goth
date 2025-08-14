@@ -110,7 +110,7 @@ func GetTasksByProject(db *pgxpool.Pool, projectID uuid.UUID, userID uuid.UUID) 
 		SELECT id, user_id, project_id, parent_task_id, title, description, status, priority, due_date, completed, collapsed, display_order, created_at, updated_at
 		FROM tasks
 		WHERE project_id = $1 AND user_id = $2
-		ORDER BY display_order ASC, created_at ASC
+		ORDER BY display_order ASC, id ASC
 	`
 	
 	rows, err := db.Query(context.Background(), query, projectID, userID)
@@ -145,6 +145,18 @@ func ToggleTaskCollapsed(db *pgxpool.Pool, taskID uuid.UUID, userID uuid.UUID) e
 	`
 	now := time.Now()
 	_, err := db.Exec(context.Background(), query, taskID, userID, now)
+	return err
+}
+
+// SetTaskCollapsed sets the collapsed state of a task to a specific value
+func SetTaskCollapsed(db *pgxpool.Pool, taskID uuid.UUID, userID uuid.UUID, collapsed bool) error {
+	query := `
+		UPDATE tasks
+		SET collapsed = $3, updated_at = $4
+		WHERE id = $1 AND user_id = $2
+	`
+	now := time.Now()
+	_, err := db.Exec(context.Background(), query, taskID, userID, collapsed, now)
 	return err
 }
 
@@ -682,6 +694,24 @@ func GetTaskAttachments(db *pgxpool.Pool, taskID uuid.UUID) ([]TaskAttachment, e
 	}
 
 	return attachments, rows.Err()
+}
+
+func GetTaskAttachmentByID(db *pgxpool.Pool, attachmentID uuid.UUID, userID uuid.UUID) (*TaskAttachment, error) {
+	query := `
+		SELECT id, task_id, user_id, filename, file_path, file_size, mime_type, created_at
+		FROM task_attachments
+		WHERE id = $1 AND user_id = $2
+	`
+	
+	var a TaskAttachment
+	err := db.QueryRow(context.Background(), query, attachmentID, userID).Scan(
+		&a.ID, &a.TaskID, &a.UserID, &a.Filename, &a.FilePath, &a.FileSize, &a.MimeType, &a.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &a, nil
 }
 
 func DeleteTaskAttachment(db *pgxpool.Pool, attachmentID uuid.UUID, userID uuid.UUID) error {

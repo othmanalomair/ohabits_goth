@@ -1,8 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -246,6 +251,12 @@ func ProjectDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Load attachments for each task
+	for i := range allTasks {
+		attachments, _ := db.GetTaskAttachments(db.DB, allTasks[i].ID)
+		allTasks[i].Attachments = attachments
+	}
+
 	// Build task map for level calculation
 	taskMap := make(map[uuid.UUID]db.Task)
 	for _, task := range allTasks {
@@ -412,6 +423,12 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Load attachments for each task
+	for i := range allTasks {
+		attachments, _ := db.GetTaskAttachments(db.DB, allTasks[i].ID)
+		allTasks[i].Attachments = attachments
+	}
+
 	// Build task map for level calculation
 	taskMap := make(map[uuid.UUID]db.Task)
 	for _, task := range allTasks {
@@ -452,13 +469,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tmpl, err := template.ParseFiles("templates/partials/task_hierarchy.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, taskHierarchies)
+	err = tmpl.ExecuteTemplate(w, "task_hierarchy.html", taskHierarchies)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -534,13 +545,7 @@ func EditTaskForm(w http.ResponseWriter, r *http.Request) {
 		AllTasks: allTasks,
 	}
 
-	tmpl, err := template.ParseFiles("templates/partials/task_edit_form.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, data)
+	err = tmpl.ExecuteTemplate(w, "task_edit_form.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -619,15 +624,186 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Handle file upload if present
+	file, header, err := r.FormFile("attachment")
+	if err == nil && file != nil {
+		defer file.Close()
+		
+		// Validate file size (max 10MB)
+		if header.Size > 10*1024*1024 {
+			http.Error(w, "File size exceeds 10MB limit", http.StatusBadRequest)
+			return
+		}
+		
+		// Create uploads directory if it doesn't exist
+		os.MkdirAll("uploads/tasks", 0755)
+		
+		// Generate unique filename
+		ext := filepath.Ext(header.Filename)
+		filename := fmt.Sprintf("%s_%s%s", taskID.String(), uuid.New().String()[:8], ext)
+		filePath := filepath.Join("uploads/tasks", filename)
+		
+		// Save file
+		dst, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, "Failed to save file", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			http.Error(w, "Failed to save file", http.StatusInternalServerError)
+			return
+		}
+		
+		// Save attachment to database
+		attachment := db.TaskAttachment{
+			TaskID:   taskID,
+			Filename: header.Filename,
+			FilePath: filePath,
+			FileSize: header.Size,
+			MimeType: header.Header.Get("Content-Type"),
+		}
+		
+		err = db.CreateTaskAttachment(db.DB, attachment, userID)
+		if err != nil {
+			// Clean up file if database save fails
+			os.Remove(filePath)
+			http.Error(w, "Failed to save attachment", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Get updated task to return
 	updatedTask, err := db.GetTaskByID(db.DB, taskID, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	
+	// Load attachments for the updated task
+	attachments, _ := db.GetTaskAttachments(db.DB, updatedTask.ID)
+	updatedTask.Attachments = attachments
 
-	// Render just the updated task with proper hierarchy context
-	renderSingleTask(w, updatedTask.ID, userID)
+	// Read collapsed task states from form data
+	collapsedTasksStr := r.FormValue("collapsed_tasks")
+	var collapsedTaskIDs []string
+	if collapsedTasksStr != "" {
+		json.Unmarshal([]byte(collapsedTasksStr), &collapsedTaskIDs)
+	}
+	
+	// Convert to UUID set for fast lookup
+	collapsedTasksSet := make(map[uuid.UUID]bool)
+	for _, taskIDStr := range collapsedTaskIDs {
+		if taskID, err := uuid.Parse(taskIDStr); err == nil {
+			collapsedTasksSet[taskID] = true
+		}
+	}
+	
+	// Update all tasks in database to preserve collapse states
+	allTasks, err := db.GetTasksByProject(db.DB, updatedTask.ProjectID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	// Update collapse states for all tasks based on client state
+	for _, task := range allTasks {
+		expectedCollapsed := collapsedTasksSet[task.ID]
+		if task.Collapsed != expectedCollapsed {
+			db.SetTaskCollapsed(db.DB, task.ID, userID, expectedCollapsed)
+		}
+	}
+	
+	// Now refresh the task list to show updated hierarchy
+	refreshTaskList(w, updatedTask.ProjectID, userID)
+}
+
+// DeleteTaskAttachment handles attachment deletion
+func DeleteTaskAttachment(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	params := mux.Vars(r)
+	taskID, err := uuid.Parse(params["taskId"])
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	attachmentID, err := uuid.Parse(params["attachmentId"])
+	if err != nil {
+		http.Error(w, "Invalid attachment ID", http.StatusBadRequest)
+		return
+	}
+
+	// Verify task ownership
+	task, err := db.GetTaskByID(db.DB, taskID, userID)
+	if err != nil {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	// Get attachment to get file path for deletion
+	attachment, err := db.GetTaskAttachmentByID(db.DB, attachmentID, userID)
+	if err != nil {
+		http.Error(w, "Attachment not found", http.StatusNotFound)
+		return
+	}
+
+	// Verify attachment belongs to the task
+	if attachment.TaskID != taskID {
+		http.Error(w, "Attachment does not belong to this task", http.StatusForbidden)
+		return
+	}
+
+	// Delete file from filesystem
+	if attachment.FilePath != "" {
+		os.Remove(attachment.FilePath)
+	}
+
+	// Delete attachment from database
+	err = db.DeleteTaskAttachment(db.DB, attachmentID, userID)
+	if err != nil {
+		http.Error(w, "Failed to delete attachment", http.StatusInternalServerError)
+		return
+	}
+
+	// Re-render the edit form to show updated attachments
+	updatedTask, err := db.GetTaskByID(db.DB, taskID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Load attachments for the updated task
+	attachments, _ := db.GetTaskAttachments(db.DB, updatedTask.ID)
+	updatedTask.Attachments = attachments
+
+	// Get all tasks in the same project for parent selection
+	allTasks, err := db.GetTasksByProject(db.DB, task.ProjectID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Task     *db.Task
+		AllTasks []db.Task
+	}{
+		Task:     updatedTask,
+		AllTasks: allTasks,
+	}
+
+	err = tmpl.ExecuteTemplate(w, "task_edit_form.html", data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // DeleteTask handles task deletion
@@ -665,6 +841,12 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Load attachments for each task
+	for i := range allTasks {
+		attachments, _ := db.GetTaskAttachments(db.DB, allTasks[i].ID)
+		allTasks[i].Attachments = attachments
 	}
 
 	// Build task map for level calculation
@@ -707,13 +889,7 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tmpl, err := template.ParseFiles("templates/partials/task_hierarchy.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, taskHierarchies)
+	err = tmpl.ExecuteTemplate(w, "task_hierarchy.html", taskHierarchies)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1006,8 +1182,11 @@ func orderTasksHierarchically(tasks []db.Task) []db.Task {
 		}
 	}
 	
-	// Sort root tasks by display order to preserve user's intended order
+	// Sort root tasks by display order, then by ID for stable ordering
 	sort.Slice(rootTasks, func(i, j int) bool {
+		if rootTasks[i].DisplayOrder == rootTasks[j].DisplayOrder {
+			return rootTasks[i].ID.String() < rootTasks[j].ID.String()
+		}
 		return rootTasks[i].DisplayOrder < rootTasks[j].DisplayOrder
 	})
 	
@@ -1063,8 +1242,11 @@ func traverseTaskOrderPreserving(task db.Task, taskMap map[uuid.UUID]db.Task, vi
 		}
 	}
 	
-	// Sort children by display order to preserve user's intended order
+	// Sort children by display order, then by ID for stable ordering
 	sort.Slice(children, func(i, j int) bool {
+		if children[i].DisplayOrder == children[j].DisplayOrder {
+			return children[i].ID.String() < children[j].ID.String()
+		}
 		return children[i].DisplayOrder < children[j].DisplayOrder
 	})
 	
@@ -1226,6 +1408,12 @@ func refreshTaskList(w http.ResponseWriter, projectID uuid.UUID, userID uuid.UUI
 		return
 	}
 
+	// Load attachments for each task
+	for i := range allTasks {
+		attachments, _ := db.GetTaskAttachments(db.DB, allTasks[i].ID)
+		allTasks[i].Attachments = attachments
+	}
+
 	// Build task map for level calculation
 	taskMap := make(map[uuid.UUID]db.Task)
 	for _, task := range allTasks {
@@ -1266,13 +1454,7 @@ func refreshTaskList(w http.ResponseWriter, projectID uuid.UUID, userID uuid.UUI
 		}
 	}
 
-	tmpl, err := template.ParseFiles("templates/partials/task_hierarchy.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, taskHierarchies)
+	err = tmpl.ExecuteTemplate(w, "task_hierarchy.html", taskHierarchies)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1312,6 +1494,12 @@ func ToggleTaskCollapsed(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Load attachments for each task
+	for i := range allTasks {
+		attachments, _ := db.GetTaskAttachments(db.DB, allTasks[i].ID)
+		allTasks[i].Attachments = attachments
 	}
 
 	// Build task map for level calculation
@@ -1354,13 +1542,7 @@ func ToggleTaskCollapsed(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tmpl, err := template.ParseFiles("templates/partials/task_hierarchy.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, taskHierarchies)
+	err = tmpl.ExecuteTemplate(w, "task_hierarchy.html", taskHierarchies)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1443,13 +1625,7 @@ func ReorderTasks(w http.ResponseWriter, r *http.Request) {
 		taskHierarchies = append(taskHierarchies, th)
 	}
 
-	tmpl, err := template.ParseFiles("templates/partials/task_hierarchy.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, taskHierarchies)
+	err = tmpl.ExecuteTemplate(w, "task_hierarchy.html", taskHierarchies)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1495,15 +1671,8 @@ func renderSingleTask(w http.ResponseWriter, taskID uuid.UUID, userID uuid.UUID)
 		Children:    []db.TaskHierarchy{},
 	}
 
-	// Use the existing task_hierarchy template to render just this single task
-	tmpl, err := template.ParseFiles("templates/partials/task_hierarchy.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Pass a slice with just this single task
-	err = tmpl.Execute(w, []db.TaskHierarchy{taskHierarchy})
+	// Use the global template with all function maps to render the task
+	err = tmpl.ExecuteTemplate(w, "task_hierarchy.html", []db.TaskHierarchy{taskHierarchy})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
