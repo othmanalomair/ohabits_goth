@@ -1,0 +1,834 @@
+{{ define "title" }}News Dashboard{{ end }}
+
+{{ define "content" }}
+<div class="news-container">
+    <!-- News Header -->
+    <div class="news-header">
+        <div class="news-title">
+            <h1>📰 News Dashboard</h1>
+            <p class="news-subtitle">Stay updated with Kuwait local news and global stories</p>
+        </div>
+        
+        <!-- News Controls -->
+        <div class="news-controls">
+            <div class="news-filters">
+                <!-- Language Filter -->
+                <div class="filter-group">
+                    <label for="language-filter">Language:</label>
+                    <select id="language-filter" 
+                            hx-get="/news" 
+                            hx-target="#news-content" 
+                            hx-swap="innerHTML"
+                            hx-include="[name='category'], [name='page']">
+                        <option value="ar" {{ if eq .Language "ar" }}selected{{ end }}>العربية</option>
+                        <option value="en" {{ if eq .Language "en" }}selected{{ end }}>English</option>
+                        <option value="" {{ if eq .Language "" }}selected{{ end }}>All</option>
+                    </select>
+                    <input type="hidden" name="language" value="{{ .Language }}">
+                </div>
+
+                <!-- Category Filter -->
+                <div class="filter-group">
+                    <label for="category-filter">Category:</label>
+                    <select id="category-filter" 
+                            hx-get="/news" 
+                            hx-target="#news-content" 
+                            hx-swap="innerHTML"
+                            hx-include="[name='language'], [name='page']">
+                        <option value="" {{ if eq .Category "" }}selected{{ end }}>All Categories</option>
+                        <option value="kuwait" {{ if eq .Category "kuwait" }}selected{{ end }}>Kuwait 🇰🇼</option>
+                        <option value="global" {{ if eq .Category "global" }}selected{{ end }}>Global 🌍</option>
+                        <option value="tech" {{ if eq .Category "tech" }}selected{{ end }}>Technology 💻</option>
+                        <option value="business" {{ if eq .Category "business" }}selected{{ end }}>Business 💼</option>
+                        <option value="anime" {{ if eq .Category "anime" }}selected{{ end }}>Anime 🎌</option>
+                    </select>
+                    <input type="hidden" name="category" value="{{ .Category }}">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="news-actions">
+                <a href="/news/sources" class="sources-btn" title="Manage News Sources">
+                    <img src="/static/images/svg/settings.svg" alt="Sources" />
+                    Sources
+                </a>
+                
+                <button class="refresh-btn" 
+                        hx-post="/news/refresh" 
+                        hx-trigger="click"
+                        hx-target="#news-content"
+                        hx-swap="none"
+                        hx-on::after-request="setTimeout(() => { htmx.ajax('GET', '/news?page=1&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}', {target: '#news-content', swap: 'innerHTML'}); }, 2000);"
+                        title="Refresh News">
+                    <img src="/static/images/svg/refresh.svg" alt="Refresh" />
+                    Refresh
+                </button>
+            </div>
+        </div>
+        
+        <!-- Search Feature -->
+        <div class="news-search">
+            <div class="search-container">
+                <input type="text" 
+                       id="news-search" 
+                       value="{{ .Search }}"
+                       placeholder="{{ if eq .Language "ar" }}البحث في الأخبار...{{ else }}Search articles...{{ end }}"
+                       hx-get="/news" 
+                       hx-target="#news-content" 
+                       hx-swap="innerHTML"
+                       hx-trigger="keyup changed delay:500ms"
+                       hx-include="[name='category'], [name='language']"
+                       name="search">
+                <img src="/static/images/svg/search.svg" alt="Search" class="search-icon" />
+            </div>
+        </div>
+    </div>
+
+    <!-- News Content -->
+    <div id="news-content" class="news-content">
+        {{ if .Articles }}
+            <!-- News Stats -->
+            <div class="news-stats">
+                <span class="article-count">{{ .TotalCount }} articles found</span>
+                {{ if .Sources }}
+                <span class="source-info">from {{ len .Sources }} sources</span>
+                {{ end }}
+            </div>
+
+            <!-- Articles Grid -->
+            <div class="articles-grid">
+                {{ range .Articles }}
+                <article class="news-article">
+                    {{ if .ImageURL }}
+                    <div class="article-image">
+                        <img src="{{ .ImageURL }}" alt="{{ .Title }}" loading="lazy" />
+                    </div>
+                    {{ end }}
+                    
+                    <div class="article-content">
+                        <div class="article-meta">
+                            <span class="article-source">{{ .SourceName }}</span>
+                            <span class="article-category">{{ .Category }}</span>
+                            {{ if .PublishedAt }}
+                            <time class="article-date">
+                                {{ .PublishedAt }}
+                            </time>
+                            {{ end }}
+                        </div>
+                        
+                        <h2 class="article-title {{ if eq .Language "ar" }}rtl-text{{ end }}">
+                            <a href="/news/article/{{ .ID }}">
+                                {{ .Title }}
+                            </a>
+                        </h2>
+                        
+                        {{ if .Content }}
+                        <div class="article-summary {{ if eq .Language "ar" }}rtl-text{{ end }}">
+                            {{ if gt (len .Content) 200 }}
+                                {{ substr .Content 0 200 }}...
+                            {{ else }}
+                                {{ .Content }}
+                            {{ end }}
+                        </div>
+                        {{ end }}
+                        
+                        <div class="article-actions">
+                            <a href="/news/article/{{ .ID }}" class="read-more-btn primary">
+                                {{ if eq .Language "ar" }}اقرأ المقال كاملاً{{ else }}Read Full Article{{ end }}
+                                <img src="/static/images/svg/arrow-right-circle.svg" alt="Read more" />
+                            </a>
+                            <a href="{{ .OriginalURL }}" target="_blank" rel="noopener noreferrer" class="external-link-btn">
+                                <img src="/static/images/svg/external-link.svg" alt="External link" />
+                                {{ if eq .Language "ar" }}الموقع الأصلي{{ else }}Original{{ end }}
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                {{ end }}
+            </div>
+
+            <!-- Pagination -->
+            {{ if gt .TotalPages 1 }}
+            <div class="news-pagination">
+                {{ if .HasPrev }}
+                <button class="pagination-btn" 
+                        hx-get="/news?page={{ .PrevPage }}&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}"
+                        hx-target="#news-content" 
+                        hx-swap="innerHTML">
+                    <img src="/static/images/svg/arrow-left-circle.svg" alt="Previous" />
+                    Previous
+                </button>
+                {{ end }}
+
+                <span class="pagination-info">
+                    Page {{ .CurrentPage }} of {{ .TotalPages }}
+                </span>
+
+                {{ if .HasNext }}
+                <button class="pagination-btn" 
+                        hx-get="/news?page={{ .NextPage }}&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}"
+                        hx-target="#news-content" 
+                        hx-swap="innerHTML">
+                    Next
+                    <img src="/static/images/svg/arrow-right-circle.svg" alt="Next" />
+                </button>
+                {{ end }}
+            </div>
+            {{ end }}
+
+        {{ else }}
+            <!-- Empty State -->
+            <div class="news-empty-state">
+                <div class="empty-icon">📰</div>
+                <h3>No News Articles Found</h3>
+                <p>Try adjusting your filters or refresh to fetch the latest news.</p>
+                <button class="refresh-btn primary" 
+                        hx-post="/news/refresh" 
+                        hx-trigger="click"
+                        hx-target="#news-content"
+                        hx-swap="none"
+                        hx-on::after-request="setTimeout(() => { htmx.ajax('GET', '/news?page=1&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}', {target: '#news-content', swap: 'innerHTML'}); }, 2000);">
+                    <img src="/static/images/svg/refresh.svg" alt="Refresh" />
+                    Fetch Latest News
+                </button>
+            </div>
+        {{ end }}
+    </div>
+</div>
+
+<style>
+/* News Dashboard Styles */
+.news-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.news-header {
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 30px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.news-title h1 {
+    margin: 0 0 12px 0;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.news-subtitle {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.125rem;
+    font-weight: 400;
+}
+
+.news-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 25px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.news-filters {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    margin-bottom: 6px;
+}
+
+.filter-group select {
+    padding: 10px 14px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    min-width: 140px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.filter-group select option {
+    background: white;
+    color: #374151;
+    padding: 8px;
+}
+
+.news-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.sources-btn,
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+.sources-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.sources-btn:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    color: white;
+}
+
+.refresh-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+}
+
+.refresh-btn.primary {
+    background: #059669;
+    padding: 12px 20px;
+    font-size: 1rem;
+}
+
+.refresh-btn.primary:hover {
+    background: #047857;
+}
+
+.sources-btn img,
+.refresh-btn img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+}
+
+/* Search Feature */
+.news-search {
+    margin-top: 20px;
+    padding: 20px 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.search-container {
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+#news-search {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#news-search:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+    background: white;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+#news-search::placeholder {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) saturate(100%) invert(50%);
+    pointer-events: none;
+}
+
+.news-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+    font-size: 0.875rem;
+    color: #475569;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.article-count {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.source-info {
+    color: #64748b;
+}
+
+.articles-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+}
+
+.news-article {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.news-article:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* RTL Styling for Arabic Content Only */
+.rtl-text {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl-text a {
+    direction: rtl;
+    text-align: right;
+}
+
+.article-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.article-content {
+    padding: 20px;
+}
+
+.article-meta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.article-source {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.article-category {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: capitalize;
+}
+
+.article-date {
+    color: #6b7280;
+}
+
+.article-title {
+    margin: 0 0 12px 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.article-title a {
+    color: #1a1a1a;
+    text-decoration: none;
+}
+
+.article-title a:hover {
+    color: #3b82f6;
+}
+
+.article-summary {
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.article-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.read-more-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #3b82f6;
+}
+
+.read-more-btn.primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.read-more-btn:hover {
+    color: #2563eb;
+    border-color: #2563eb;
+}
+
+.read-more-btn.primary:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.read-more-btn img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) saturate(100%) invert(40%) sepia(75%) saturate(1500%) hue-rotate(210deg);
+}
+
+.read-more-btn.primary img {
+    filter: brightness(0) invert(1);
+}
+
+.external-link-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.external-link-btn:hover {
+    color: #374151;
+    border-color: #9ca3af;
+    background: #f9fafb;
+}
+
+.external-link-btn img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) saturate(100%) invert(50%);
+}
+
+.news-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 40px;
+    padding: 20px 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    color: #374151;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-btn:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-color: #3b82f6;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+.pagination-btn img {
+    width: 16px;
+    height: 16px;
+    transition: filter 0.3s ease;
+}
+
+.pagination-btn:hover img {
+    filter: brightness(0) invert(1);
+}
+
+.pagination-info {
+    background: rgba(255, 255, 255, 0.8);
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.news-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.news-empty-state h3 {
+    margin: 0 0 12px 0;
+    color: #374151;
+    font-size: 1.5rem;
+}
+
+.news-empty-state p {
+    margin: 0 0 24px 0;
+    font-size: 1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .news-container {
+        padding: 15px;
+    }
+    
+    /* Compact news header for mobile */
+    .news-header {
+        margin-bottom: 20px;
+        padding: 20px;
+    }
+    
+    .news-title h1 {
+        font-size: 1.75rem;
+        margin-bottom: 8px;
+    }
+    
+    .news-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+    
+    .news-controls {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 15px;
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .news-filters {
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .filter-group {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .filter-group label {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    
+    .filter-group select {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        min-width: unset;
+    }
+    
+    .news-actions {
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .sources-btn,
+    .refresh-btn {
+        padding: 10px 16px;
+        font-size: 0.8rem;
+        gap: 8px;
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+    }
+    
+    /* Mobile search */
+    .news-search {
+        margin-top: 15px;
+        padding: 15px 20px;
+    }
+    
+    .search-container {
+        max-width: 100%;
+    }
+    
+    #news-search {
+        padding: 10px 40px 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .articles-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    /* Mobile pagination improvements */
+    .news-pagination {
+        margin-top: 25px;
+        padding: 15px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .pagination-btn {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+    }
+    
+    .pagination-info {
+        order: -1;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+}
+
+/* Template Functions */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+.htmx-request .htmx-indicator {
+    opacity: 1;
+}
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+</style>
+
+<script>
+// Helper functions for template
+function sub(a, b) {
+    return a - b;
+}
+
+function add(a, b) {
+    return a + b;
+}
+
+// Auto-update news every 30 minutes
+document.addEventListener('DOMContentLoaded', function() {
+    setInterval(function() {
+        // Silently refresh articles in background
+        htmx.ajax('GET', '/news?' + new URLSearchParams({
+            page: '{{ .CurrentPage }}',
+            category: '{{ .Category }}',
+            language: '{{ .Language }}'
+        }), {
+            target: '#news-content',
+            swap: 'innerHTML'
+        });
+    }, 30 * 60 * 1000); // 30 minutes
+});
+</script>
+{{ end }}

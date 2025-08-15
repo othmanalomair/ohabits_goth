@@ -1,0 +1,449 @@
+{{ define "title" }}News Sources{{ end }}
+
+{{ define "content" }}
+<div class="news-sources-container">
+    <!-- News Sources Header -->
+    <div class="news-sources-header">
+        <div class="sources-title">
+            <h1>📡 News Sources Management</h1>
+            <p class="sources-subtitle">Customize your news feed by enabling/disabling sources</p>
+        </div>
+
+        <!-- Header Controls -->
+        <div class="sources-controls">
+            <a href="/news" class="back-to-news-btn">
+                <img src="/static/images/svg/arrow-left.svg" alt="Back" />
+                Back
+            </a>
+
+            <button class="refresh-all-btn"
+                    hx-post="/news/refresh"
+                    hx-trigger="click"
+                    hx-swap="none"
+                    title="Refresh All Sources">
+                <img src="/static/images/svg/refresh.svg" alt="Refresh All" />
+                Refresh All
+            </button>
+        </div>
+    </div>
+
+    <div class="sources-grid">
+        {{ range .Sources }}
+        <div class="source-card">
+            <div class="source-header">
+                <h3 class="source-name">{{ .Name }}</h3>
+                <span class="source-language {{ if eq .Language "ar" }}arabic{{ else }}english{{ end }}">
+                    {{ if eq .Language "ar" }}العربية{{ else }}English{{ end }}
+                </span>
+            </div>
+
+            <div class="source-details">
+                <div class="source-info">
+                    <span class="label">Status:</span>
+                    <span class="value status-indicator {{ if .IsActive }}active{{ else }}inactive{{ end }}">
+                        {{ if .IsActive }}
+                            <img src="/static/images/svg/check.svg" alt="Active" />
+                            Active
+                        {{ else }}
+                            <img src="/static/images/svg/x.svg" alt="Inactive" />
+                            Inactive
+                        {{ end }}
+                    </span>
+                </div>
+                <div class="source-info">
+                    <span class="label">Category:</span>
+                    <span class="value">{{ .Category }}</span>
+                </div>
+                <div class="source-info">
+                    <span class="label">Type:</span>
+                    <span class="value">{{ .Type }}</span>
+                </div>
+                <div class="source-info">
+                    <span class="label">Fetch Every:</span>
+                    <span class="value">{{ .FetchFrequencyHours }} hours</span>
+                </div>
+                <div class="source-info">
+                    <span class="label">Last Fetched:</span>
+                    <span class="value">
+                        {{ if .LastFetched }}
+                            {{ .LastFetched.Format "Jan 2, 2006 15:04" }}
+                        {{ else }}
+                            Never
+                        {{ end }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="source-url">
+                <a href="{{ .URL }}" target="_blank" rel="noopener noreferrer">
+                    {{ .URL }}
+                </a>
+            </div>
+
+            <div class="source-actions">
+                <button class="fetch-btn"
+                        hx-post="/news/refresh/{{ .ID }}"
+                        hx-trigger="click"
+                        hx-swap="none"
+                        title="Fetch Latest Articles">
+                    <img src="/static/images/svg/refresh.svg" alt="Fetch" />
+                    Fetch Now
+                </button>
+
+                <!-- User Preference Toggle -->
+                <button class="user-pref-btn {{ if .UserEnabled }}enabled{{ else }}disabled{{ end }}"
+                        hx-post="/news/sources/{{ .ID }}/user-toggle"
+                        hx-trigger="click"
+                        hx-swap="outerHTML"
+                        title="Toggle in Your Feed">
+                    {{ if .UserEnabled }}
+                        <img src="/static/images/svg/check.svg" alt="Shown" />
+                        Show in Feed
+                    {{ else }}
+                        <img src="/static/images/svg/x.svg" alt="Hidden" />
+                        Hide from Feed
+                    {{ end }}
+                </button>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<style>
+/* News Sources Styles - Matching News Dashboard Design */
+.news-sources-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styling */
+.news-sources-header {
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 30px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.sources-title h1 {
+    margin: 0 0 12px 0;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sources-subtitle {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.125rem;
+    font-weight: 400;
+}
+
+.sources-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.back-to-news-btn,
+.refresh-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+.back-to-news-btn {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+}
+
+.back-to-news-btn:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(107, 114, 128, 0.6);
+    color: white;
+}
+
+.refresh-all-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    border: none;
+}
+
+.refresh-all-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+}
+
+.back-to-news-btn img,
+.refresh-all-btn img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+}
+
+.sources-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    margin-bottom: 30px;
+}
+
+.source-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: box-shadow 0.2s;
+}
+
+.source-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.source-name {
+    margin: 0;
+    color: #1a1a1a;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.source-language {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.source-language.arabic {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.source-language.english {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.source-details {
+    margin-bottom: 16px;
+}
+
+.source-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.source-info .label {
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.source-info .value {
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.status-indicator.active {
+    color: #059669;
+}
+
+.status-indicator.inactive {
+    color: #dc2626;
+}
+
+.status-indicator img {
+    width: 14px;
+    height: 14px;
+}
+
+.status-indicator.active img {
+    filter: invert(30%) sepia(93%) saturate(1425%) hue-rotate(137deg) brightness(98%) contrast(93%);
+}
+
+.status-indicator.inactive img {
+    filter: invert(19%) sepia(95%) saturate(5556%) hue-rotate(356deg) brightness(99%) contrast(90%);
+}
+
+.source-url {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 6px;
+}
+
+.source-url a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.875rem;
+    word-break: break-all;
+}
+
+.source-url a:hover {
+    text-decoration: underline;
+}
+
+.source-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.fetch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    flex: 1;
+}
+
+.fetch-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.fetch-btn img {
+    width: 14px;
+    height: 14px;
+    filter: brightness(0) invert(1);
+}
+
+.user-pref-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    justify-content: center;
+    flex: 1;
+}
+
+.user-pref-btn.enabled {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+}
+
+.user-pref-btn.disabled {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    box-shadow: 0 2px 6px rgba(107, 114, 128, 0.3);
+}
+
+.user-pref-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.user-pref-btn img {
+    width: 14px;
+    height: 14px;
+    filter: brightness(0) invert(1);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .news-sources-container {
+        padding: 15px;
+    }
+
+    .news-sources-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .sources-title h1 {
+        font-size: 1.75rem;
+    }
+
+    .sources-controls {
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .back-to-news-btn,
+    .refresh-all-btn {
+        padding: 10px 16px;
+        font-size: 0.8rem;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .sources-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .source-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .source-actions {
+        gap: 8px;
+    }
+
+    .fetch-btn,
+    .user-pref-btn {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+    }
+}
+</style>
+{{ end }}

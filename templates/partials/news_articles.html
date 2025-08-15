@@ -1,0 +1,104 @@
+{{ if .Articles }}
+    <!-- News Stats -->
+    <div class="news-stats">
+        <span class="article-count">{{ .TotalCount }} articles found</span>
+        {{ if .Sources }}
+        <span class="source-info">from {{ len .Sources }} sources</span>
+        {{ end }}
+    </div>
+
+    <!-- Articles Grid -->
+    <div class="articles-grid">
+        {{ range .Articles }}
+        <article class="news-article">
+            {{ if .ImageURL }}
+            <div class="article-image">
+                <img src="{{ .ImageURL }}" alt="{{ .Title }}" loading="lazy" />
+            </div>
+            {{ end }}
+            
+            <div class="article-content">
+                <div class="article-meta">
+                    <span class="article-source">{{ .SourceName }}</span>
+                    <span class="article-category">{{ .Category }}</span>
+                    {{ if .PublishedAt }}
+                    <time class="article-date">
+                        {{ .PublishedAt }}
+                    </time>
+                    {{ end }}
+                </div>
+                
+                <h2 class="article-title {{ if eq .Language "ar" }}rtl-text{{ end }}">
+                    <a href="/news/article/{{ .ID }}">
+                        {{ .Title }}
+                    </a>
+                </h2>
+                
+                {{ if .Content }}
+                <div class="article-summary {{ if eq .Language "ar" }}rtl-text{{ end }}">
+                    {{ if gt (len .Content) 200 }}
+                        {{ substr .Content 0 200 }}...
+                    {{ else }}
+                        {{ .Content }}
+                    {{ end }}
+                </div>
+                {{ end }}
+                
+                <div class="article-actions">
+                    <a href="/news/article/{{ .ID }}" class="read-more-btn primary">
+                        {{ if eq .Language "ar" }}اقرأ المقال كاملاً{{ else }}Read Full Article{{ end }}
+                        <img src="/static/images/svg/arrow-right-circle.svg" alt="Read more" />
+                    </a>
+                    <a href="{{ .OriginalURL }}" target="_blank" rel="noopener noreferrer" class="external-link-btn">
+                        <img src="/static/images/svg/external-link.svg" alt="External link" />
+                        {{ if eq .Language "ar" }}الموقع الأصلي{{ else }}Original{{ end }}
+                    </a>
+                </div>
+            </div>
+        </article>
+        {{ end }}
+    </div>
+
+    <!-- Pagination -->
+    {{ if gt .TotalPages 1 }}
+    <div class="news-pagination">
+        {{ if .HasPrev }}
+        <button class="pagination-btn" 
+                hx-get="/news?page={{ .PrevPage }}&category={{ .Category }}&language={{ .Language }}"
+                hx-target="#news-content" 
+                hx-swap="innerHTML">
+            <img src="/static/images/svg/arrow-left-circle.svg" alt="Previous" />
+            Previous
+        </button>
+        {{ end }}
+
+        <span class="pagination-info">
+            Page {{ .CurrentPage }} of {{ .TotalPages }}
+        </span>
+
+        {{ if .HasNext }}
+        <button class="pagination-btn" 
+                hx-get="/news?page={{ .NextPage }}&category={{ .Category }}&language={{ .Language }}"
+                hx-target="#news-content" 
+                hx-swap="innerHTML">
+            Next
+            <img src="/static/images/svg/arrow-right-circle.svg" alt="Next" />
+        </button>
+        {{ end }}
+    </div>
+    {{ end }}
+
+{{ else }}
+    <!-- Empty State -->
+    <div class="news-empty-state">
+        <div class="empty-icon">📰</div>
+        <h3>No News Articles Found</h3>
+        <p>Try adjusting your filters or refresh to fetch the latest news.</p>
+        <button class="refresh-btn primary" 
+                hx-post="/news/refresh" 
+                hx-trigger="click">
+            <img src="/static/images/svg/refresh.svg" alt="Refresh" />
+            Fetch Latest News
+        </button>
+    </div>
+{{ end }}

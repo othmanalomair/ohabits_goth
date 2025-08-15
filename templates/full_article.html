@@ -1,0 +1,345 @@
+{{ define "title" }}{{ .Article.Title }}{{ end }}
+
+{{ define "content" }}
+<div class="full-article-container">
+    <!-- Article Header - Always LTR -->
+    <div class="article-header ltr-header">
+        <nav class="article-breadcrumb">
+            <a href="/news" class="breadcrumb-link">📰 News Dashboard</a>
+            <span class="breadcrumb-separator">→</span>
+            <span class="breadcrumb-current">{{ .Article.Category }}</span>
+        </nav>
+        
+        <div class="article-meta-top">
+            <span class="article-source">{{ .Article.SourceName }}</span>
+            <span class="article-category">{{ .Article.Category }}</span>
+            <time class="article-date">{{ .Article.PublishedAt }}</time>
+            {{ if .Article.AuthorName }}
+            <span class="article-author">{{ if eq .Article.Language "ar" }}بقلم{{ else }}By{{ end }} {{ .Article.AuthorName }}</span>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Article Content -->
+    <article class="full-article-content{{ if eq .Article.Language "ar" }} rtl-content{{ end }}">
+        <!-- Article Title -->
+        <h1 class="article-title">{{ .Article.Title }}</h1>
+        
+        <!-- Article Image -->
+        {{ if .Article.ImageURL }}
+        <div class="article-image-container">
+            <img src="{{ .Article.ImageURL }}" alt="{{ .Article.Title }}" class="article-main-image" />
+        </div>
+        {{ end }}
+        
+        <!-- Article Body -->
+        <div class="article-body">
+            {{ if .Article.FullContent }}
+                <div class="article-full-content article-text">{{ .Article.FullContent }}</div>
+            {{ else if .Article.Content }}
+                <div class="article-content article-text">{{ .Article.Content }}</div>
+            {{ else }}
+                <div class="article-no-content">
+                    <p>{{ if eq .Article.Language "ar" }}المحتوى الكامل غير متوفر.{{ else }}Full content not available.{{ end }}</p>
+                    <p>{{ if eq .Article.Language "ar" }}يرجى زيارة الرابط الأصلي لقراءة المقال كاملاً.{{ else }}Please visit the original link to read the full article.{{ end }}</p>
+                </div>
+            {{ end }}
+        </div>
+        
+        
+        <!-- Article Actions -->
+        <div class="article-actions">
+            <a href="{{ .Article.OriginalURL }}" target="_blank" rel="noopener noreferrer" class="original-link-btn">
+                <img src="/static/images/svg/external-link.svg" alt="External link" />
+                {{ if eq .Article.Language "ar" }}قراءة في الموقع الأصلي{{ else }}Read on Original Site{{ end }}
+            </a>
+            
+            
+            <a href="/news" class="back-btn">
+                <img src="/static/images/svg/arrow-left.svg" alt="Back" />
+                {{ if eq .Article.Language "ar" }}العودة للأخبار{{ else }}Back to News{{ end }}
+            </a>
+        </div>
+    </article>
+</div>
+
+<style>
+/* Full Article Styles */
+.full-article-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.full-article-container.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Article Header */
+.article-header {
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px 25px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Always LTR for header */
+.ltr-header {
+    direction: ltr;
+    text-align: left;
+}
+
+/* RTL content for Arabic articles */
+.rtl-content {
+    direction: rtl;
+    text-align: right;
+}
+
+.article-breadcrumb {
+    margin-bottom: 15px;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.breadcrumb-link {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.breadcrumb-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    margin: 0 8px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.breadcrumb-current {
+    color: white;
+    text-transform: capitalize;
+    font-weight: 600;
+}
+
+.article-meta-top {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 0.875rem;
+    padding: 12px 0 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.article-source {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.article-category {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.article-date {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+
+.article-author {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+/* Article Content */
+.full-article-content {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.article-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 25px 0;
+    line-height: 1.3;
+}
+
+.article-image-container {
+    margin: 0 0 30px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.article-main-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.article-body {
+    margin-bottom: 30px;
+}
+
+.article-full-content,
+.article-content {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: #374151;
+}
+
+.article-text {
+    white-space: pre-line;
+}
+
+.article-full-content p,
+.article-content p {
+    margin-bottom: 1.5rem;
+}
+
+.article-no-content {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.article-no-content p {
+    margin-bottom: 10px;
+    color: #6b7280;
+}
+
+
+/* Article Actions */
+.article-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.original-link-btn,
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.original-link-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.original-link-btn:hover {
+    background: #2563eb;
+}
+
+
+.back-btn {
+    background: #6b7280;
+    color: white;
+}
+
+.back-btn:hover {
+    background: #4b5563;
+}
+
+.article-actions img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .full-article-container {
+        padding: 15px;
+    }
+    
+    .full-article-content {
+        padding: 20px;
+    }
+    
+    .article-title {
+        font-size: 1.25rem;
+        line-height: 1.4;
+    }
+    
+    .article-meta-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .article-actions {
+        flex-direction: column;
+    }
+    
+    .original-link-btn,
+    .back-btn {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    /* Smaller text size for mobile reading */
+    .article-full-content,
+    .article-content {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .article-header {
+        padding: 15px 20px;
+    }
+    
+    .article-breadcrumb {
+        font-size: 0.8rem;
+    }
+    
+    .article-meta-top {
+        font-size: 0.8rem;
+    }
+}
+
+/* RTL Adjustments for Arabic content */
+.rtl-content .article-actions img {
+    transform: scaleX(-1);
+}
+
+.rtl-content .breadcrumb-separator {
+    margin: 0 8px;
+}
+</style>
+
+<script>
+
+// Template helper functions removed - using simpler approach in template
+</script>
+{{ end }}

@@ -124,6 +124,14 @@ func Server() *http.Server {
 	protected.HandleFunc("/tasks/{taskId}/comments", handlers.AddTaskComment).Methods("POST")
 	protected.HandleFunc("/tasks/{taskId}/attachments/{attachmentId}/delete", handlers.DeleteTaskAttachment).Methods("POST")
 
+	// News Dashboard Routes
+	protected.HandleFunc("/news", handlers.NewsHandler).Methods("GET")
+	protected.HandleFunc("/news/refresh", handlers.RefreshNewsHandler).Methods("POST")
+	protected.HandleFunc("/news/refresh/{sourceId}", handlers.RefreshNewsHandler).Methods("POST")
+	protected.HandleFunc("/news/sources", handlers.NewsSourcesHandler).Methods("GET")
+	protected.HandleFunc("/news/sources/{sourceId}/user-toggle", handlers.ToggleUserNewsPreferenceHandler).Methods("POST")
+	protected.HandleFunc("/news/article/{id}", handlers.FullArticleHandler).Methods("GET")
+
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	

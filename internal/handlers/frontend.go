@@ -290,8 +290,21 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		User:         user,
 		SelectedDate: selectedDate,
 	}
-	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
+	// Parse templates explicitly to avoid conflicts
+	indexTmpl, err := template.New("").Funcs(template.FuncMap{
+		"formatDate": func(t time.Time) string {
+			return t.Format("2006-01-02")
+		},
+	}).ParseFiles("templates/base.html", "templates/index.html")
+	if err != nil {
+		http.Error(w, "Template parsing error", http.StatusInternalServerError)
+		fmt.Printf("Template parsing error: %v\n", err)
+		return
+	}
+	
+	if err := indexTmpl.ExecuteTemplate(w, "base.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("Template execution error: %v\n", err)
 	}
 }
 
