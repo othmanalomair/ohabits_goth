@@ -88,7 +88,26 @@ func timePtrToString(ptr *time.Time) string {
 		return ""
 	}
 	
-	// Convert to Kuwait timezone for display
+	// Since published_at is stored as "timestamp without time zone" in the database,
+	// the time is already in Kuwait timezone but Go treats it as local system time.
+	// We need to interpret it as Kuwait time and display it as-is.
+	
+	// Check if this timestamp has no timezone info (from database)
+	// In this case, we assume it's already in Kuwait timezone
+	if ptr.Location() == time.UTC || ptr.Location().String() == "Local" {
+		// This timestamp is from the database and should be treated as Kuwait time
+		// Just format it directly without conversion
+		return ptr.Format("Jan 2, 2006 15:04")
+	}
+	
+	// If it has timezone info, check if it's already Kuwait timezone
+	_, offset := ptr.Zone()
+	if offset == 3*3600 {
+		// Already in Kuwait timezone, don't convert again
+		return ptr.Format("Jan 2, 2006 15:04")
+	}
+	
+	// Convert to Kuwait timezone for display only if it has different timezone
 	kuwaitTZ, err := time.LoadLocation("Asia/Kuwait")
 	if err != nil {
 		// Fallback to UTC+3 if Kuwait timezone is not available
