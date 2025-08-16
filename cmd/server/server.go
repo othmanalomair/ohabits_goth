@@ -130,6 +130,7 @@ func Server() *http.Server {
 	protected.HandleFunc("/news/refresh/{sourceId}", handlers.RefreshNewsHandler).Methods("POST")
 	protected.HandleFunc("/news/sources", handlers.NewsSourcesHandler).Methods("GET")
 	protected.HandleFunc("/news/sources/{sourceId}/user-toggle", handlers.ToggleUserNewsPreferenceHandler).Methods("POST")
+	protected.HandleFunc("/news/section-sources", handlers.GetSectionSourcesHandler).Methods("GET")
 	protected.HandleFunc("/news/article/{id}", handlers.FullArticleHandler).Methods("GET")
 
 	// Serve static files (css, js, etc.)

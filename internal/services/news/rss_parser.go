@@ -31,6 +31,34 @@ type Item struct {
 	Content     string `xml:"content"`
 }
 
+// Atom Feed Structures
+type AtomFeed struct {
+	XMLName xml.Name    `xml:"feed"`
+	Title   string      `xml:"title"`
+	Link    []AtomLink  `xml:"link"`
+	Entries []AtomEntry `xml:"entry"`
+}
+
+type AtomLink struct {
+	Href string `xml:"href,attr"`
+	Rel  string `xml:"rel,attr"`
+}
+
+type AtomEntry struct {
+	Title   string     `xml:"title"`
+	Link    []AtomLink `xml:"link"`
+	Summary string     `xml:"summary"`
+	Content AtomContent `xml:"content"`
+	Updated string     `xml:"updated"`
+	Published string   `xml:"published"`
+	ID      string     `xml:"id"`
+}
+
+type AtomContent struct {
+	Type string `xml:"type,attr"`
+	Text string `xml:",chardata"`
+}
+
 // ParsedArticle represents a news article after RSS parsing
 type ParsedArticle struct {
 	Title       string
@@ -54,28 +82,42 @@ func NewRSSParser() *RSSParser {
 	}
 }
 
-// ParseRSSFeed fetches and parses an RSS feed from the given URL
+// ParseRSSFeed fetches and parses an RSS or Atom feed from the given URL
 func (p *RSSParser) ParseRSSFeed(url string) ([]ParsedArticle, error) {
-	// Fetch RSS feed
+	// Fetch feed
 	resp, err := p.client.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch RSS feed from %s: %w", url, err)
+		return nil, fmt.Errorf("failed to fetch feed from %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("RSS feed returned status %d for URL %s", resp.StatusCode, url)
+		return nil, fmt.Errorf("feed returned status %d for URL %s", resp.StatusCode, url)
 	}
 
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read RSS response: %w", err)
+		return nil, fmt.Errorf("failed to read feed response: %w", err)
 	}
 
-	// Parse XML
+	// Detect feed type and parse accordingly
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<feed") {
+		// Parse as Atom feed
+		return p.parseAtomFeed(body)
+	} else if strings.Contains(bodyStr, "<rss") {
+		// Parse as RSS feed
+		return p.parseRSSFeed(body)
+	} else {
+		return nil, fmt.Errorf("unrecognized feed format (not RSS or Atom)")
+	}
+}
+
+// parseRSSFeed parses RSS format feeds
+func (p *RSSParser) parseRSSFeed(body []byte) ([]ParsedArticle, error) {
 	var feed RSSFeed
-	err = xml.Unmarshal(body, &feed)
+	err := xml.Unmarshal(body, &feed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse RSS XML: %w", err)
 	}
@@ -87,6 +129,29 @@ func (p *RSSParser) ParseRSSFeed(url string) ([]ParsedArticle, error) {
 		if err != nil {
 			// Log error but continue with other articles
 			fmt.Printf("Error converting RSS item: %v\n", err)
+			continue
+		}
+		articles = append(articles, article)
+	}
+
+	return articles, nil
+}
+
+// parseAtomFeed parses Atom format feeds
+func (p *RSSParser) parseAtomFeed(body []byte) ([]ParsedArticle, error) {
+	var feed AtomFeed
+	err := xml.Unmarshal(body, &feed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse Atom XML: %w", err)
+	}
+
+	// Convert Atom entries to parsed articles
+	var articles []ParsedArticle
+	for _, entry := range feed.Entries {
+		article, err := p.convertAtomEntry(entry)
+		if err != nil {
+			// Log error but continue with other articles
+			fmt.Printf("Error converting Atom entry: %v\n", err)
 			continue
 		}
 		articles = append(articles, article)
@@ -125,6 +190,81 @@ func (p *RSSParser) convertRSSItem(item Item) (ParsedArticle, error) {
 		PublishedAt: pubDate,
 		ImageURL:    imageURL,
 	}, nil
+}
+
+// convertAtomEntry converts an Atom entry to a ParsedArticle
+func (p *RSSParser) convertAtomEntry(entry AtomEntry) (ParsedArticle, error) {
+	// Parse publication date - try published first, then updated
+	var pubDate time.Time
+	var err error
+	
+	if entry.Published != "" {
+		pubDate, err = p.parseAtomDate(entry.Published)
+	} else if entry.Updated != "" {
+		pubDate, err = p.parseAtomDate(entry.Updated)
+	}
+	
+	if err != nil {
+		// Use current time in Kuwait timezone if parsing fails
+		kuwaitTZ, tzErr := time.LoadLocation("Asia/Kuwait")
+		if tzErr != nil {
+			kuwaitTZ = time.FixedZone("AST", 3*3600) // Arabia Standard Time (UTC+3)
+		}
+		pubDate = time.Now().In(kuwaitTZ)
+	}
+
+	// Get content - prefer content over summary
+	content := entry.Content.Text
+	if content == "" {
+		content = entry.Summary
+	}
+	content = p.cleanHTMLContent(content)
+
+	// Get link URL
+	var linkURL string
+	for _, link := range entry.Link {
+		if link.Rel == "" || link.Rel == "alternate" {
+			linkURL = link.Href
+			break
+		}
+	}
+
+	// Extract image URL from content if available
+	imageURL := p.extractImageURL(content)
+
+	return ParsedArticle{
+		Title:       strings.TrimSpace(entry.Title),
+		Content:     content,
+		URL:         strings.TrimSpace(linkURL),
+		PublishedAt: pubDate,
+		ImageURL:    imageURL,
+	}, nil
+}
+
+// parseAtomDate handles Atom date formats (ISO 8601)
+func (p *RSSParser) parseAtomDate(dateStr string) (time.Time, error) {
+	dateStr = strings.TrimSpace(dateStr)
+	if dateStr == "" {
+		return time.Time{}, fmt.Errorf("empty date string")
+	}
+
+	// Atom dates are in ISO 8601 format
+	formats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02T15:04:05Z",
+		"2006-01-02T15:04:05.000Z",
+		"2006-01-02T15:04:05-07:00",
+		"2006-01-02T15:04:05.000-07:00",
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, dateStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse Atom date: %s", dateStr)
 }
 
 // parseRSSDate handles various RSS date formats and converts to Kuwait time

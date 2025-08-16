@@ -18,9 +18,9 @@ import (
 type TemplateArticle struct {
 	ID           string
 	Title        string
-	Content      string
+	Content      template.HTML
 	Summary      string
-	FullContent  string
+	FullContent  template.HTML
 	OriginalURL  string
 	ImageURL     string
 	ThumbnailURL string
@@ -43,11 +43,12 @@ type NewsPageData struct {
 	Category     string
 	Language     string
 	Search       string
-	Sources      []db.NewsSource
+	SourceCount  int
 	HasNext      bool
 	HasPrev      bool
 	NextPage     int
 	PrevPage     int
+	Sources      []db.NewsSourceWithUserPref
 }
 
 // convertToTemplateArticles converts database articles to template-friendly articles
@@ -57,9 +58,9 @@ func convertToTemplateArticles(articles []db.NewsArticle) []TemplateArticle {
 		templateArticles[i] = TemplateArticle{
 			ID:           article.ID.String(),
 			Title:        article.Title,
-			Content:      stringPtrToString(article.Content),
+			Content:      template.HTML(stringPtrToString(article.Content)),
 			Summary:      stringPtrToString(article.Summary),
-			FullContent:  stringPtrToString(article.FullContent),
+			FullContent:  template.HTML(stringPtrToString(article.FullContent)),
 			OriginalURL:  article.OriginalURL,
 			ImageURL:     stringPtrToString(article.ImageURL),
 			ThumbnailURL: stringPtrToString(article.ThumbnailURL),
@@ -117,8 +118,49 @@ func timePtrToString(ptr *time.Time) string {
 	return ptr.In(kuwaitTZ).Format("Jan 2, 2006 15:04")
 }
 
+// formatHackerNewsContent formats HTML content specifically for Hacker News articles
+func formatHackerNewsContent(content string) string {
+	// Add specific classes for better styling
+	formatted := strings.ReplaceAll(content, "<p>", "<p class=\"hn-paragraph\">")
+	
+	// Replace horizontal rules with styled separators
+	formatted = strings.ReplaceAll(formatted, " <hr> ", "<hr class=\"hn-separator\" />")
+	formatted = strings.ReplaceAll(formatted, "<hr>", "<hr class=\"hn-separator\" />")
+	
+	// Style links to break long URLs properly and open in new tab
+	formatted = strings.ReplaceAll(formatted, "<a href=", "<a class=\"hn-link\" target=\"_blank\" rel=\"noopener noreferrer\" href=")
+	
+	// If there are no paragraph tags, try to add some structure by splitting on common patterns
+	if !strings.Contains(formatted, "<p") {
+		// Split on double line breaks if they exist
+		if strings.Contains(formatted, "\n\n") {
+			parts := strings.Split(formatted, "\n\n")
+			var formattedParts []string
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if part != "" {
+					formattedParts = append(formattedParts, "<p class=\"hn-paragraph\">"+part+"</p>")
+				}
+			}
+			formatted = strings.Join(formattedParts, "\n")
+		} else {
+			// If no double line breaks, look for sentence endings followed by capital letters
+			// This is a simple heuristic that works reasonably well for HN posts
+			formatted = strings.ReplaceAll(formatted, ". ", ".</p><p class=\"hn-paragraph\">")
+			formatted = "<p class=\"hn-paragraph\">" + formatted + "</p>"
+			
+			// Clean up any malformed paragraphs
+			formatted = strings.ReplaceAll(formatted, "<p class=\"hn-paragraph\"></p>", "")
+			formatted = strings.ReplaceAll(formatted, "<p class=\"hn-paragraph\"><hr", "<hr")
+		}
+	}
+	
+	return formatted
+}
+
 // NewsHandler displays the news page
 func NewsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("=== NewsHandler START ===\n")
 	fmt.Printf("NewsHandler called with method: %s, URL: %s, HTMX: %s\n", r.Method, r.URL.String(), r.Header.Get("HX-Request"))
 	// Get user from context
 	userIDValue := r.Context().Value("userID")
@@ -168,6 +210,9 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		category = "kuwait"
 	}
 
+	fmt.Printf("NewsHandler processed params: page=%d, category='%s', language='%s', search='%s', userID=%s\n", 
+		page, category, language, search, userID.String())
+
 	const articlesPerPage = 20
 	offset := (page - 1) * articlesPerPage
 
@@ -199,11 +244,18 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get news sources for filter
-	sources, err := db.GetActiveNewsSources(db.DB)
+	// Get source count for the specific category (considering user preferences)
+	sourceCount, err := db.GetActiveSourceCountByCategoryForUser(db.DB, userID, category)
 	if err != nil {
-		fmt.Printf("Error loading news sources: %v\n", err)
-		sources = []db.NewsSource{} // Continue with empty sources
+		fmt.Printf("Error loading user source count for category %s: %v\n", category, err)
+		sourceCount = 0 // Continue with 0 count
+	}
+
+	// Get sources with user preferences for the template
+	sources, err := db.GetNewsSourcesWithUserPrefs(db.DB, userID)
+	if err != nil {
+		fmt.Printf("Error loading sources with user prefs: %v\n", err)
+		sources = []db.NewsSourceWithUserPref{} // Continue with empty sources
 	}
 
 	// Calculate pagination
@@ -221,11 +273,12 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		Category:    category,
 		Language:    language,
 		Search:      search,
-		Sources:     sources,
+		SourceCount: sourceCount,
 		HasNext:     page < totalPages,
 		HasPrev:     page > 1,
 		NextPage:    page + 1,
 		PrevPage:    page - 1,
+		Sources:     sources,
 	}
 
 	// Check if this is an HTMX request
@@ -236,12 +289,22 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		
 		// Use enhanced template parsing for HTMX requests
 		tmpl, err := template.New("news_articles.html").Funcs(template.FuncMap{
-			"substr": func(s string, start, length int) string {
+			"substr": func(s interface{}, start, length int) string {
+				var str string
+				switch v := s.(type) {
+				case string:
+					str = v
+				case template.HTML:
+					str = string(v)
+				default:
+					return ""
+				}
+				
 				if start < 0 {
 					start = 0
 				}
 				// Convert to runes to handle UTF-8 properly
-				runes := []rune(s)
+				runes := []rune(str)
 				if start >= len(runes) {
 					return ""
 				}
@@ -269,12 +332,22 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Render full page
 	tmpl, err := template.New("base.html").Funcs(template.FuncMap{
-		"substr": func(s string, start, length int) string {
+		"substr": func(s interface{}, start, length int) string {
+			var str string
+			switch v := s.(type) {
+			case string:
+				str = v
+			case template.HTML:
+				str = string(v)
+			default:
+				return ""
+			}
+			
 			if start < 0 {
 				start = 0
 			}
 			// Convert to runes to handle UTF-8 properly
-			runes := []rune(s)
+			runes := []rune(str)
 			if start >= len(runes) {
 				return ""
 			}
@@ -318,7 +391,7 @@ func renderNewsArticles(w http.ResponseWriter, data NewsPageData) {
 	<div class="articles-grid">`, data.TotalCount)
 	
 	for _, article := range data.Articles {
-		content := article.Content
+		content := string(article.Content)
 		// Handle UTF-8 properly for content truncation
 		if len([]rune(content)) > 200 {
 			runes := []rune(content)
@@ -540,26 +613,73 @@ func ToggleUserNewsPreferenceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the updated user preference button HTML
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if newState {
-		fmt.Fprintf(w, `<button class="user-pref-btn enabled" 
-			hx-post="/news/sources/%s/user-toggle" 
+	// Check if this is a request from the news dashboard (via query param)
+	isDashboard := r.URL.Query().Get("dashboard") == "true"
+	
+	// Get current page context for news refresh
+	category := r.URL.Query().Get("category")
+	language := r.URL.Query().Get("language")
+	search := r.URL.Query().Get("search")
+	
+	fmt.Printf("Toggle request: sourceID=%s, isDashboard=%t, newState=%t, category=%s, language=%s, search='%s'\n", 
+		sourceID, isDashboard, newState, category, language, search)
+	
+	if isDashboard {
+		// Return dashboard-style toggle
+		enabledClass := "enabled"
+		statusText := "✓"
+		if !newState {
+			enabledClass = "disabled"
+			statusText = "✗"
+		}
+		
+		// Get source name for display
+		sources, err := db.GetAllNewsSources(db.DB)
+		if err != nil {
+			http.Error(w, "Failed to load source info", http.StatusInternalServerError)
+			return
+		}
+		
+		var sourceName string
+		for _, source := range sources {
+			if source.ID == sourceID {
+				sourceName = source.Name
+				break
+			}
+		}
+		
+		// Set HX-Trigger header to trigger news refresh
+		w.Header().Set("HX-Trigger", "refreshNews")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		
+		fmt.Fprintf(w, `<span class="source-toggle %s" 
+			hx-post="/news/sources/%s/user-toggle?dashboard=true&category=%s&language=%s&search=%s" 
 			hx-trigger="click"
 			hx-swap="outerHTML"
-			title="Toggle in Your Feed">
-			<img src="/static/images/svg/view.svg" alt="Shown" />
-			Show in Feed
-		</button>`, sourceID)
+			data-source-id="%s">%s %s</span>`,
+			enabledClass, sourceID, category, language, search, sourceID, sourceName, statusText)
 	} else {
-		fmt.Fprintf(w, `<button class="user-pref-btn disabled" 
-			hx-post="/news/sources/%s/user-toggle" 
-			hx-trigger="click"
-			hx-swap="outerHTML"
-			title="Toggle in Your Feed">
-			<img src="/static/images/svg/x.svg" alt="Hidden" />
-			Hide from Feed
-		</button>`, sourceID)
+		// Return news sources page style button
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if newState {
+			fmt.Fprintf(w, `<button class="user-pref-btn enabled" 
+				hx-post="/news/sources/%s/user-toggle" 
+				hx-trigger="click"
+				hx-swap="outerHTML"
+				title="Toggle in Your Feed">
+				<img src="/static/images/svg/view.svg" alt="Shown" />
+				Show in Feed
+			</button>`, sourceID)
+		} else {
+			fmt.Fprintf(w, `<button class="user-pref-btn disabled" 
+				hx-post="/news/sources/%s/user-toggle" 
+				hx-trigger="click"
+				hx-swap="outerHTML"
+				title="Toggle in Your Feed">
+				<img src="/static/images/svg/x.svg" alt="Hidden" />
+				Hide from Feed
+			</button>`, sourceID)
+		}
 	}
 }
 
@@ -603,22 +723,33 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 	fullContent := stringPtrToString(article.FullContent)
 	content := stringPtrToString(article.Content)
 	
-	// Process line breaks for display
-	if fullContent != "" {
-		fullContent = strings.ReplaceAll(fullContent, "\r\n", "\n")
-		fullContent = strings.ReplaceAll(fullContent, "\r", "\n")
-	}
-	if content != "" {
-		content = strings.ReplaceAll(content, "\r\n", "\n")
-		content = strings.ReplaceAll(content, "\r", "\n")
+	// Process content based on category
+	if article.Category == "hackernews" {
+		// Format Hacker News content specially
+		if fullContent != "" {
+			fullContent = formatHackerNewsContent(fullContent)
+		}
+		if content != "" {
+			content = formatHackerNewsContent(content)
+		}
+	} else {
+		// Process line breaks for display for other content
+		if fullContent != "" {
+			fullContent = strings.ReplaceAll(fullContent, "\r\n", "\n")
+			fullContent = strings.ReplaceAll(fullContent, "\r", "\n")
+		}
+		if content != "" {
+			content = strings.ReplaceAll(content, "\r\n", "\n")
+			content = strings.ReplaceAll(content, "\r", "\n")
+		}
 	}
 	
 	templateArticle := TemplateArticle{
 		ID:           article.ID.String(),
 		Title:        article.Title,
-		Content:      content,
+		Content:      template.HTML(content),
 		Summary:      stringPtrToString(article.Summary),
-		FullContent:  fullContent,
+		FullContent:  template.HTML(fullContent),
 		OriginalURL:  article.OriginalURL,
 		ImageURL:     stringPtrToString(article.ImageURL),
 		ThumbnailURL: stringPtrToString(article.ThumbnailURL),
@@ -651,5 +782,72 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Template execution error", http.StatusInternalServerError)
 		fmt.Printf("Template execution error: %v\n", err)
+	}
+}
+
+// GetSectionSourcesHandler returns sources for a specific section with user preferences
+func GetSectionSourcesHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from context
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get section from query parameter
+	section := r.URL.Query().Get("section")
+	if section == "" {
+		http.Error(w, "Section parameter required", http.StatusBadRequest)
+		return
+	}
+	
+	// Get current category, language, and search for news refresh
+	category := r.URL.Query().Get("category")
+	language := r.URL.Query().Get("language")
+	search := r.URL.Query().Get("search")
+
+	// Get sources for the section
+	sources, err := db.GetAllNewsSources(db.DB)
+	if err != nil {
+		http.Error(w, "Failed to load sources", http.StatusInternalServerError)
+		return
+	}
+
+	// Get user preferences
+	userPrefs, err := db.GetUserNewsPreferences(db.DB, userID)
+	if err != nil {
+		http.Error(w, "Failed to load user preferences", http.StatusInternalServerError)
+		return
+	}
+
+	// Filter sources by section and build response
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	for _, source := range sources {
+		if source.Category == section {
+			isEnabled := true // Default to enabled
+			if pref, exists := userPrefs[source.ID]; exists {
+				isEnabled = pref
+			}
+
+			enabledClass := "enabled"
+			statusText := "✓"
+			if !isEnabled {
+				enabledClass = "disabled"
+				statusText = "✗"
+			}
+
+			fmt.Fprintf(w, `<span class="source-toggle %s" 
+				hx-post="/news/sources/%s/user-toggle?dashboard=true&category=%s&language=%s&search=%s" 
+				hx-trigger="click"
+				hx-swap="outerHTML"
+				hx-on::after-request="htmx.ajax('GET', '/news?page=1&category=%s&language=%s&search=%s', {target: '#news-content', swap: 'innerHTML'})"
+				data-source-id="%s">%s %s</span>`,
+				enabledClass, source.ID.String(), category, language, search, category, language, search, source.ID.String(), source.Name, statusText)
+		}
 	}
 }

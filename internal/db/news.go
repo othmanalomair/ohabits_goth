@@ -630,3 +630,40 @@ func GetUserInterests(db *pgxpool.Pool, userID uuid.UUID) ([]UserInterest, error
 
 	return interests, nil
 }
+
+// GetActiveSourceCountByCategory returns the count of active sources for a specific category
+func GetActiveSourceCountByCategory(db *pgxpool.Pool, category string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM news_sources 
+		WHERE is_active = true AND category = $1
+	`
+	
+	var count int
+	err := db.QueryRow(context.Background(), query, category).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get active source count for category %s: %w", category, err)
+	}
+	
+	return count, nil
+}
+
+// GetActiveSourceCountByCategoryForUser returns the count of sources that are active AND enabled by the user
+func GetActiveSourceCountByCategoryForUser(db *pgxpool.Pool, userID uuid.UUID, category string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM news_sources ns
+		LEFT JOIN user_news_preferences unp ON (ns.id = unp.source_id AND unp.user_id = $1)
+		WHERE ns.is_active = true 
+		  AND ns.category = $2
+		  AND (unp.is_enabled IS NULL OR unp.is_enabled = true)
+	`
+	
+	var count int
+	err := db.QueryRow(context.Background(), query, userID, category).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user-enabled source count for category %s: %w", category, err)
+	}
+	
+	return count, nil
+}

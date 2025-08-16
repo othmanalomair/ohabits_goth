@@ -1,0 +1,7 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6V18H20V6H4Z" fill="currentColor"/>
+<path d="M4 6H20V10H4V6Z" fill="#00A651"/>
+<path d="M4 10H20V14H4V10Z" fill="currentColor"/>
+<path d="M4 14H20V18H4V14Z" fill="#ED1C24"/>
+<path d="M4 6L10 12L4 18V6Z" fill="#000000"/>
+</svg>

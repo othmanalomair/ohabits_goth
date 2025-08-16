@@ -213,6 +213,45 @@
     margin-bottom: 1.5rem;
 }
 
+/* Hacker News specific styles */
+.hn-paragraph {
+    margin-bottom: 1.2rem;
+    line-height: 1.7;
+}
+
+.hn-separator {
+    margin: 2rem 0;
+    border: none;
+    border-top: 2px solid #e5e7eb;
+    background: none;
+}
+
+/* Style links in article content */
+.article-text a,
+.article-text .hn-link {
+    color: #3b82f6;
+    text-decoration: underline;
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
+.article-text a:hover,
+.article-text .hn-link:hover {
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+/* Style for Hacker News metadata at the end */
+.article-text p:last-child {
+    background: #f3f4f6;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 2rem;
+    border-left: 4px solid #ff6600;
+}
+
 .article-no-content {
     text-align: center;
     padding: 40px 20px;

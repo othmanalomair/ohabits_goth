@@ -2,13 +2,13 @@
     <!-- News Stats -->
     <div class="news-stats">
         <span class="article-count">{{ .TotalCount }} articles found</span>
-        {{ if .Sources }}
-        <span class="source-info">from {{ len .Sources }} sources</span>
+        {{ if .SourceCount }}
+        <span class="source-info">from {{ .SourceCount }} sources</span>
         {{ end }}
     </div>
 
     <!-- Articles Grid -->
-    <div class="articles-grid">
+    <div class="articles-grid {{ .Category }}-layout">
         {{ range .Articles }}
         <article class="news-article">
             {{ if .ImageURL }}
@@ -18,6 +18,21 @@
             {{ end }}
             
             <div class="article-content">
+                {{ if eq .Category "hackernews" }}
+                <!-- Hacker News style with inline meta -->
+                <h2 class="article-title hn-title-with-meta">
+                    <a href="/news/article/{{ .ID }}" class="hn-title-link">
+                        {{ .Title }}
+                    </a>
+                    <span class="hn-inline-meta">
+                        <span class="hn-source">{{ .SourceName }}</span>
+                        {{ if .PublishedAt }}
+                        <span class="hn-date">{{ .PublishedAt }}</span>
+                        {{ end }}
+                    </span>
+                </h2>
+                {{ else }}
+                <!-- Default style for other categories -->
                 <div class="article-meta">
                     <span class="article-source">{{ .SourceName }}</span>
                     <span class="article-category">{{ .Category }}</span>
@@ -33,6 +48,7 @@
                         {{ .Title }}
                     </a>
                 </h2>
+                {{ end }}
                 
                 {{ if .Content }}
                 <div class="article-summary {{ if eq .Language "ar" }}rtl-text{{ end }}">

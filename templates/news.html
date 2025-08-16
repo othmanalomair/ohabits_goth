@@ -5,76 +5,130 @@
     <!-- News Header -->
     <div class="news-header">
         <div class="news-title">
-            <h1>📰 News Dashboard</h1>
-            <p class="news-subtitle">Stay updated with Kuwait local news and global stories</p>
-        </div>
-        
-        <!-- News Controls -->
-        <div class="news-controls">
-            <div class="news-filters">
-                <!-- Language Filter -->
-                <div class="filter-group">
-                    <label for="language-filter">Language:</label>
-                    <select id="language-filter" 
-                            hx-get="/news" 
-                            hx-target="#news-content" 
-                            hx-swap="innerHTML"
-                            hx-include="[name='category'], [name='page']">
-                        <option value="ar" {{ if eq .Language "ar" }}selected{{ end }}>العربية</option>
-                        <option value="en" {{ if eq .Language "en" }}selected{{ end }}>English</option>
-                        <option value="" {{ if eq .Language "" }}selected{{ end }}>All</option>
-                    </select>
-                    <input type="hidden" name="language" value="{{ .Language }}">
-                </div>
-
-                <!-- Category Filter -->
-                <div class="filter-group">
-                    <label for="category-filter">Category:</label>
-                    <select id="category-filter" 
-                            hx-get="/news" 
-                            hx-target="#news-content" 
-                            hx-swap="innerHTML"
-                            hx-include="[name='language'], [name='page']">
-                        <option value="" {{ if eq .Category "" }}selected{{ end }}>All Categories</option>
-                        <option value="kuwait" {{ if eq .Category "kuwait" }}selected{{ end }}>Kuwait 🇰🇼</option>
-                        <option value="global" {{ if eq .Category "global" }}selected{{ end }}>Global 🌍</option>
-                        <option value="tech" {{ if eq .Category "tech" }}selected{{ end }}>Technology 💻</option>
-                        <option value="business" {{ if eq .Category "business" }}selected{{ end }}>Business 💼</option>
-                        <option value="anime" {{ if eq .Category "anime" }}selected{{ end }}>Anime 🎌</option>
-                    </select>
-                    <input type="hidden" name="category" value="{{ .Category }}">
-                </div>
+            <div class="title-content">
+                <h1>📰 News Dashboard</h1>
+                <p class="news-subtitle">Stay updated with Kuwait local news and global stories</p>
             </div>
-
-            <!-- Action Buttons -->
-            <div class="news-actions">
-                <a href="/news/sources" class="sources-btn" title="Manage News Sources">
+            <div class="header-actions">
+                <a href="/news/sources" class="header-btn sources-btn" title="Manage News Sources">
                     <img src="/static/images/svg/settings.svg" alt="Sources" />
-                    Sources
                 </a>
-                
-                <button class="refresh-btn" 
-                        hx-post="/news/refresh" 
+
+                <button class="header-btn refresh-btn"
+                        hx-post="/news/refresh"
                         hx-trigger="click"
                         hx-target="#news-content"
                         hx-swap="none"
                         hx-on::after-request="setTimeout(() => { htmx.ajax('GET', '/news?page=1&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}', {target: '#news-content', swap: 'innerHTML'}); }, 2000);"
                         title="Refresh News">
                     <img src="/static/images/svg/refresh.svg" alt="Refresh" />
-                    Refresh
                 </button>
             </div>
         </div>
-        
+
+        <!-- News Section Buttons -->
+        <div class="news-sections">
+            <div class="section-buttons">
+                <button class="section-btn {{ if eq .Category "kuwait" }}active{{ end }}"
+                        hx-get="/news?category=kuwait&language=ar"
+                        hx-target="#news-content"
+                        hx-swap="innerHTML"
+                        data-section="kuwait">
+                    <img src="/static/images/svg/flag-kw.svg" alt="Kuwait" />
+                    Kuwait News
+                </button>
+
+                <button class="section-btn {{ if eq .Category "hackernews" }}active{{ end }}"
+                        hx-get="/news?category=hackernews&language=en"
+                        hx-target="#news-content"
+                        hx-swap="innerHTML"
+                        data-section="hackernews">
+                    <img src="/static/images/svg/globe.svg" alt="Hacker News" />
+                    Hacker News
+                </button>
+
+                <button class="section-btn {{ if eq .Category "reddit" }}active{{ end }}"
+                        hx-get="/news?category=reddit&language=en"
+                        hx-target="#news-content"
+                        hx-swap="innerHTML"
+                        data-section="reddit">
+                    <img src="/static/images/svg/message-circle.svg" alt="Reddit" />
+                    Reddit
+                </button>
+            </div>
+
+            <!-- Section-specific controls -->
+            <div class="section-controls">
+                <!-- Kuwait Controls -->
+                <div class="section-control {{ if eq .Category "kuwait" }}active{{ end }}" data-section="kuwait">
+                    <div class="section-sources">
+                        <h4>Kuwait Sources:</h4>
+                        <div class="source-toggles">
+                            {{ range .Sources }}
+                                {{ if eq .Category "kuwait" }}
+                                    <span class="source-toggle {{ if .UserEnabled }}enabled{{ else }}disabled{{ end }}"
+                                          hx-post="/news/sources/{{ .ID }}/user-toggle?dashboard=true&category={{ $.Category }}&language={{ $.Language }}&search={{ $.Search }}"
+                                          hx-trigger="click"
+                                          hx-swap="outerHTML"
+                                          data-source-id="{{ .ID }}">{{ .Name }} {{ if .UserEnabled }}✓{{ else }}✗{{ end }}</span>
+                                {{ end }}
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hacker News Controls -->
+                <div class="section-control {{ if eq .Category "hackernews" }}active{{ end }}" data-section="hackernews">
+                    <div class="section-sources">
+                        <h4>Hacker News Sources:</h4>
+                        <div class="source-toggles">
+                            {{ range .Sources }}
+                                {{ if eq .Category "hackernews" }}
+                                    <span class="source-toggle {{ if .UserEnabled }}enabled{{ else }}disabled{{ end }}"
+                                          hx-post="/news/sources/{{ .ID }}/user-toggle?dashboard=true&category={{ $.Category }}&language={{ $.Language }}&search={{ $.Search }}"
+                                          hx-trigger="click"
+                                          hx-swap="outerHTML"
+                                          data-source-id="{{ .ID }}">{{ .Name }} {{ if .UserEnabled }}✓{{ else }}✗{{ end }}</span>
+                                {{ end }}
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reddit Controls -->
+                <div class="section-control {{ if eq .Category "reddit" }}active{{ end }}" data-section="reddit">
+                    <div class="section-sources">
+                        <h4>Reddit Sources:</h4>
+                        <div class="source-toggles">
+                            {{ range .Sources }}
+                                {{ if eq .Category "reddit" }}
+                                    <span class="source-toggle {{ if .UserEnabled }}enabled{{ else }}disabled{{ end }}"
+                                          hx-post="/news/sources/{{ .ID }}/user-toggle?dashboard=true&category={{ $.Category }}&language={{ $.Language }}&search={{ $.Search }}"
+                                          hx-trigger="click"
+                                          hx-swap="outerHTML"
+                                          data-source-id="{{ .ID }}">{{ .Name }} {{ if .UserEnabled }}✓{{ else }}✗{{ end }}</span>
+                                {{ end }}
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <!-- Search Feature -->
         <div class="news-search">
             <div class="search-container">
-                <input type="text" 
-                       id="news-search" 
+                <!-- Hidden fields to maintain current category and language during search -->
+                <input type="hidden" name="category" value="{{ .Category }}" id="search-category">
+                <input type="hidden" name="language" value="{{ .Language }}" id="search-language">
+                
+                <input type="text"
+                       id="news-search"
                        value="{{ .Search }}"
-                       placeholder="{{ if eq .Language "ar" }}البحث في الأخبار...{{ else }}Search articles...{{ end }}"
-                       hx-get="/news" 
-                       hx-target="#news-content" 
+                       placeholder="Search articles..."
+                       hx-get="/news"
+                       hx-target="#news-content"
                        hx-swap="innerHTML"
                        hx-trigger="keyup changed delay:500ms"
                        hx-include="[name='category'], [name='language']"
@@ -90,13 +144,13 @@
             <!-- News Stats -->
             <div class="news-stats">
                 <span class="article-count">{{ .TotalCount }} articles found</span>
-                {{ if .Sources }}
-                <span class="source-info">from {{ len .Sources }} sources</span>
+                {{ if .SourceCount }}
+                <span class="source-info">from {{ .SourceCount }} sources</span>
                 {{ end }}
             </div>
 
             <!-- Articles Grid -->
-            <div class="articles-grid">
+            <div class="articles-grid {{ .Category }}-layout">
                 {{ range .Articles }}
                 <article class="news-article">
                     {{ if .ImageURL }}
@@ -104,8 +158,23 @@
                         <img src="{{ .ImageURL }}" alt="{{ .Title }}" loading="lazy" />
                     </div>
                     {{ end }}
-                    
+
                     <div class="article-content">
+                        {{ if eq .Category "hackernews" }}
+                        <!-- Hacker News style with inline meta -->
+                        <h2 class="article-title hn-title-with-meta">
+                            <a href="/news/article/{{ .ID }}" class="hn-title-link">
+                                {{ .Title }}
+                            </a>
+                            <span class="hn-inline-meta">
+                                <span class="hn-source">{{ .SourceName }}</span>
+                                {{ if .PublishedAt }}
+                                <span class="hn-date">{{ .PublishedAt }}</span>
+                                {{ end }}
+                            </span>
+                        </h2>
+                        {{ else }}
+                        <!-- Default style for other categories -->
                         <div class="article-meta">
                             <span class="article-source">{{ .SourceName }}</span>
                             <span class="article-category">{{ .Category }}</span>
@@ -115,13 +184,14 @@
                             </time>
                             {{ end }}
                         </div>
-                        
+
                         <h2 class="article-title {{ if eq .Language "ar" }}rtl-text{{ end }}">
                             <a href="/news/article/{{ .ID }}">
                                 {{ .Title }}
                             </a>
                         </h2>
-                        
+                        {{ end }}
+
                         {{ if .Content }}
                         <div class="article-summary {{ if eq .Language "ar" }}rtl-text{{ end }}">
                             {{ if gt (len .Content) 200 }}
@@ -131,7 +201,7 @@
                             {{ end }}
                         </div>
                         {{ end }}
-                        
+
                         <div class="article-actions">
                             <a href="/news/article/{{ .ID }}" class="read-more-btn primary">
                                 {{ if eq .Language "ar" }}اقرأ المقال كاملاً{{ else }}Read Full Article{{ end }}
@@ -151,9 +221,9 @@
             {{ if gt .TotalPages 1 }}
             <div class="news-pagination">
                 {{ if .HasPrev }}
-                <button class="pagination-btn" 
+                <button class="pagination-btn"
                         hx-get="/news?page={{ .PrevPage }}&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}"
-                        hx-target="#news-content" 
+                        hx-target="#news-content"
                         hx-swap="innerHTML">
                     <img src="/static/images/svg/arrow-left-circle.svg" alt="Previous" />
                     Previous
@@ -165,9 +235,9 @@
                 </span>
 
                 {{ if .HasNext }}
-                <button class="pagination-btn" 
+                <button class="pagination-btn"
                         hx-get="/news?page={{ .NextPage }}&category={{ .Category }}&language={{ .Language }}&search={{ .Search }}"
-                        hx-target="#news-content" 
+                        hx-target="#news-content"
                         hx-swap="innerHTML">
                     Next
                     <img src="/static/images/svg/arrow-right-circle.svg" alt="Next" />
@@ -182,8 +252,8 @@
                 <div class="empty-icon">📰</div>
                 <h3>No News Articles Found</h3>
                 <p>Try adjusting your filters or refresh to fetch the latest news.</p>
-                <button class="refresh-btn primary" 
-                        hx-post="/news/refresh" 
+                <button class="refresh-btn primary"
+                        hx-post="/news/refresh"
                         hx-trigger="click"
                         hx-target="#news-content"
                         hx-swap="none"
@@ -213,7 +283,14 @@
     box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
 }
 
-.news-title h1 {
+.news-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.title-content h1 {
     margin: 0 0 12px 0;
     color: white;
     font-size: 2.5rem;
@@ -228,12 +305,46 @@
     font-weight: 400;
 }
 
-.news-controls {
+.header-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 20px;
+    gap: 12px;
+    align-items: center;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    text-decoration: none;
+}
+
+.header-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.header-btn img {
+    width: 14px;
+    height: 14px;
+    filter: brightness(0) invert(1);
+}
+
+/* News Section Buttons */
+.news-sections {
     margin-top: 25px;
     padding: 20px;
     background: rgba(255, 255, 255, 0.1);
@@ -241,52 +352,115 @@
     backdrop-filter: blur(10px);
 }
 
-.news-filters {
+.section-buttons {
     display: flex;
     gap: 15px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
-.filter-group {
+.section-btn {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.filter-group label {
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
     font-size: 0.875rem;
     font-weight: 600;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    margin-bottom: 6px;
-}
-
-.filter-group select {
-    padding: 10px 14px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    color: #374151;
-    font-size: 0.875rem;
-    font-weight: 500;
-    min-width: 140px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
 }
 
-.filter-group select:focus {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.8);
-    background: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+.section-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.filter-group select option {
-    background: white;
-    color: #374151;
-    padding: 8px;
+.section-btn.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.section-btn img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+}
+
+.section-controls {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 20px;
+}
+
+.section-control {
+    display: none;
+}
+
+.section-control.active {
+    display: block;
+}
+
+.section-sources h4 {
+    color: white;
+    margin: 0 0 10px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.source-toggles {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.source-toggle {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.source-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.source-toggle.enabled {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #10b981;
+}
+
+.source-toggle.disabled {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+
+.source-toggle.enabled:hover {
+    background: rgba(16, 185, 129, 0.4);
+    border-color: rgba(16, 185, 129, 0.7);
+}
+
+.source-toggle.disabled:hover {
+    background: rgba(239, 68, 68, 0.4);
+    border-color: rgba(239, 68, 68, 0.7);
 }
 
 .news-actions {
@@ -426,10 +600,99 @@
     color: #64748b;
 }
 
+/* Articles Grid - Default 2-column layout for Kuwait */
 .articles-grid {
     display: grid;
     gap: 24px;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+}
+
+/* Hacker News Row Layout */
+.articles-grid.hackernews-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.articles-grid.hackernews-layout .news-article {
+    display: flex;
+    padding: 16px 20px;
+    border-radius: 8px;
+    align-items: center;
+    min-height: auto;
+}
+
+.articles-grid.hackernews-layout .article-content {
+    padding: 0;
+    flex: 1;
+}
+
+.articles-grid.hackernews-layout .article-meta {
+    display: none; /* Hide meta for clean Hacker News style */
+}
+
+.articles-grid.hackernews-layout .article-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.articles-grid.hackernews-layout .article-title a {
+    color: #1a1a1a;
+    text-decoration: none;
+}
+
+.articles-grid.hackernews-layout .article-title a:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.articles-grid.hackernews-layout .article-summary {
+    display: none; /* Hide summary for clean title-only display */
+}
+
+.articles-grid.hackernews-layout .article-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 12px;
+    align-items: center;
+}
+
+.articles-grid.hackernews-layout .article-actions .read-more-btn {
+    display: none; /* Hide "Read Full Article" for cleaner look */
+}
+
+.articles-grid.hackernews-layout .article-actions .external-link-btn {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #6b7280;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.articles-grid.hackernews-layout .article-actions .external-link-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #374151;
+}
+
+/* Reddit Layout (similar to Hacker News but with some modifications) */
+.articles-grid.reddit-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.articles-grid.reddit-layout .news-article {
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+
+.articles-grid.reddit-layout .article-summary {
+    font-size: 0.875rem;
+    margin-bottom: 12px;
 }
 
 .news-article {
@@ -685,23 +948,23 @@
     .news-container {
         padding: 15px;
     }
-    
+
     /* Compact news header for mobile */
     .news-header {
         margin-bottom: 20px;
         padding: 20px;
     }
-    
+
     .news-title h1 {
         font-size: 1.75rem;
         margin-bottom: 8px;
     }
-    
+
     .news-subtitle {
         font-size: 0.95rem;
         margin-bottom: 0;
     }
-    
+
     .news-controls {
         flex-direction: column;
         align-items: stretch;
@@ -709,34 +972,34 @@
         padding: 15px;
         gap: 15px;
     }
-    
+
     .news-filters {
         justify-content: center;
         gap: 10px;
     }
-    
+
     .filter-group {
         flex: 1;
         min-width: 120px;
     }
-    
+
     .filter-group label {
         font-size: 0.8rem;
         margin-bottom: 4px;
     }
-    
+
     .filter-group select {
         padding: 8px 12px;
         font-size: 0.8rem;
         min-width: unset;
     }
-    
+
     .news-actions {
         gap: 10px;
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .sources-btn,
     .refresh-btn {
         padding: 10px 16px;
@@ -746,27 +1009,27 @@
         min-width: 100px;
         justify-content: center;
     }
-    
+
     /* Mobile search */
     .news-search {
         margin-top: 15px;
         padding: 15px 20px;
     }
-    
+
     .search-container {
         max-width: 100%;
     }
-    
+
     #news-search {
         padding: 10px 40px 10px 12px;
         font-size: 0.85rem;
     }
-    
+
     .articles-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     /* Mobile pagination improvements */
     .news-pagination {
         margin-top: 25px;
@@ -774,7 +1037,7 @@
         gap: 12px;
         flex-wrap: wrap;
     }
-    
+
     .pagination-btn {
         padding: 10px 14px;
         font-size: 0.8rem;
@@ -782,7 +1045,7 @@
         min-width: 100px;
         justify-content: center;
     }
-    
+
     .pagination-info {
         order: -1;
         width: 100%;
@@ -815,6 +1078,260 @@ function sub(a, b) {
 function add(a, b) {
     return a + b;
 }
+
+// Section switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle section button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('section-btn') || e.target.closest('.section-btn')) {
+            const btn = e.target.closest('.section-btn');
+            const section = btn.dataset.section;
+
+            // Update active button
+            document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update active section controls
+            document.querySelectorAll('.section-control').forEach(c => c.classList.remove('active'));
+            const sectionControl = document.querySelector(`.section-control[data-section="${section}"]`);
+            if (sectionControl) {
+                sectionControl.classList.add('active');
+            }
+
+            // Update hidden form fields for search to maintain correct category/language
+            const categoryField = document.getElementById('search-category');
+            const languageField = document.getElementById('search-language');
+            
+            if (categoryField && languageField) {
+                switch(section) {
+                    case 'kuwait':
+                        categoryField.value = 'kuwait';
+                        languageField.value = 'ar';
+                        break;
+                    case 'hackernews':
+                        categoryField.value = 'hackernews';
+                        languageField.value = 'en';
+                        break;
+                    case 'reddit':
+                        categoryField.value = 'reddit';
+                        languageField.value = 'en';
+                        break;
+                }
+                console.log('Updated search context:', {
+                    category: categoryField.value,
+                    language: languageField.value
+                });
+            }
+
+            // Sources are now loaded server-side, no need for dynamic loading
+        }
+    });
+
+    // Sources are now loaded server-side on initial page load
+});
+
+// Sources are now rendered server-side, no dynamic loading needed
+
+
+// Debug HTMX events for source toggles
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== NEWS PAGE DEBUG LOADED ===');
+    console.log('Current page category:', '{{ .Category }}');
+    console.log('Current page language:', '{{ .Language }}');
+    console.log('Current page search:', '{{ .Search }}');
+
+    // Add HTMX event listeners for debugging
+    document.addEventListener('htmx:beforeRequest', function(evt) {
+        // Try different ways to get the URL
+        const url = evt.detail.xhr?.responseURL ||
+                   evt.detail.requestConfig?.url ||
+                   evt.detail.path ||
+                   evt.detail.target?.getAttribute('hx-post') ||
+                   evt.detail.target?.getAttribute('hx-get') ||
+                   'unknown';
+
+        console.log('HTMX: Before request');
+        console.log('  - Target:', evt.detail.target);
+        console.log('  - URL attempts:', {
+            responseURL: evt.detail.xhr?.responseURL,
+            configUrl: evt.detail.requestConfig?.url,
+            path: evt.detail.path,
+            hxPost: evt.detail.target?.getAttribute('hx-post'),
+            hxGet: evt.detail.target?.getAttribute('hx-get')
+        });
+        console.log('  - Final URL:', url);
+
+        if (url && url.includes('user-toggle')) {
+            console.log('🔄 HTMX: Starting source toggle request');
+            console.log('  - Element:', evt.detail.target);
+            console.log('  - hx-post:', evt.detail.target?.getAttribute('hx-post'));
+        }
+    });
+
+    document.addEventListener('htmx:afterRequest', function(evt) {
+        const url = evt.detail.xhr?.responseURL ||
+                   evt.detail.requestConfig?.url ||
+                   evt.detail.path ||
+                   evt.detail.target?.getAttribute('hx-post') ||
+                   evt.detail.target?.getAttribute('hx-get') ||
+                   'unknown';
+
+        console.log('HTMX: After request');
+        console.log('  - Status:', evt.detail.xhr.status);
+        console.log('  - URL:', url);
+        console.log('  - Response length:', evt.detail.xhr.responseText.length);
+
+        if (url && url.includes('user-toggle')) {
+            console.log('✅ HTMX: Source toggle completed');
+            console.log('  - Status:', evt.detail.xhr.status);
+            console.log('  - Response HTML preview:', evt.detail.xhr.responseText.substring(0, 300));
+
+            // Check for HX-Trigger header
+            const hxTrigger = evt.detail.xhr.getResponseHeader('HX-Trigger');
+            if (hxTrigger) {
+                console.log('🎯 HTMX: HX-Trigger header found:', hxTrigger);
+                if (hxTrigger.includes('refreshNews')) {
+                    console.log('🔔 HTMX: refreshNews trigger should fire automatically');
+                }
+            } else {
+                console.log('❌ HTMX: No HX-Trigger header found');
+            }
+
+            // Check if the response contains hx-on::after-request (legacy)
+            if (evt.detail.xhr.responseText.includes('hx-on::after-request')) {
+                console.log('⚠️ HTMX: Response still contains old auto-refresh code (should be removed)');
+            }
+        }
+
+        if (url && url.includes('/news?page=')) {
+            console.log('📰 HTMX: News refresh completed');
+            console.log('  - Status:', evt.detail.xhr.status);
+            console.log('  - Response length:', evt.detail.xhr.responseText.length);
+            if (evt.detail.xhr.responseText.includes('articles found')) {
+                const match = evt.detail.xhr.responseText.match(/(\d+) articles found/);
+                if (match) {
+                    console.log('  - Articles found:', match[1]);
+                }
+            }
+        }
+    });
+
+    // Add debugging for manual testing
+    window.debugNewsToggle = function(sourceId) {
+        console.log('=== MANUAL DEBUG: Testing source toggle ===');
+
+        // Get current active section dynamically
+        const activeBtn = document.querySelector('.section-btn.active');
+        let currentCategory = '{{ .Category }}';
+        let currentLanguage = '{{ .Language }}';
+
+        if (activeBtn) {
+            const section = activeBtn.dataset.section;
+            switch(section) {
+                case 'kuwait':
+                    currentCategory = 'kuwait';
+                    currentLanguage = 'ar';
+                    break;
+                case 'hackernews':
+                    currentCategory = 'hackernews';
+                    currentLanguage = 'en';
+                    break;
+                case 'reddit':
+                    currentCategory = 'reddit';
+                    currentLanguage = 'en';
+                    break;
+            }
+        }
+
+        const currentSearch = document.getElementById('news-search')?.value || '';
+        const toggleUrl = `/news/sources/${sourceId}/user-toggle?dashboard=true&category=${currentCategory}&language=${currentLanguage}&search=${currentSearch}`;
+
+        console.log('Active section:', activeBtn?.dataset.section);
+        console.log('Sending toggle request to:', toggleUrl);
+
+        fetch(toggleUrl, { method: 'POST' })
+            .then(response => {
+                console.log('Toggle response status:', response.status);
+                return response.text();
+            })
+            .then(html => {
+                console.log('Toggle response HTML:', html);
+
+                // Now test the refresh
+                const refreshUrl = `/news?page=1&category=${currentCategory}&language=${currentLanguage}&search=${currentSearch}`;
+                console.log('Testing manual refresh to:', refreshUrl);
+
+                return fetch(refreshUrl, {
+                    headers: { 'HX-Request': 'true' }
+                });
+            })
+            .then(response => {
+                console.log('Refresh response status:', response.status);
+                return response.text();
+            })
+            .then(html => {
+                console.log('Refresh response length:', html.length);
+                console.log('Refresh response preview:', html.substring(0, 500));
+            })
+            .catch(error => {
+                console.error('Debug test error:', error);
+            });
+    };
+
+    console.log('Debug function loaded. Test with: debugNewsToggle("SOURCE_ID")');
+
+    // Listen for HX-Trigger events from source toggle responses
+    document.addEventListener('refreshNews', function() {
+        console.log('🔔 HX-Trigger: refreshNews event received');
+
+        // Get current active section dynamically
+        const activeBtn = document.querySelector('.section-btn.active');
+        let currentCategory = '{{ .Category }}';
+        let currentLanguage = '{{ .Language }}';
+
+        if (activeBtn) {
+            const section = activeBtn.dataset.section;
+            console.log('🎯 Active section detected:', section);
+
+            // Map section to category and language
+            switch(section) {
+                case 'kuwait':
+                    currentCategory = 'kuwait';
+                    currentLanguage = 'ar';
+                    break;
+                case 'hackernews':
+                    currentCategory = 'hackernews';
+                    currentLanguage = 'en';
+                    break;
+                case 'reddit':
+                    currentCategory = 'reddit';
+                    currentLanguage = 'en';
+                    break;
+                default:
+                    console.log('⚠️ Unknown section, using defaults');
+            }
+        } else {
+            console.log('⚠️ No active section button found, using page defaults');
+        }
+
+        const currentSearch = document.getElementById('news-search')?.value || '';
+        const refreshUrl = `/news?page=1&category=${currentCategory}&language=${currentLanguage}&search=${currentSearch}`;
+
+        console.log('🔄 Triggering news refresh to:', refreshUrl);
+        console.log('  - Category:', currentCategory);
+        console.log('  - Language:', currentLanguage);
+        console.log('  - Search:', currentSearch);
+
+        htmx.ajax('GET', refreshUrl, {
+            target: '#news-content',
+            swap: 'innerHTML'
+        }).then(() => {
+            console.log('✅ News refresh completed via HX-Trigger');
+        }).catch(error => {
+            console.error('❌ News refresh failed:', error);
+        });
+    });
+});
 
 // Auto-update news every 30 minutes
 document.addEventListener('DOMContentLoaded', function() {
