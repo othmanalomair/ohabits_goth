@@ -454,6 +454,17 @@ func UpdateTask(db *pgxpool.Pool, task Task, userID uuid.UUID) error {
 	return err
 }
 
+func UpdateTaskStatus(db *pgxpool.Pool, taskID uuid.UUID, status string, userID uuid.UUID) error {
+	query := `
+		UPDATE tasks
+		SET status = $3, updated_at = $4
+		WHERE id = $1 AND user_id = $2
+	`
+	now := time.Now()
+	_, err := db.Exec(context.Background(), query, taskID, userID, status, now)
+	return err
+}
+
 func ToggleTaskCompletion(db *pgxpool.Pool, taskID uuid.UUID, userID uuid.UUID) error {
 	// Check if task is blocked
 	if isTaskBlocked(db, taskID) {

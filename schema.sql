@@ -30,6 +30,22 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
 
+--
+-- Name: update_user_news_preferences_updated_at(); Type: FUNCTION; Schema: public; Owner: most3mr
+--
+
+CREATE FUNCTION public.update_user_news_preferences_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_user_news_preferences_updated_at() OWNER TO most3mr;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -62,7 +78,7 @@ CREATE TABLE public.episodes (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     show_id uuid,
     user_id uuid,
-    tvmaze_id integer NOT NULL,
+    external_id integer NOT NULL,
     name text NOT NULL,
     season integer NOT NULL,
     number integer NOT NULL,
@@ -71,7 +87,11 @@ CREATE TABLE public.episodes (
     runtime integer,
     image_url text,
     created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now()
+    updated_at timestamp without time zone DEFAULT now(),
+    show_type character varying(20) DEFAULT 'tv'::character varying NOT NULL,
+    filler boolean DEFAULT false NOT NULL,
+    recap boolean DEFAULT false NOT NULL,
+    CONSTRAINT episodes_type_check CHECK (((show_type)::text = ANY ((ARRAY['tv'::character varying, 'anime'::character varying])::text[])))
 );
 
 
@@ -109,6 +129,42 @@ CREATE TABLE public.habits_completions (
 
 
 ALTER TABLE public.habits_completions OWNER TO most3mr;
+
+--
+-- Name: market_data; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.market_data (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    symbol text NOT NULL,
+    current_price numeric(15,6),
+    change_amount numeric(15,6),
+    change_percent numeric(8,4),
+    volume bigint,
+    market_cap bigint,
+    last_updated timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.market_data OWNER TO most3mr;
+
+--
+-- Name: market_watchlist; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.market_watchlist (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid,
+    symbol text NOT NULL,
+    name text NOT NULL,
+    type text NOT NULL,
+    display_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT market_watchlist_type_check CHECK ((type = ANY (ARRAY['stock'::text, 'crypto'::text, 'forex'::text])))
+);
+
+
+ALTER TABLE public.market_watchlist OWNER TO most3mr;
 
 --
 -- Name: medication_logs; Type: TABLE; Schema: public; Owner: most3mr
@@ -173,6 +229,91 @@ CREATE TABLE public.mood_ratings (
 ALTER TABLE public.mood_ratings OWNER TO most3mr;
 
 --
+-- Name: news_articles; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.news_articles (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    source_id uuid,
+    title text NOT NULL,
+    content text,
+    summary text,
+    original_url text NOT NULL,
+    image_url text,
+    published_at timestamp without time zone,
+    language text NOT NULL,
+    category text NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    thumbnail_url text,
+    full_content text,
+    author_name text,
+    keywords text,
+    date_modified timestamp with time zone,
+    CONSTRAINT news_articles_language_check CHECK ((language = ANY (ARRAY['ar'::text, 'en'::text])))
+);
+
+
+ALTER TABLE public.news_articles OWNER TO most3mr;
+
+--
+-- Name: COLUMN news_articles.thumbnail_url; Type: COMMENT; Schema: public; Owner: most3mr
+--
+
+COMMENT ON COLUMN public.news_articles.thumbnail_url IS 'URL to article thumbnail image';
+
+
+--
+-- Name: COLUMN news_articles.full_content; Type: COMMENT; Schema: public; Owner: most3mr
+--
+
+COMMENT ON COLUMN public.news_articles.full_content IS 'Complete article body text from JSON-LD';
+
+
+--
+-- Name: COLUMN news_articles.author_name; Type: COMMENT; Schema: public; Owner: most3mr
+--
+
+COMMENT ON COLUMN public.news_articles.author_name IS 'Article author name from JSON-LD';
+
+
+--
+-- Name: COLUMN news_articles.keywords; Type: COMMENT; Schema: public; Owner: most3mr
+--
+
+COMMENT ON COLUMN public.news_articles.keywords IS 'Article keywords from JSON-LD';
+
+
+--
+-- Name: COLUMN news_articles.date_modified; Type: COMMENT; Schema: public; Owner: most3mr
+--
+
+COMMENT ON COLUMN public.news_articles.date_modified IS 'Last modification date from JSON-LD';
+
+
+--
+-- Name: news_sources; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.news_sources (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    name text NOT NULL,
+    type text NOT NULL,
+    url text NOT NULL,
+    language text NOT NULL,
+    category text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    fetch_frequency_hours integer DEFAULT 2 NOT NULL,
+    last_fetched timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT news_sources_language_check CHECK ((language = ANY (ARRAY['ar'::text, 'en'::text]))),
+    CONSTRAINT news_sources_type_check CHECK ((type = ANY (ARRAY['rss'::text, 'api'::text, 'scraper'::text])))
+);
+
+
+ALTER TABLE public.news_sources OWNER TO most3mr;
+
+--
 -- Name: notes; Type: TABLE; Schema: public; Owner: most3mr
 --
 
@@ -208,13 +349,29 @@ CREATE TABLE public.notifications (
 ALTER TABLE public.notifications OWNER TO most3mr;
 
 --
+-- Name: projects; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.projects (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    name text NOT NULL,
+    description text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.projects OWNER TO most3mr;
+
+--
 -- Name: shows; Type: TABLE; Schema: public; Owner: most3mr
 --
 
 CREATE TABLE public.shows (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid,
-    tvmaze_id integer NOT NULL,
+    external_id integer NOT NULL,
     name text NOT NULL,
     summary text,
     image_url text,
@@ -227,7 +384,9 @@ CREATE TABLE public.shows (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     last_episode_sync timestamp without time zone,
-    last_info_sync timestamp without time zone
+    last_info_sync timestamp without time zone,
+    show_type character varying(20) DEFAULT 'tv'::character varying NOT NULL,
+    CONSTRAINT shows_type_check CHECK (((show_type)::text = ANY ((ARRAY['tv'::character varying, 'anime'::character varying])::text[])))
 );
 
 
@@ -289,6 +448,81 @@ ALTER SEQUENCE public.sync_settings_id_seq OWNED BY public.sync_settings.id;
 
 
 --
+-- Name: task_attachments; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.task_attachments (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    task_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    filename text NOT NULL,
+    file_path text NOT NULL,
+    file_size bigint NOT NULL,
+    mime_type text NOT NULL,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.task_attachments OWNER TO most3mr;
+
+--
+-- Name: task_comments; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.task_comments (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    task_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    comment text NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.task_comments OWNER TO most3mr;
+
+--
+-- Name: task_dependencies; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.task_dependencies (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    task_id uuid NOT NULL,
+    depends_on_task_id uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT task_dependencies_no_self_reference CHECK ((task_id <> depends_on_task_id))
+);
+
+
+ALTER TABLE public.task_dependencies OWNER TO most3mr;
+
+--
+-- Name: tasks; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.tasks (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    parent_task_id uuid,
+    title text NOT NULL,
+    description text,
+    status text DEFAULT 'Not Started'::text NOT NULL,
+    priority text DEFAULT 'None'::text NOT NULL,
+    due_date timestamp without time zone,
+    completed boolean DEFAULT false NOT NULL,
+    display_order integer DEFAULT 0,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    collapsed boolean DEFAULT false NOT NULL,
+    CONSTRAINT tasks_priority_check CHECK ((priority = ANY (ARRAY['None'::text, 'Low'::text, 'Medium'::text, 'High'::text]))),
+    CONSTRAINT tasks_status_check CHECK ((status = ANY (ARRAY['Not Started'::text, 'In Progress'::text, 'Blocked'::text, 'In Review'::text, 'Completed'::text])))
+);
+
+
+ALTER TABLE public.tasks OWNER TO most3mr;
+
+--
 -- Name: todos; Type: TABLE; Schema: public; Owner: most3mr
 --
 
@@ -304,6 +538,41 @@ CREATE TABLE public.todos (
 
 
 ALTER TABLE public.todos OWNER TO most3mr;
+
+--
+-- Name: user_interests; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.user_interests (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid,
+    interest_name text NOT NULL,
+    keywords jsonb,
+    sources jsonb,
+    priority integer DEFAULT 1 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT user_interests_priority_check CHECK (((priority >= 1) AND (priority <= 5)))
+);
+
+
+ALTER TABLE public.user_interests OWNER TO most3mr;
+
+--
+-- Name: user_news_preferences; Type: TABLE; Schema: public; Owner: most3mr
+--
+
+CREATE TABLE public.user_news_preferences (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    source_id uuid NOT NULL,
+    is_enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.user_news_preferences OWNER TO most3mr;
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: most3mr
@@ -407,6 +676,30 @@ ALTER TABLE ONLY public.habits
 
 
 --
+-- Name: market_data market_data_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.market_data
+    ADD CONSTRAINT market_data_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: market_data market_data_symbol_unique; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.market_data
+    ADD CONSTRAINT market_data_symbol_unique UNIQUE (symbol);
+
+
+--
+-- Name: market_watchlist market_watchlist_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.market_watchlist
+    ADD CONSTRAINT market_watchlist_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: medication_logs medication_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
 --
 
@@ -431,6 +724,30 @@ ALTER TABLE ONLY public.mood_ratings
 
 
 --
+-- Name: news_articles news_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.news_articles
+    ADD CONSTRAINT news_articles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: news_articles news_articles_url_unique; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.news_articles
+    ADD CONSTRAINT news_articles_url_unique UNIQUE (original_url);
+
+
+--
+-- Name: news_sources news_sources_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.news_sources
+    ADD CONSTRAINT news_sources_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: notes notes_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
 --
 
@@ -444,6 +761,14 @@ ALTER TABLE ONLY public.notes
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.projects
+    ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
 
 
 --
@@ -479,11 +804,75 @@ ALTER TABLE ONLY public.sync_settings
 
 
 --
+-- Name: task_attachments task_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_attachments
+    ADD CONSTRAINT task_attachments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: task_comments task_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_comments
+    ADD CONSTRAINT task_comments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: task_dependencies task_dependencies_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_dependencies
+    ADD CONSTRAINT task_dependencies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: task_dependencies task_dependencies_unique_pair; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_dependencies
+    ADD CONSTRAINT task_dependencies_unique_pair UNIQUE (task_id, depends_on_task_id);
+
+
+--
+-- Name: tasks tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: todos todos_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
 --
 
 ALTER TABLE ONLY public.todos
     ADD CONSTRAINT todos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_interests user_interests_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.user_interests
+    ADD CONSTRAINT user_interests_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_news_preferences user_news_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.user_news_preferences
+    ADD CONSTRAINT user_news_preferences_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_news_preferences user_news_preferences_user_id_source_id_key; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.user_news_preferences
+    ADD CONSTRAINT user_news_preferences_user_id_source_id_key UNIQUE (user_id, source_id);
 
 
 --
@@ -533,6 +922,34 @@ CREATE INDEX idx_episode_tracking_user_id ON public.episode_tracking USING btree
 
 
 --
+-- Name: idx_episodes_external_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_episodes_external_id ON public.episodes USING btree (external_id);
+
+
+--
+-- Name: idx_episodes_filler; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_episodes_filler ON public.episodes USING btree (filler);
+
+
+--
+-- Name: idx_episodes_filler_recap; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_episodes_filler_recap ON public.episodes USING btree (filler, recap);
+
+
+--
+-- Name: idx_episodes_recap; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_episodes_recap ON public.episodes USING btree (recap);
+
+
+--
 -- Name: idx_episodes_show_id; Type: INDEX; Schema: public; Owner: most3mr
 --
 
@@ -540,10 +957,17 @@ CREATE INDEX idx_episodes_show_id ON public.episodes USING btree (show_id);
 
 
 --
--- Name: idx_episodes_tvmaze_id; Type: INDEX; Schema: public; Owner: most3mr
+-- Name: idx_market_data_last_updated; Type: INDEX; Schema: public; Owner: most3mr
 --
 
-CREATE INDEX idx_episodes_tvmaze_id ON public.episodes USING btree (tvmaze_id);
+CREATE INDEX idx_market_data_last_updated ON public.market_data USING btree (last_updated);
+
+
+--
+-- Name: idx_market_watchlist_user_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_market_watchlist_user_id ON public.market_watchlist USING btree (user_id);
 
 
 --
@@ -582,6 +1006,48 @@ CREATE INDEX idx_medications_user_id ON public.medications USING btree (user_id)
 
 
 --
+-- Name: idx_news_articles_author; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_news_articles_author ON public.news_articles USING btree (author_name);
+
+
+--
+-- Name: idx_news_articles_category; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_news_articles_category ON public.news_articles USING btree (category);
+
+
+--
+-- Name: idx_news_articles_keywords; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_news_articles_keywords ON public.news_articles USING gin (to_tsvector('arabic'::regconfig, keywords));
+
+
+--
+-- Name: idx_news_articles_language; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_news_articles_language ON public.news_articles USING btree (language);
+
+
+--
+-- Name: idx_news_articles_published_at; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_news_articles_published_at ON public.news_articles USING btree (published_at DESC);
+
+
+--
+-- Name: idx_news_articles_source_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_news_articles_source_id ON public.news_articles USING btree (source_id);
+
+
+--
 -- Name: idx_notifications_created_at; Type: INDEX; Schema: public; Owner: most3mr
 --
 
@@ -600,6 +1066,27 @@ CREATE INDEX idx_notifications_user_id ON public.notifications USING btree (user
 --
 
 CREATE INDEX idx_notifications_user_read ON public.notifications USING btree (user_id, read);
+
+
+--
+-- Name: idx_projects_user_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_projects_user_id ON public.projects USING btree (user_id);
+
+
+--
+-- Name: idx_shows_external_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_shows_external_id ON public.shows USING btree (external_id);
+
+
+--
+-- Name: idx_shows_external_id_type; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_shows_external_id_type ON public.shows USING btree (external_id, show_type);
 
 
 --
@@ -624,13 +1111,6 @@ CREATE INDEX idx_shows_status ON public.shows USING btree (status);
 
 
 --
--- Name: idx_shows_tvmaze_id; Type: INDEX; Schema: public; Owner: most3mr
---
-
-CREATE INDEX idx_shows_tvmaze_id ON public.shows USING btree (tvmaze_id);
-
-
---
 -- Name: idx_shows_user_id; Type: INDEX; Schema: public; Owner: most3mr
 --
 
@@ -649,6 +1129,132 @@ CREATE INDEX idx_sync_logs_created_at ON public.sync_logs USING btree (created_a
 --
 
 CREATE INDEX idx_sync_logs_show_id ON public.sync_logs USING btree (show_id);
+
+
+--
+-- Name: idx_task_attachments_task_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_task_attachments_task_id ON public.task_attachments USING btree (task_id);
+
+
+--
+-- Name: idx_task_comments_task_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_task_comments_task_id ON public.task_comments USING btree (task_id);
+
+
+--
+-- Name: idx_task_dependencies_depends_on_task_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_task_dependencies_depends_on_task_id ON public.task_dependencies USING btree (depends_on_task_id);
+
+
+--
+-- Name: idx_task_dependencies_task_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_task_dependencies_task_id ON public.task_dependencies USING btree (task_id);
+
+
+--
+-- Name: idx_tasks_completed; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_completed ON public.tasks USING btree (completed);
+
+
+--
+-- Name: idx_tasks_due_date; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_due_date ON public.tasks USING btree (due_date);
+
+
+--
+-- Name: idx_tasks_parent_display_order; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_parent_display_order ON public.tasks USING btree (parent_task_id, display_order) WHERE (parent_task_id IS NOT NULL);
+
+
+--
+-- Name: idx_tasks_parent_task_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_parent_task_id ON public.tasks USING btree (parent_task_id);
+
+
+--
+-- Name: idx_tasks_priority; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_priority ON public.tasks USING btree (priority);
+
+
+--
+-- Name: idx_tasks_project_display_order; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_project_display_order ON public.tasks USING btree (project_id, display_order);
+
+
+--
+-- Name: idx_tasks_project_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_project_id ON public.tasks USING btree (project_id);
+
+
+--
+-- Name: idx_tasks_status; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_status ON public.tasks USING btree (status);
+
+
+--
+-- Name: idx_tasks_user_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_tasks_user_id ON public.tasks USING btree (user_id);
+
+
+--
+-- Name: idx_user_interests_user_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_user_interests_user_id ON public.user_interests USING btree (user_id);
+
+
+--
+-- Name: idx_user_news_preferences_enabled; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_user_news_preferences_enabled ON public.user_news_preferences USING btree (user_id, is_enabled);
+
+
+--
+-- Name: idx_user_news_preferences_source_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_user_news_preferences_source_id ON public.user_news_preferences USING btree (source_id);
+
+
+--
+-- Name: idx_user_news_preferences_user_id; Type: INDEX; Schema: public; Owner: most3mr
+--
+
+CREATE INDEX idx_user_news_preferences_user_id ON public.user_news_preferences USING btree (user_id);
+
+
+--
+-- Name: user_news_preferences update_user_news_preferences_updated_at; Type: TRIGGER; Schema: public; Owner: most3mr
+--
+
+CREATE TRIGGER update_user_news_preferences_updated_at BEFORE UPDATE ON public.user_news_preferences FOR EACH ROW EXECUTE FUNCTION public.update_user_news_preferences_updated_at();
 
 
 --
@@ -708,6 +1314,14 @@ ALTER TABLE ONLY public.habits
 
 
 --
+-- Name: market_watchlist market_watchlist_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.market_watchlist
+    ADD CONSTRAINT market_watchlist_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: medication_logs medication_logs_medication_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
 --
 
@@ -740,6 +1354,14 @@ ALTER TABLE ONLY public.mood_ratings
 
 
 --
+-- Name: news_articles news_articles_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.news_articles
+    ADD CONSTRAINT news_articles_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.news_sources(id) ON DELETE CASCADE;
+
+
+--
 -- Name: notes notes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
 --
 
@@ -753,6 +1375,14 @@ ALTER TABLE ONLY public.notes
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: projects projects_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.projects
+    ADD CONSTRAINT projects_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -772,11 +1402,107 @@ ALTER TABLE ONLY public.sync_logs
 
 
 --
+-- Name: task_attachments task_attachments_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_attachments
+    ADD CONSTRAINT task_attachments_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+
+--
+-- Name: task_attachments task_attachments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_attachments
+    ADD CONSTRAINT task_attachments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: task_comments task_comments_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_comments
+    ADD CONSTRAINT task_comments_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+
+--
+-- Name: task_comments task_comments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_comments
+    ADD CONSTRAINT task_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: task_dependencies task_dependencies_depends_on_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_dependencies
+    ADD CONSTRAINT task_dependencies_depends_on_task_id_fkey FOREIGN KEY (depends_on_task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+
+--
+-- Name: task_dependencies task_dependencies_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.task_dependencies
+    ADD CONSTRAINT task_dependencies_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tasks tasks_parent_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_parent_task_id_fkey FOREIGN KEY (parent_task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tasks tasks_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tasks tasks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: todos todos_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
 --
 
 ALTER TABLE ONLY public.todos
     ADD CONSTRAINT todos_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_interests user_interests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.user_interests
+    ADD CONSTRAINT user_interests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_news_preferences user_news_preferences_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.user_news_preferences
+    ADD CONSTRAINT user_news_preferences_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.news_sources(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_news_preferences user_news_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.user_news_preferences
+    ADD CONSTRAINT user_news_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

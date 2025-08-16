@@ -288,6 +288,41 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Response{Message: "Task updated successfully"})
 }
 
+func UpdateTaskStatus(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	params := mux.Vars(r)
+	taskID, err := uuid.Parse(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	type StatusRequest struct {
+		Status string `json:"status"`
+	}
+
+	var statusReq StatusRequest
+	err = json.NewDecoder(r.Body).Decode(&statusReq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = db.UpdateTaskStatus(db.DB, taskID, statusReq.Status, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Response{Message: "Task status updated successfully"})
+}
+
 func ToggleTask(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {

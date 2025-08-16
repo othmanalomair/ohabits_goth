@@ -593,13 +593,15 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task := db.Task{
-		ID:          taskID,
-		ProjectID:   existingTask.ProjectID,
-		Title:       title,
-		Description: taskDescription,
-		Status:      status,
-		Priority:    priority,
-		Completed:   existingTask.Completed,
+		ID:           taskID,
+		ProjectID:    existingTask.ProjectID,
+		Title:        title,
+		Description:  taskDescription,
+		Status:       status,
+		Priority:     priority,
+		Completed:    existingTask.Completed,
+		DisplayOrder: existingTask.DisplayOrder,
+		Collapsed:    existingTask.Collapsed,
 	}
 
 	// Parse due date if provided
