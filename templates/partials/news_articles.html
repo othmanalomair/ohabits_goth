@@ -31,6 +31,36 @@
                         {{ end }}
                     </span>
                 </h2>
+                {{ else if eq .Category "reddit" }}
+                <!-- Reddit style with post flair and user info -->
+                <div class="reddit-meta">
+                    {{ if .PostFlair }}
+                    <span class="reddit-flair reddit-flair-{{ substr .PostFlair 1 1 }}">{{ .PostFlair }}</span>
+                    {{ end }}
+                    <span class="reddit-source">{{ .SourceName }}</span>
+                    {{ if .PublishedAt }}
+                    <span class="reddit-date">{{ .PublishedAt }}</span>
+                    {{ end }}
+                </div>
+                
+                <h2 class="article-title reddit-title">
+                    <a href="/news/article/{{ .ID }}" class="reddit-title-link">
+                        {{ .Title }}
+                    </a>
+                </h2>
+                
+                <div class="reddit-author-info">
+                    {{ if .RedditUser }}
+                    <span class="reddit-user">{{ .RedditUser }}</span>
+                    {{ end }}
+                    {{ if .CommentCount }}
+                    <span class="reddit-comments">
+                        <a href="{{ .CommentsURL }}" target="_blank" rel="noopener noreferrer">
+                            {{ .CommentCount }}
+                        </a>
+                    </span>
+                    {{ end }}
+                </div>
                 {{ else }}
                 <!-- Default style for other categories -->
                 <div class="article-meta">
@@ -53,7 +83,7 @@
                 {{ if .Content }}
                 <div class="article-summary {{ if eq .Language "ar" }}rtl-text{{ end }}">
                     {{ if gt (len .Content) 200 }}
-                        {{ substr .Content 0 200 }}...
+                        {{ substrHTML .Content 0 200 }}...
                     {{ else }}
                         {{ .Content }}
                     {{ end }}

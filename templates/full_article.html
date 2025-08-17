@@ -9,7 +9,7 @@
             <span class="breadcrumb-separator">→</span>
             <span class="breadcrumb-current">{{ .Article.Category }}</span>
         </nav>
-        
+
         <div class="article-meta-top">
             <span class="article-source">{{ .Article.SourceName }}</span>
             <span class="article-category">{{ .Article.Category }}</span>
@@ -24,20 +24,20 @@
     <article class="full-article-content{{ if eq .Article.Language "ar" }} rtl-content{{ end }}">
         <!-- Article Title -->
         <h1 class="article-title">{{ .Article.Title }}</h1>
-        
+
         <!-- Article Image -->
         {{ if .Article.ImageURL }}
         <div class="article-image-container">
             <img src="{{ .Article.ImageURL }}" alt="{{ .Article.Title }}" class="article-main-image" />
         </div>
         {{ end }}
-        
+
         <!-- Article Body -->
         <div class="article-body">
             {{ if .Article.FullContent }}
                 <div class="article-full-content article-text">{{ .Article.FullContent }}</div>
             {{ else if .Article.Content }}
-                <div class="article-content article-text">{{ .Article.Content }}</div>
+                <div class="article-content">{{ .Article.Content }}</div>
             {{ else }}
                 <div class="article-no-content">
                     <p>{{ if eq .Article.Language "ar" }}المحتوى الكامل غير متوفر.{{ else }}Full content not available.{{ end }}</p>
@@ -45,20 +45,20 @@
                 </div>
             {{ end }}
         </div>
-        
-        
+
+
         <!-- Article Actions -->
         <div class="article-actions">
             <a href="{{ .Article.OriginalURL }}" target="_blank" rel="noopener noreferrer" class="original-link-btn">
                 <img src="/static/images/svg/external-link.svg" alt="External link" />
                 {{ if eq .Article.Language "ar" }}قراءة في الموقع الأصلي{{ else }}Read on Original Site{{ end }}
             </a>
-            
-            
-            <a href="/news" class="back-btn">
+
+
+            <button onclick="history.back()" class="back-btn">
                 <img src="/static/images/svg/arrow-left.svg" alt="Back" />
-                {{ if eq .Article.Language "ar" }}العودة للأخبار{{ else }}Back to News{{ end }}
-            </a>
+                {{ if eq .Article.Language "ar" }}العودة{{ else }}Back{{ end }}
+            </button>
         </div>
     </article>
 </div>
@@ -177,24 +177,27 @@
     font-size: 2rem;
     font-weight: 700;
     color: #1a1a1a;
-    margin: 0 0 25px 0;
+    margin: 0 0 20px 0;
     line-height: 1.3;
 }
 
 .article-image-container {
-    margin: 0 0 30px 0;
+    margin: 0 0 10px 0 !important;
     border-radius: 8px;
     overflow: hidden;
+    max-height: 250px !important;
 }
 
 .article-main-image {
     width: 100%;
     height: auto;
     display: block;
+    object-fit: cover;
+    max-height: 250px !important;
 }
 
 .article-body {
-    margin-bottom: 30px;
+    margin-bottom: 10px !important;
 }
 
 .article-full-content,
@@ -266,54 +269,64 @@
 }
 
 
-/* Article Actions */
-.article-actions {
-    display: flex;
+/* Article Actions - Updated v4.0 - Consistent Button Sizing */
+.full-article-content .article-actions {
+    display: flex !important;
     gap: 15px;
     flex-wrap: wrap;
     justify-content: center;
-    padding-top: 20px;
+    padding-top: 20px !important;
     border-top: 1px solid #e5e7eb;
+    margin-top: 20px !important;
+    margin-bottom: 0 !important;
 }
 
-.original-link-btn,
-.back-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
+.full-article-content .article-actions .original-link-btn,
+.full-article-content .article-actions .back-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 16px !important;
+    border-radius: 6px !important;
+    text-decoration: none !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
     transition: all 0.2s;
     cursor: pointer;
-    border: none;
+    border: none !important;
+    color: white !important;
+    min-height: auto !important;
+    max-height: auto !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    line-height: 1.2 !important;
 }
 
-.original-link-btn {
-    background: #3b82f6;
-    color: white;
+.full-article-content .article-actions .original-link-btn {
+    background: #3b82f6 !important;
+    color: white !important;
 }
 
-.original-link-btn:hover {
-    background: #2563eb;
+.full-article-content .article-actions .original-link-btn:hover {
+    background: #2563eb !important;
+    color: white !important;
 }
 
-
-.back-btn {
-    background: #6b7280;
-    color: white;
+.full-article-content .article-actions .back-btn {
+    background: #6b7280 !important;
+    color: white !important;
 }
 
-.back-btn:hover {
-    background: #4b5563;
+.full-article-content .article-actions .back-btn:hover {
+    background: #4b5563 !important;
+    color: white !important;
 }
 
-.article-actions img {
-    width: 16px;
-    height: 16px;
+.full-article-content .article-actions img {
+    width: 16px !important;
+    height: 16px !important;
     filter: brightness(0) invert(1);
+    flex-shrink: 0 !important;
 }
 
 /* Mobile Responsive */
@@ -321,47 +334,51 @@
     .full-article-container {
         padding: 15px;
     }
-    
+
     .full-article-content {
         padding: 20px;
     }
-    
+
     .article-title {
         font-size: 1.25rem;
         line-height: 1.4;
     }
-    
+
     .article-meta-top {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-    
-    .article-actions {
+
+    .full-article-content .article-actions {
         flex-direction: column;
+        margin-top: 20px;
+        padding-top: 20px;
     }
-    
-    .original-link-btn,
-    .back-btn {
+
+    .full-article-content .article-actions .original-link-btn,
+    .full-article-content .article-actions .back-btn {
         justify-content: center;
         width: 100%;
+        min-height: 44px;
+        padding: 12px 16px;
     }
-    
+
     /* Smaller text size for mobile reading */
     .article-full-content,
     .article-content {
         font-size: 0.95rem;
         line-height: 1.6;
     }
-    
+
     .article-header {
         padding: 15px 20px;
     }
-    
+
     .article-breadcrumb {
         font-size: 0.8rem;
     }
-    
+
     .article-meta-top {
         font-size: 0.8rem;
     }
@@ -374,6 +391,219 @@
 
 .rtl-content .breadcrumb-separator {
     margin: 0 8px;
+}
+
+/* Reddit-specific styles for enhanced content */
+.article-text .reddit-content-image {
+    margin: 16px 0;
+    text-align: center;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.article-text .reddit-inline-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+
+.article-text .reddit-image-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    color: #1976d2 !important;
+    text-decoration: none;
+    font-size: 0.9rem;
+    border: 1px solid #bbdefb;
+}
+
+.article-text .reddit-image-link:hover {
+    background: #bbdefb;
+    text-decoration: none;
+}
+
+.article-text .reddit-image-link::before {
+    content: "🖼️";
+    font-size: 0.8rem;
+}
+
+/* Video link styles */
+.article-text .reddit-video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    margin: 4px 0;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    color: white !important;
+}
+
+.article-text .reddit-video-link .video-icon {
+    font-size: 1rem;
+    margin-right: 4px;
+}
+
+.article-text .reddit-video-link .video-platform {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+}
+
+.article-text .youtube-link {
+    background: linear-gradient(135deg, #ff0000, #cc0000);
+    border: 1px solid #b30000;
+}
+
+.article-text .youtube-link:hover {
+    background: linear-gradient(135deg, #cc0000, #990000);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3);
+}
+
+.article-text .peertube-link {
+    background: linear-gradient(135deg, #f1680d, #d1560b);
+    border: 1px solid #b8490a;
+}
+
+.article-text .peertube-link:hover {
+    background: linear-gradient(135deg, #d1560b, #b14409);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(241, 104, 13, 0.3);
+}
+
+.article-text .vimeo-link {
+    background: linear-gradient(135deg, #1ab7ea, #1593c4);
+    border: 1px solid #127ba3;
+}
+
+.article-text .vimeo-link:hover {
+    background: linear-gradient(135deg, #1593c4, #116fa0);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(26, 183, 234, 0.3);
+}
+
+.article-text .reddit-video {
+    background: linear-gradient(135deg, #ff4500, #d63600);
+    border: 1px solid #b82e00;
+}
+
+.article-text .reddit-video:hover {
+    background: linear-gradient(135deg, #d63600, #b82e00);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 69, 0, 0.3);
+}
+
+/* Reddit submission info styling - top placement */
+.reddit-submission-info-top {
+    margin: 16px 0 20px 0;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #ff4500, #e13d00);
+    border-radius: 8px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(255, 69, 0, 0.2);
+}
+
+.reddit-user-info,
+.reddit-comments-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.reddit-user-info a,
+.reddit-comments-info a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.reddit-user-info a:hover,
+.reddit-comments-info a:hover {
+    text-decoration: underline;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.reddit-icon {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.reddit-flair {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Reddit submission info styling - bottom (legacy) */
+.article-text .reddit-submission-info {
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-left: 4px solid #ff4500;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.article-text .reddit-submission-info a {
+    color: #ff4500;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.article-text .reddit-submission-info a:hover {
+    text-decoration: underline;
+}
+
+/* Reddit content improvements */
+.article-text .reddit-content {
+    line-height: 1.6;
+}
+
+.article-text .reddit-content br {
+    margin-bottom: 0.5rem;
+}
+
+/* Reddit video section at top */
+.article-text .reddit-video-section {
+    margin: 20px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    border-left: 4px solid #ff4500;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.article-text .reddit-video-section .reddit-video-link {
+    margin: 0;
+    display: inline-flex;
+    max-width: fit-content;
 }
 </style>
 

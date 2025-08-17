@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"html"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -31,6 +32,11 @@ type TemplateArticle struct {
 	Language     string
 	Category     string
 	SourceName   string
+	// Reddit-specific fields
+	PostFlair    string // [D], [R], [P], [N], etc.
+	RedditUser   string // /u/username format
+	CommentCount string // for Reddit comment link
+	CommentsURL  string // URL to Reddit comments
 }
 
 // NewsPageData represents data for the news page
@@ -55,14 +61,103 @@ type NewsPageData struct {
 func convertToTemplateArticles(articles []db.NewsArticle) []TemplateArticle {
 	templateArticles := make([]TemplateArticle, len(articles))
 	for i, article := range articles {
+		// Process content based on category
+		content := stringPtrToString(article.Content)
+		fullContent := stringPtrToString(article.FullContent)
+		
+		// Extract Reddit-specific fields
+		var postFlair, redditUser, commentCount, commentsURL string
+		var extractedImageURL string
+		
+		if article.Category == "reddit" {
+			// Extract Reddit metadata before processing content
+			originalContent := stringPtrToString(article.Content)
+			var metadata map[string]string
+			
+			// Extract submission metadata if it exists
+			if strings.Contains(originalContent, "submitted by") {
+				submittedIndex := strings.Index(originalContent, " submitted by ")
+				if submittedIndex == -1 {
+					submittedIndex = strings.Index(originalContent, "submitted by")
+				}
+				if submittedIndex != -1 {
+					submissionInfo := originalContent[submittedIndex:]
+					metadata = extractRedditSubmissionMetadata(submissionInfo)
+				}
+			}
+			
+			// Extract image from content if no main image exists
+			hasMainImage := stringPtrToString(article.ImageURL) != ""
+			
+			if !hasMainImage {
+				extractedImageURL = extractFirstImageFromRedditContent(originalContent)
+				if extractedImageURL != "" {
+					hasMainImage = true
+				}
+			}
+			
+			// For news list view, keep Reddit content simple - don't format with HTML
+			// Only clean up basic entities but don't add complex HTML structures
+			if fullContent != "" {
+				fullContent = cleanRedditContentForList(fullContent)
+			}
+			if content != "" {
+				content = cleanRedditContentForList(content)
+			}
+			
+			// Extract Reddit-specific information
+			postFlair = extractRedditFlair(article.Title)
+			redditUser = extractRedditUser(stringPtrToString(article.AuthorName))
+			
+			// If no user in author field, try to extract from content or metadata
+			if redditUser == "" {
+				redditUser = extractRedditUserFromContent(content)
+			}
+			if redditUser == "" && metadata != nil && metadata["user"] != "" {
+				redditUser = metadata["user"]
+			}
+			
+			// Extract comment info
+			commentCount = extractRedditCommentCount(content)
+			if commentCount == "" && strings.Contains(article.OriginalURL, "reddit.com") {
+				commentCount = "Discussion"
+			}
+			
+			// Extract comments URL from metadata
+			if metadata != nil && metadata["comments_url"] != "" {
+				commentsURL = metadata["comments_url"]
+			} else {
+				commentsURL = article.OriginalURL
+			}
+		} else if article.Category == "hackernews" {
+			// Format Hacker News content
+			if fullContent != "" {
+				fullContent = formatHackerNewsContent(fullContent)
+			}
+			if content != "" {
+				content = formatHackerNewsContent(content)
+			}
+		}
+		
+		// Determine final image URL (use extracted image if available, otherwise original)
+		finalImageURL := stringPtrToString(article.ImageURL)
+		if extractedImageURL != "" {
+			finalImageURL = extractedImageURL
+		}
+		
+		// Decode HTML entities in the final image URL
+		if finalImageURL != "" {
+			finalImageURL = html.UnescapeString(finalImageURL)
+		}
+		
 		templateArticles[i] = TemplateArticle{
 			ID:           article.ID.String(),
 			Title:        article.Title,
-			Content:      template.HTML(stringPtrToString(article.Content)),
+			Content:      template.HTML(content),
 			Summary:      stringPtrToString(article.Summary),
-			FullContent:  template.HTML(stringPtrToString(article.FullContent)),
+			FullContent:  template.HTML(fullContent),
 			OriginalURL:  article.OriginalURL,
-			ImageURL:     stringPtrToString(article.ImageURL),
+			ImageURL:     finalImageURL,
 			ThumbnailURL: stringPtrToString(article.ThumbnailURL),
 			AuthorName:   stringPtrToString(article.AuthorName),
 			Keywords:     stringPtrToString(article.Keywords),
@@ -71,6 +166,11 @@ func convertToTemplateArticles(articles []db.NewsArticle) []TemplateArticle {
 			Language:     article.Language,
 			Category:     article.Category,
 			SourceName:   article.SourceName,
+			// Reddit-specific fields
+			PostFlair:    postFlair,
+			RedditUser:   redditUser,
+			CommentCount: commentCount,
+			CommentsURL:  commentsURL,
 		}
 	}
 	return templateArticles
@@ -158,10 +258,1035 @@ func formatHackerNewsContent(content string) string {
 	return formatted
 }
 
+// formatRedditContent formats HTML content specifically for Reddit posts
+func formatRedditContent(content string) string {
+	// Remove Reddit's SC_OFF/SC_ON comments
+	formatted := strings.ReplaceAll(content, "<!-- SC_OFF -->", "")
+	formatted = strings.ReplaceAll(formatted, "<!-- SC_ON -->", "")
+	
+	// Convert HTML table structure (used by Reddit for posts with images) to cleaner format
+	if strings.Contains(formatted, "<table>") {
+		// Extract image from table structure
+		formatted = extractRedditTableContent(formatted)
+	}
+	
+	// Style Reddit markdown divs
+	formatted = strings.ReplaceAll(formatted, "<div class=\"md\">", "<div class=\"reddit-content\">")
+	
+	// Style paragraphs for Reddit
+	formatted = strings.ReplaceAll(formatted, "<p>", "<p class=\"reddit-paragraph\">")
+	
+	// Style links to open in new tab
+	formatted = strings.ReplaceAll(formatted, "<a href=", "<a class=\"reddit-link\" target=\"_blank\" rel=\"noopener noreferrer\" href=")
+	
+	// Style strong/bold text
+	formatted = strings.ReplaceAll(formatted, "<strong>", "<strong class=\"reddit-bold\">")
+	
+	// Clean up Reddit submission footer
+	if strings.Contains(formatted, "submitted by") {
+		// Extract and clean the submission info
+		formatted = cleanRedditSubmissionInfo(formatted)
+	}
+	
+	return formatted
+}
+
+// formatRedditContentWithImageCheck formats HTML content for Reddit posts with proper formatting and image handling
+func formatRedditContentWithImageCheck(content string, hasImageAlready bool) string {
+	// First decode HTML entities if they exist
+	formatted := content
+	if strings.Contains(formatted, "&lt;") || strings.Contains(formatted, "&gt;") || strings.Contains(formatted, "&quot;") {
+		formatted = strings.ReplaceAll(formatted, "&lt;", "<")
+		formatted = strings.ReplaceAll(formatted, "&gt;", ">")
+		formatted = strings.ReplaceAll(formatted, "&quot;", "\"")
+		formatted = strings.ReplaceAll(formatted, "&amp;", "&")
+		formatted = strings.ReplaceAll(formatted, "&#32;", " ")
+	}
+	
+	// Remove Reddit's SC_OFF/SC_ON comments
+	formatted = strings.ReplaceAll(formatted, "<!-- SC_OFF -->", "")
+	formatted = strings.ReplaceAll(formatted, "<!-- SC_ON -->", "")
+	
+	// Convert HTML table structure to cleaner format
+	if strings.Contains(formatted, "<table>") {
+		formatted = extractAndFormatRedditTableContent(formatted, hasImageAlready)
+	}
+	
+	// Process Reddit submission footer BEFORE image processing to extract images cleanly
+	if strings.Contains(formatted, "submitted by") {
+		formatted = formatRedditSubmissionInfo(formatted)
+	}
+	
+	// Handle image links - if we have a main image, remove all image links; otherwise convert them
+	if hasImageAlready {
+		// Remove all image links since we have a main image displayed
+		formatted = removeAllImageLinksFromContent(formatted)
+	} else {
+		// Convert image links to inline images
+		formatted = convertImageLinksToImages(formatted)
+	}
+	
+	// Add video preview support for Reddit posts
+	formatted = addVideoPreviewSupport(formatted)
+	
+	// Style Reddit markdown divs
+	formatted = strings.ReplaceAll(formatted, "<div class=\"md\">", "<div class=\"reddit-content\">")
+	
+	// Convert paragraph tags to line breaks for better Reddit formatting
+	formatted = strings.ReplaceAll(formatted, "<p>", "")
+	formatted = strings.ReplaceAll(formatted, "</p>", "<br><br>")
+	
+	// Add proper line breaks - Reddit uses "; -" as bullet points
+	formatted = strings.ReplaceAll(formatted, "; -", ";<br><br>•")
+	formatted = strings.ReplaceAll(formatted, "- ", "<br>• ")
+	
+	// Add line breaks after sentences for better readability
+	formatted = strings.ReplaceAll(formatted, ". ", ".<br><br>")
+	formatted = strings.ReplaceAll(formatted, "? ", "?<br><br>")
+	formatted = strings.ReplaceAll(formatted, "! ", "!<br><br>")
+	
+	// Convert double spaces to line breaks for better readability  
+	formatted = strings.ReplaceAll(formatted, "  ", "<br>")
+	
+	// Style links to open in new tab
+	formatted = strings.ReplaceAll(formatted, "<a href=", "<a class=\"reddit-link\" target=\"_blank\" rel=\"noopener noreferrer\" href=")
+	
+	return formatted
+}
+
+// cleanRedditContentForList cleans Reddit content for news list display without complex HTML
+func cleanRedditContentForList(content string) string {
+	// Handle table structure first - extract text content from table
+	if strings.Contains(content, "<table>") {
+		content = extractTextFromTable(content)
+	}
+	
+	// Remove HTML comments
+	cleaned := strings.ReplaceAll(content, "<!-- SC_OFF -->", "")
+	cleaned = strings.ReplaceAll(cleaned, "<!-- SC_ON -->", "")
+	
+	// Remove submitted by sections entirely for news list
+	submittedIndex := strings.Index(cleaned, " submitted by ")
+	if submittedIndex == -1 {
+		submittedIndex = strings.Index(cleaned, "submitted by")
+	}
+	if submittedIndex != -1 {
+		cleaned = cleaned[:submittedIndex]
+	}
+	
+	// Remove image links for news list view
+	cleaned = removeAllImageLinksFromContent(cleaned)
+	
+	// Clean up basic HTML entities
+	cleaned = html.UnescapeString(cleaned)
+	
+	// Remove ALL HTML tags for news list - be more aggressive
+	// Remove table remnants
+	cleaned = strings.ReplaceAll(cleaned, "<table>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</table>", "")
+	cleaned = strings.ReplaceAll(cleaned, "<tr>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</tr>", "")
+	cleaned = strings.ReplaceAll(cleaned, "<td>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</td>", " ")
+	cleaned = strings.ReplaceAll(cleaned, "<th>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</th>", " ")
+	
+	// Remove common HTML tags
+	cleaned = strings.ReplaceAll(cleaned, "<div class=\"md\">", "")
+	cleaned = strings.ReplaceAll(cleaned, "<div>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</div>", "")
+	cleaned = strings.ReplaceAll(cleaned, "<p>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</p>", " ")
+	cleaned = strings.ReplaceAll(cleaned, "<br>", " ")
+	cleaned = strings.ReplaceAll(cleaned, "<br/>", " ")
+	
+	// Remove any remaining anchor tags but keep the text
+	cleaned = strings.ReplaceAll(cleaned, "</a>", "")
+	// Remove opening anchor tags with href
+	for strings.Contains(cleaned, "<a href=") {
+		start := strings.Index(cleaned, "<a href=")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(cleaned[start:], ">")
+		if end == -1 {
+			break
+		}
+		cleaned = cleaned[:start] + cleaned[start+end+1:]
+	}
+	
+	// Clean up multiple spaces
+	for strings.Contains(cleaned, "  ") {
+		cleaned = strings.ReplaceAll(cleaned, "  ", " ")
+	}
+	
+	return strings.TrimSpace(cleaned)
+}
+
+// extractAndFormatRedditTableContent handles table content with proper image and text formatting
+func extractAndFormatRedditTableContent(content string, hasImageAlready bool) string {
+	// Extract text content from table
+	textContent := extractTextFromTable(content)
+	
+	if hasImageAlready {
+		// Just return cleaned text if we already have the main image
+		return textContent
+	}
+	
+	// Extract and format images from table if no main image exists
+	if strings.Contains(content, "<img src=") {
+		start := strings.Index(content, "<img src=\"")
+		if start != -1 {
+			start += 10
+			end := strings.Index(content[start:], "\"")
+			if end != -1 {
+				imageURL := content[start : start+end]
+				return fmt.Sprintf(`<div class="reddit-content-image">
+					<img src="%s" class="reddit-inline-image" alt="Reddit content image" />
+				</div>
+				<div class="reddit-text-content">%s</div>`, imageURL, textContent)
+			}
+		}
+	}
+	
+	return textContent
+}
+
+// convertImageLinksToImages converts image URLs in content to actual img tags
+func convertImageLinksToImages(content string) string {
+	// Convert image URLs that are just text links to actual images
+	imageExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+	imageDomains := []string{"i.redd.it", "preview.redd.it", "imgur.com", "i.imgur.com"}
+	
+	// Pattern: <a href="IMAGE_URL">[link]</a>
+	// Replace with actual images
+	for _, domain := range imageDomains {
+		for _, ext := range imageExtensions {
+			// Look for Reddit image links
+			pattern := `<a href="https://` + domain + `/[^"]*` + ext + `">\[link\]</a>`
+			content = replaceImageLinksWithImages(content, pattern, domain, ext)
+		}
+	}
+	
+	// Also handle direct image links that aren't wrapped with [link]
+	for _, ext := range imageExtensions {
+		if strings.Contains(content, ext) {
+			content = highlightImageLinks(content, ext)
+		}
+	}
+	
+	return content
+}
+
+// replaceImageLinksWithImages replaces specific image link patterns with actual img tags
+func replaceImageLinksWithImages(content, pattern, domain, ext string) string {
+	// Use a simple string search approach since we don't have regex
+	searchTerm := `<a href="https://` + domain
+	endTerm := ext + `">[link]</a>`
+	
+	searchPos := 0
+	for {
+		start := strings.Index(content[searchPos:], searchTerm)
+		if start == -1 {
+			break
+		}
+		start += searchPos
+		
+		// Find the end of this link
+		end := strings.Index(content[start:], endTerm)
+		if end == -1 {
+			searchPos = start + len(searchTerm)
+			continue
+		}
+		
+		// Extract the full URL
+		urlStart := start + len(`<a href="`)
+		urlEnd := strings.Index(content[urlStart:], `">`)
+		if urlEnd == -1 {
+			searchPos = start + len(searchTerm)
+			continue
+		}
+		
+		imageURL := content[urlStart : urlStart+urlEnd]
+		
+		// Replace with image tag that will be prominently displayed
+		imageHTML := fmt.Sprintf(`<div class="reddit-content-image">
+			<img src="%s" class="reddit-inline-image" alt="Reddit image" loading="lazy" />
+		</div>`, imageURL)
+		
+		fullLinkEnd := start + end + len(endTerm)
+		content = content[:start] + imageHTML + content[fullLinkEnd:]
+		
+		// Update search position
+		searchPos = start + len(imageHTML)
+	}
+	
+	return content
+}
+
+// extractFirstImageFromRedditContent extracts the first image URL from Reddit content to use as main image
+func extractFirstImageFromRedditContent(content string) string {
+	// First decode HTML entities
+	content = strings.ReplaceAll(content, "&#32;", " ")
+	content = strings.ReplaceAll(content, "&amp;", "&")
+	content = strings.ReplaceAll(content, "&lt;", "<")
+	content = strings.ReplaceAll(content, "&gt;", ">")
+	content = strings.ReplaceAll(content, "&quot;", "\"")
+	
+	imageDomains := []string{"i.redd.it", "preview.redd.it", "imgur.com", "i.imgur.com"}
+	imageExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+	
+	for _, domain := range imageDomains {
+		searchTerm := `<a href="https://` + domain
+		
+		searchPos := 0
+		start := strings.Index(content[searchPos:], searchTerm)
+		if start == -1 {
+			continue
+		}
+		start += searchPos
+		
+		// Extract the full URL
+		urlStart := start + len(`<a href="`)
+		urlEnd := strings.Index(content[urlStart:], `">`)
+		if urlEnd == -1 {
+			continue
+		}
+		
+		imageURL := content[urlStart : urlStart+urlEnd]
+		
+		// Check if it's actually an image
+		for _, ext := range imageExtensions {
+			if strings.Contains(imageURL, ext) {
+				return imageURL
+			}
+		}
+	}
+	
+	return ""
+}
+
+// Helper function for min
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// highlightImageLinks highlights remaining image links that weren't converted
+func highlightImageLinks(content, ext string) string {
+	// Style remaining image links specially
+	content = strings.ReplaceAll(content, ext+`">`, ext+`" class="reddit-image-link">`)
+	return content
+}
+
+// addVideoPreviewSupport adds video preview support for various platforms
+func addVideoPreviewSupport(content string) string {
+	var videoLinks []string
+	
+	// Extract video links and collect them
+	content, videoLinks = extractAndEnhanceVideoLinks(content, videoLinks)
+	
+	// If we found video links, prepend them to the content for prominence
+	if len(videoLinks) > 0 {
+		videoSection := "<div class=\"reddit-video-section\">"
+		for _, videoLink := range videoLinks {
+			videoSection += videoLink
+		}
+		videoSection += "</div><br><br>"
+		content = videoSection + content
+	}
+	
+	return content
+}
+
+// extractAndEnhanceVideoLinks extracts and enhances video links, returning updated content and collected links
+func extractAndEnhanceVideoLinks(content string, videoLinks []string) (string, []string) {
+	// Handle YouTube links
+	content, videoLinks = enhanceYouTubeLinksWithExtraction(content, videoLinks)
+	
+	// Handle PeerTube links
+	content, videoLinks = enhancePeerTubeLinksWithExtraction(content, videoLinks)
+	
+	// Handle Vimeo links
+	content, videoLinks = enhanceVimeoLinksWithExtraction(content, videoLinks)
+	
+	// Handle Reddit video links  
+	content, videoLinks = enhanceRedditVideoLinksWithExtraction(content, videoLinks)
+	
+	return content, videoLinks
+}
+
+// enhanceYouTubeLinksWithExtraction extracts YouTube links for top placement
+func enhanceYouTubeLinksWithExtraction(content string, videoLinks []string) (string, []string) {
+	ytDomains := []string{"youtube.com", "youtu.be", "www.youtube.com"}
+	
+	for _, domain := range ytDomains {
+		searchTerm := `<a href="https://` + domain
+		searchPos := 0
+		
+		for {
+			start := strings.Index(content[searchPos:], searchTerm)
+			if start == -1 {
+				break
+			}
+			start += searchPos
+			
+			// Find the end of the link
+			end := strings.Index(content[start:], "</a>")
+			if end == -1 {
+				break
+			}
+			
+			linkContent := content[start : start+end+4]
+			
+			// Create enhanced video link
+			enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link youtube-link" href=`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">🎥</span>`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `</a>`, ` <span class="video-platform">YouTube</span></a>`)
+			
+			// Add to video links collection
+			videoLinks = append(videoLinks, enhancedLink)
+			
+			// Remove from original content
+			content = content[:start] + content[start+end+4:]
+			// Don't increment searchPos since we removed content
+		}
+	}
+	
+	return content, videoLinks
+}
+
+// enhanceYouTubeLinks adds preview info for YouTube links (legacy function)
+func enhanceYouTubeLinks(content string) string {
+	// Look for YouTube links and add preview styling
+	ytDomains := []string{"youtube.com", "youtu.be", "www.youtube.com"}
+	
+	for _, domain := range ytDomains {
+		searchTerm := `<a href="https://` + domain
+		searchPos := 0
+		
+		for {
+			start := strings.Index(content[searchPos:], searchTerm)
+			if start == -1 {
+				break
+			}
+			start += searchPos
+			
+			// Find the end of the link
+			end := strings.Index(content[start:], "</a>")
+			if end == -1 {
+				break
+			}
+			
+			linkContent := content[start : start+end+4]
+			
+			// Add video preview styling
+			enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link youtube-link" href=`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">🎥</span>`)
+			
+			content = content[:start] + enhancedLink + content[start+end+4:]
+			searchPos = start + len(enhancedLink)
+		}
+	}
+	
+	return content
+}
+
+// enhancePeerTubeLinksWithExtraction extracts PeerTube links for top placement
+func enhancePeerTubeLinksWithExtraction(content string, videoLinks []string) (string, []string) {
+	peerTubeDomains := []string{"peertube.wtf", "framatube.org", "video.antopie.org"}
+	
+	for _, domain := range peerTubeDomains {
+		searchTerm := `<a href="https://` + domain
+		searchPos := 0
+		
+		for {
+			start := strings.Index(content[searchPos:], searchTerm)
+			if start == -1 {
+				break
+			}
+			start += searchPos
+			
+			// Find the end of the link
+			end := strings.Index(content[start:], "</a>")
+			if end == -1 {
+				break
+			}
+			
+			linkContent := content[start : start+end+4]
+			
+			// Create enhanced video link
+			enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link peertube-link" href=`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">📹</span><span class="video-platform">PeerTube</span>`)
+			
+			// Add to video links collection
+			videoLinks = append(videoLinks, enhancedLink)
+			
+			// Remove from original content
+			content = content[:start] + content[start+end+4:]
+			// Don't increment searchPos since we removed content
+		}
+	}
+	
+	return content, videoLinks
+}
+
+// enhancePeerTubeLinks adds preview info for PeerTube links (legacy function)
+func enhancePeerTubeLinks(content string) string {
+	// Look for PeerTube domains
+	peerTubeDomains := []string{"peertube.wtf", "framatube.org", "video.antopie.org"}
+	
+	for _, domain := range peerTubeDomains {
+		searchTerm := `<a href="https://` + domain
+		searchPos := 0
+		
+		for {
+			start := strings.Index(content[searchPos:], searchTerm)
+			if start == -1 {
+				break
+			}
+			start += searchPos
+			
+			// Find the end of the link
+			end := strings.Index(content[start:], "</a>")
+			if end == -1 {
+				break
+			}
+			
+			linkContent := content[start : start+end+4]
+			
+			// Add PeerTube preview styling
+			enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link peertube-link" href=`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">📹</span><span class="video-platform">PeerTube</span>`)
+			
+			content = content[:start] + enhancedLink + content[start+end+4:]
+			searchPos = start + len(enhancedLink)
+		}
+	}
+	
+	return content
+}
+
+// enhanceVimeoLinksWithExtraction extracts Vimeo links for top placement
+func enhanceVimeoLinksWithExtraction(content string, videoLinks []string) (string, []string) {
+	searchTerm := `<a href="https://vimeo.com`
+	searchPos := 0
+	
+	for {
+		start := strings.Index(content[searchPos:], searchTerm)
+		if start == -1 {
+			break
+		}
+		start += searchPos
+		
+		// Find the end of the link
+		end := strings.Index(content[start:], "</a>")
+		if end == -1 {
+			break
+		}
+		
+		linkContent := content[start : start+end+4]
+		
+		// Create enhanced video link
+		enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link vimeo-link" href=`)
+		enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">🎬</span><span class="video-platform">Vimeo</span>`)
+		
+		// Add to video links collection
+		videoLinks = append(videoLinks, enhancedLink)
+		
+		// Remove from original content
+		content = content[:start] + content[start+end+4:]
+		// Don't increment searchPos since we removed content
+	}
+	
+	return content, videoLinks
+}
+
+// enhanceRedditVideoLinksWithExtraction extracts Reddit video links for top placement
+func enhanceRedditVideoLinksWithExtraction(content string, videoLinks []string) (string, []string) {
+	redditVideoDomains := []string{"v.redd.it", "reddit.com/video"}
+	
+	for _, domain := range redditVideoDomains {
+		searchTerm := `<a href="https://` + domain
+		if domain == "reddit.com/video" {
+			searchTerm = `<a href="https://www.reddit.com/video`
+		}
+		
+		searchPos := 0
+		
+		for {
+			start := strings.Index(content[searchPos:], searchTerm)
+			if start == -1 {
+				break
+			}
+			start += searchPos
+			
+			// Find the end of the link
+			end := strings.Index(content[start:], "</a>")
+			if end == -1 {
+				break
+			}
+			
+			linkContent := content[start : start+end+4]
+			
+			// Create enhanced video link
+			enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link reddit-video" href=`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">🎞️</span><span class="video-platform">Reddit Video</span>`)
+			
+			// Add to video links collection
+			videoLinks = append(videoLinks, enhancedLink)
+			
+			// Remove from original content
+			content = content[:start] + content[start+end+4:]
+			// Don't increment searchPos since we removed content
+		}
+	}
+	
+	return content, videoLinks
+}
+
+// enhanceVimeoLinks adds preview info for Vimeo links
+func enhanceVimeoLinks(content string) string {
+	searchTerm := `<a href="https://vimeo.com`
+	searchPos := 0
+	
+	for {
+		start := strings.Index(content[searchPos:], searchTerm)
+		if start == -1 {
+			break
+		}
+		start += searchPos
+		
+		// Find the end of the link
+		end := strings.Index(content[start:], "</a>")
+		if end == -1 {
+			break
+		}
+		
+		linkContent := content[start : start+end+4]
+		
+		// Add Vimeo preview styling
+		enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link vimeo-link" href=`)
+		enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">🎬</span><span class="video-platform">Vimeo</span>`)
+		
+		content = content[:start] + enhancedLink + content[start+end+4:]
+		searchPos = start + len(enhancedLink)
+	}
+	
+	return content
+}
+
+// enhanceRedditVideoLinks adds preview info for Reddit video links
+func enhanceRedditVideoLinks(content string) string {
+	redditVideoDomains := []string{"v.redd.it", "reddit.com/video"}
+	
+	for _, domain := range redditVideoDomains {
+		searchTerm := `<a href="https://` + domain
+		if domain == "reddit.com/video" {
+			searchTerm = `<a href="https://www.reddit.com/video`
+		}
+		
+		searchPos := 0
+		
+		for {
+			start := strings.Index(content[searchPos:], searchTerm)
+			if start == -1 {
+				break
+			}
+			start += searchPos
+			
+			// Find the end of the link
+			end := strings.Index(content[start:], "</a>")
+			if end == -1 {
+				break
+			}
+			
+			linkContent := content[start : start+end+4]
+			
+			// Add Reddit video preview styling
+			enhancedLink := strings.ReplaceAll(linkContent, `<a href=`, `<a class="reddit-video-link reddit-video" href=`)
+			enhancedLink = strings.ReplaceAll(enhancedLink, `">`, `"><span class="video-icon">🎞️</span><span class="video-platform">Reddit Video</span>`)
+			
+			content = content[:start] + enhancedLink + content[start+end+4:]
+			searchPos = start + len(enhancedLink)
+		}
+	}
+	
+	return content
+}
+
+// removeAllImageLinksFromContent removes all image links from Reddit content 
+func removeAllImageLinksFromContent(content string) string {
+	imageDomains := []string{"i.redd.it", "preview.redd.it", "imgur.com", "i.imgur.com"}
+	imageExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+	
+	// Remove image links - handle both [link] pattern and empty links
+	for _, domain := range imageDomains {
+		for _, ext := range imageExtensions {
+			// Pattern 1: <a href="https://domain/path.ext">[link]</a>
+			searchTerm := `<a href="https://` + domain
+			endTerm := ext + `">[link]</a>`
+			
+			searchPos := 0
+			for {
+				start := strings.Index(content[searchPos:], searchTerm)
+				if start == -1 {
+					break
+				}
+				start += searchPos
+				
+				// Find the end of this link
+				end := strings.Index(content[start:], endTerm)
+				if end == -1 {
+					searchPos = start + len(searchTerm)
+					continue
+				}
+				
+				fullLinkEnd := start + end + len(endTerm)
+				// Remove the entire link
+				content = content[:start] + content[fullLinkEnd:]
+				// Don't increment searchPos since we removed content
+			}
+			
+			// Pattern 2: <a class="reddit-link" ... href="https://domain/path.ext"></a> (empty links)
+			searchPos = 0
+			for {
+				linkStart := strings.Index(content[searchPos:], `<a`)
+				if linkStart == -1 {
+					break
+				}
+				linkStart += searchPos
+				
+				linkEnd := strings.Index(content[linkStart:], `</a>`)
+				if linkEnd == -1 {
+					break
+				}
+				
+				fullLink := content[linkStart : linkStart+linkEnd+4]
+				
+				// Check if this link contains our image domain and extension
+				if strings.Contains(fullLink, domain) && strings.Contains(fullLink, ext) {
+					// Remove this link entirely
+					content = content[:linkStart] + content[linkStart+linkEnd+4:]
+					// Don't increment searchPos since we removed content
+				} else {
+					searchPos = linkStart + linkEnd + 4
+				}
+			}
+		}
+	}
+	
+	// Also remove any remaining image content divs
+	content = strings.ReplaceAll(content, `<div class="reddit-content-image">`, "")
+	
+	// Remove img tags
+	for strings.Contains(content, "<img") {
+		start := strings.Index(content, "<img")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(content[start:], ">")
+		if end == -1 {
+			break
+		}
+		content = content[:start] + content[start+end+1:]
+	}
+	
+	// Clean up any leftover closing divs
+	content = strings.ReplaceAll(content, `</div>`, "")
+	
+	return content
+}
+
+// removeDuplicateImagesButKeepOthers removes duplicate main images but keeps content images
+func removeDuplicateImagesButKeepOthers(content string) string {
+	// This is more selective - only remove images that match the main image
+	// For now, we'll use the existing function but could be more sophisticated
+	return removeImagesFromContent(content)
+}
+
+// extractRedditTableContent extracts content from Reddit's table structure
+func extractRedditTableContent(content string) string {
+	// Reddit uses tables for posts with images, extract the image and content separately
+	if strings.Contains(content, "<img src=") {
+		// Extract image URL
+		start := strings.Index(content, "<img src=\"")
+		if start != -1 {
+			start += 10
+			end := strings.Index(content[start:], "\"")
+			if end != -1 {
+				imageURL := content[start : start+end]
+				// Create a cleaner structure
+				textContent := extractTextFromTable(content)
+				return fmt.Sprintf(`<div class="reddit-post-with-image">
+					<img src="%s" class="reddit-post-image" alt="Post image" />
+					<div class="reddit-post-text">%s</div>
+				</div>`, imageURL, textContent)
+			}
+		}
+	}
+	// Fallback: just remove table tags
+	formatted := strings.ReplaceAll(content, "<table>", "")
+	formatted = strings.ReplaceAll(formatted, "</table>", "")
+	formatted = strings.ReplaceAll(formatted, "<tr>", "")
+	formatted = strings.ReplaceAll(formatted, "</tr>", "")
+	formatted = strings.ReplaceAll(formatted, "<td>", "")
+	formatted = strings.ReplaceAll(formatted, "</td>", "")
+	return formatted
+}
+
+// extractTextFromTable extracts text content from Reddit table structure
+func extractTextFromTable(content string) string {
+	// Find the text content in the second td (after the image)
+	start := strings.Index(content, "</td><td>")
+	if start != -1 {
+		start += 9
+		end := strings.Index(content[start:], "</td>")
+		if end != -1 {
+			return content[start : start+end]
+		}
+	}
+	return content
+}
+
+// cleanRedditSubmissionInfo cleans up Reddit submission footer
+func cleanRedditSubmissionInfo(content string) string {
+	// Remove the submission footer that contains "submitted by /u/username [link] [comments]"
+	submittedIndex := strings.Index(content, " submitted by ")
+	if submittedIndex != -1 {
+		// Keep content before submission info
+		content = content[:submittedIndex]
+	}
+	return content
+}
+
+// formatRedditSubmissionInfo formats Reddit submission footer to preserve useful links
+func formatRedditSubmissionInfo(content string) string {
+	// Try different patterns for submission info
+	submittedIndex := strings.Index(content, " submitted by ")
+	if submittedIndex == -1 {
+		submittedIndex = strings.Index(content, "submitted by")
+	}
+	if submittedIndex == -1 {
+		return content
+	}
+	
+	// Extract main content before submission info
+	mainContent := content[:submittedIndex]
+	submissionInfo := content[submittedIndex:]
+	
+	// Format the submission info with proper styling
+	submissionInfo = strings.ReplaceAll(submissionInfo, " submitted by ", "<br><br><div class=\"reddit-submission-info\">Posted by ")
+	submissionInfo = strings.ReplaceAll(submissionInfo, "submitted by", "<br><br><div class=\"reddit-submission-info\">Posted by")
+	
+	// Clean up line breaks within submission info
+	submissionInfo = strings.ReplaceAll(submissionInfo, "<br> <a", " <a")
+	submissionInfo = strings.ReplaceAll(submissionInfo, "</a><br> <a", "</a> | <a")
+	submissionInfo = strings.ReplaceAll(submissionInfo, "<br/>", " | ")
+	
+	// Format user link
+	submissionInfo = strings.ReplaceAll(submissionInfo, " /u/", " /u/")
+	
+	// Remove [link] and format [comments]
+	submissionInfo = strings.ReplaceAll(submissionInfo, "[link]</a>", "</a>")
+	submissionInfo = strings.ReplaceAll(submissionInfo, "[comments]", "💬 Comments")
+	
+	// Close the submission info div
+	if !strings.Contains(submissionInfo, "</div>") {
+		submissionInfo += "</div>"
+	}
+	
+	return mainContent + submissionInfo
+}
+
+// extractRedditSubmissionMetadata extracts Reddit submission metadata for top placement
+func extractRedditSubmissionMetadata(submissionInfo string) map[string]string {
+	metadata := make(map[string]string)
+	
+	// Extract username
+	if strings.Contains(submissionInfo, "/u/") {
+		userStart := strings.Index(submissionInfo, "/u/")
+		if userStart != -1 {
+			userPart := submissionInfo[userStart:]
+			userEnd := strings.IndexAny(userPart, " <>\"\n\r")
+			if userEnd == -1 {
+				userEnd = len(userPart)
+			}
+			username := userPart[:userEnd]
+			if len(username) > 3 && len(username) < 25 {
+				metadata["user"] = username
+			}
+		}
+	}
+	
+	// Extract comment link
+	if strings.Contains(submissionInfo, "[comments]") {
+		// Find the comment link
+		commentStart := strings.Index(submissionInfo, `<a href="`)
+		if commentStart != -1 {
+			urlStart := commentStart + 9
+			urlEnd := strings.Index(submissionInfo[urlStart:], `"`)
+			if urlEnd != -1 {
+				commentURL := submissionInfo[urlStart : urlStart+urlEnd]
+				if strings.Contains(commentURL, "reddit.com") {
+					metadata["comments_url"] = commentURL
+				}
+			}
+		}
+	}
+	
+	return metadata
+}
+
+// extractTextFromTableOnly extracts only text content from Reddit table without images
+func extractTextFromTableOnly(content string) string {
+	// Just extract text content and remove table structure
+	text := extractTextFromTable(content)
+	if text == content {
+		// Fallback: remove table tags entirely
+		formatted := strings.ReplaceAll(content, "<table>", "")
+		formatted = strings.ReplaceAll(formatted, "</table>", "")
+		formatted = strings.ReplaceAll(formatted, "<tr>", "")
+		formatted = strings.ReplaceAll(formatted, "</tr>", "")
+		formatted = strings.ReplaceAll(formatted, "<td>", "")
+		formatted = strings.ReplaceAll(formatted, "</td>", "")
+		return formatted
+	}
+	return text
+}
+
+// removeImagesFromContent removes img tags from content to prevent duplicates
+func removeImagesFromContent(content string) string {
+	// Remove img tags and any surrounding divs that contain only images
+	formatted := content
+	
+	// Remove standalone img tags
+	for strings.Contains(formatted, "<img") {
+		start := strings.Index(formatted, "<img")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(formatted[start:], ">")
+		if end == -1 {
+			break
+		}
+		formatted = formatted[:start] + formatted[start+end+1:]
+	}
+	
+	// Remove links to image files (preview.redd.it, i.redd.it, etc.)
+	imageExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+	imageDomains := []string{"preview.redd.it", "i.redd.it", "imgur.com", "thumbs.redditmedia.com"}
+	
+	searchPos := 0
+	for {
+		start := strings.Index(formatted[searchPos:], "<a")
+		if start == -1 {
+			break
+		}
+		start += searchPos
+		
+		end := strings.Index(formatted[start:], "</a>")
+		if end == -1 {
+			break
+		}
+		linkContent := formatted[start : start+end+4]
+		
+		// Check if this link points to an image
+		isImageLink := false
+		for _, domain := range imageDomains {
+			if strings.Contains(linkContent, domain) {
+				isImageLink = true
+				break
+			}
+		}
+		if !isImageLink {
+			for _, ext := range imageExtensions {
+				if strings.Contains(linkContent, ext) {
+					isImageLink = true
+					break
+				}
+			}
+		}
+		
+		if isImageLink {
+			// Remove the entire link
+			formatted = formatted[:start] + formatted[start+end+4:]
+			// Continue searching from the same position since content shifted
+		} else {
+			// Move search position past this link
+			searchPos = start + end + 4
+		}
+	}
+	
+	// Remove divs that only contain images (like reddit-post-with-image)
+	formatted = strings.ReplaceAll(formatted, `<div class="reddit-post-with-image">`, "")
+	formatted = strings.ReplaceAll(formatted, `<div class="reddit-post-text">`, "")
+	
+	// Clean up any empty or malformed tags
+	formatted = strings.ReplaceAll(formatted, "</div></div>", "")
+	
+	return formatted
+}
+
+// extractRedditFlair extracts post flair like [D], [R], [P] from Reddit titles
+func extractRedditFlair(title string) string {
+	if strings.HasPrefix(title, "[") {
+		end := strings.Index(title, "]")
+		if end != -1 && end < 10 { // Reasonable flair length
+			return title[:end+1]
+		}
+	}
+	return ""
+}
+
+// extractRedditUser extracts Reddit username from author name or content
+func extractRedditUser(authorName string) string {
+	if strings.HasPrefix(authorName, "/u/") {
+		return authorName
+	}
+	return ""
+}
+
+// extractRedditUserFromContent extracts Reddit user from content when not in author field
+func extractRedditUserFromContent(content string) string {
+	// Look for "/u/username" pattern in content
+	userStart := strings.Index(content, "/u/")
+	if userStart != -1 {
+		// Find the end of the username (space, >, or end of string)
+		usernamePart := content[userStart:]
+		endChars := []string{" ", ">", "<", "\"", "'", "\n", "\r"}
+		
+		endPos := len(usernamePart)
+		for _, endChar := range endChars {
+			if pos := strings.Index(usernamePart, endChar); pos != -1 && pos < endPos {
+				endPos = pos
+			}
+		}
+		
+		username := usernamePart[:endPos]
+		if len(username) > 3 && len(username) < 25 { // Reasonable username length
+			return username
+		}
+	}
+	return ""
+}
+
+// extractRedditCommentCount extracts comment count from Reddit content
+func extractRedditCommentCount(content string) string {
+	// Look for "[comments]" links or "comments" text
+	if strings.Contains(content, "[comments]") {
+		return "Comments"
+	}
+	if strings.Contains(content, "comments") && strings.Contains(content, "reddit.com") {
+		return "Discussion"
+	}
+	return ""
+}
+
 // NewsHandler displays the news page
 func NewsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("=== NewsHandler START ===\n")
-	fmt.Printf("NewsHandler called with method: %s, URL: %s, HTMX: %s\n", r.Method, r.URL.String(), r.Header.Get("HX-Request"))
 	// Get user from context
 	userIDValue := r.Context().Value("userID")
 	if userIDValue == nil {
@@ -210,9 +1335,6 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		category = "kuwait"
 	}
 
-	fmt.Printf("NewsHandler processed params: page=%d, category='%s', language='%s', search='%s', userID=%s\n", 
-		page, category, language, search, userID.String())
-
 	const articlesPerPage = 20
 	offset := (page - 1) * articlesPerPage
 
@@ -223,7 +1345,6 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		articles, err = db.GetNewsArticlesWithSearchAndUserPrefs(db.DB, userID, articlesPerPage, offset, category, language, search)
 		if err != nil {
 			http.Error(w, "Failed to search news articles", http.StatusInternalServerError)
-			fmt.Printf("Error searching news articles: %v\n", err)
 			return
 		}
 		
@@ -232,7 +1353,6 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 		articles, err = db.GetNewsArticlesWithSearchAndUserPrefs(db.DB, userID, articlesPerPage, offset, category, language, "")
 		if err != nil {
 			http.Error(w, "Failed to load news articles", http.StatusInternalServerError)
-			fmt.Printf("Error loading news articles: %v\n", err)
 			return
 		}
 		
@@ -240,21 +1360,18 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		http.Error(w, "Failed to count news articles", http.StatusInternalServerError)
-		fmt.Printf("Error counting news articles: %v\n", err)
 		return
 	}
 
 	// Get source count for the specific category (considering user preferences)
 	sourceCount, err := db.GetActiveSourceCountByCategoryForUser(db.DB, userID, category)
 	if err != nil {
-		fmt.Printf("Error loading user source count for category %s: %v\n", category, err)
 		sourceCount = 0 // Continue with 0 count
 	}
 
 	// Get sources with user preferences for the template
 	sources, err := db.GetNewsSourcesWithUserPrefs(db.DB, userID)
 	if err != nil {
-		fmt.Printf("Error loading sources with user prefs: %v\n", err)
 		sources = []db.NewsSourceWithUserPref{} // Continue with empty sources
 	}
 
@@ -284,7 +1401,6 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if this is an HTMX request
 	if r.Header.Get("HX-Request") == "true" {
 		// Return just the article content for HTMX requests
-		fmt.Printf("HTMX request detected for page %d\n", page)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		
 		// Use enhanced template parsing for HTMX requests
@@ -314,19 +1430,41 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				return string(runes[start:end])
 			},
+			"substrHTML": func(s interface{}, start, length int) template.HTML {
+				var str string
+				switch v := s.(type) {
+				case string:
+					str = v
+				case template.HTML:
+					str = string(v)
+				default:
+					return template.HTML("")
+				}
+				
+				if start < 0 {
+					start = 0
+				}
+				// Convert to runes to handle UTF-8 properly
+				runes := []rune(str)
+				if start >= len(runes) {
+					return template.HTML("")
+				}
+				end := start + length
+				if end > len(runes) {
+					end = len(runes)
+				}
+				return template.HTML(string(runes[start:end]))
+			},
 		}).ParseFiles("templates/partials/news_articles.html")
 		if err != nil {
-			fmt.Printf("HTMX template parsing error: %v\n", err)
 			http.Error(w, "Template error", http.StatusInternalServerError)
 			return
 		}
 
 		err = tmpl.Execute(w, data)
 		if err != nil {
-			fmt.Printf("HTMX template execution error: %v\n", err)
 			http.Error(w, "Template execution error", http.StatusInternalServerError)
 		}
-		fmt.Printf("HTMX response sent with %d articles\n", len(articles))
 		return
 	}
 
@@ -357,28 +1495,49 @@ func NewsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			return string(runes[start:end])
 		},
+		"substrHTML": func(s interface{}, start, length int) template.HTML {
+			var str string
+			switch v := s.(type) {
+			case string:
+				str = v
+			case template.HTML:
+				str = string(v)
+			default:
+				return template.HTML("")
+			}
+			
+			if start < 0 {
+				start = 0
+			}
+			// Convert to runes to handle UTF-8 properly
+			runes := []rune(str)
+			if start >= len(runes) {
+				return template.HTML("")
+			}
+			end := start + length
+			if end > len(runes) {
+				end = len(runes)
+			}
+			return template.HTML(string(runes[start:end]))
+		},
 	}).ParseFiles("templates/base.html", "templates/news.html")
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
-		fmt.Printf("Template parsing error: %v\n", err)
 		return
 	}
 
 	err = tmpl.ExecuteTemplate(w, "base.html", data)
 	if err != nil {
 		http.Error(w, "Template execution error", http.StatusInternalServerError)
-		fmt.Printf("Template execution error: %v\n", err)
 	}
 }
 
 // renderNewsArticles renders just the articles list for HTMX updates
 func renderNewsArticles(w http.ResponseWriter, data NewsPageData) {
-	fmt.Printf("renderNewsArticles called with %d articles, page %d of %d\n", len(data.Articles), data.CurrentPage, data.TotalPages)
 	
 	// Add error recovery
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("Panic in renderNewsArticles: %v\n", r)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}()
@@ -491,7 +1650,6 @@ func RefreshNewsHandler(w http.ResponseWriter, r *http.Request) {
 		err = fetchService.FetchFromSourceManually(sourceID)
 		if err != nil {
 			http.Error(w, "Failed to fetch news", http.StatusInternalServerError)
-			fmt.Printf("Error fetching from source %s: %v\n", sourceID, err)
 			return
 		}
 
@@ -540,7 +1698,6 @@ func NewsSourcesHandler(w http.ResponseWriter, r *http.Request) {
 	sources, err := db.GetNewsSourcesWithUserPrefs(db.DB, userID)
 	if err != nil {
 		http.Error(w, "Failed to load news sources", http.StatusInternalServerError)
-		fmt.Printf("Error loading news sources: %v\n", err)
 		return
 	}
 
@@ -555,14 +1712,12 @@ func NewsSourcesHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/base.html", "templates/news_sources.html")
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
-		fmt.Printf("Template parsing error: %v\n", err)
 		return
 	}
 
 	err = tmpl.ExecuteTemplate(w, "base.html", data)
 	if err != nil {
 		http.Error(w, "Template execution error", http.StatusInternalServerError)
-		fmt.Printf("Template execution error: %v\n", err)
 	}
 }
 
@@ -594,7 +1749,6 @@ func ToggleUserNewsPreferenceHandler(w http.ResponseWriter, r *http.Request) {
 	userPrefs, err := db.GetUserNewsPreferences(db.DB, userID)
 	if err != nil {
 		http.Error(w, "Failed to get user preferences", http.StatusInternalServerError)
-		fmt.Printf("Error getting user preferences: %v\n", err)
 		return
 	}
 
@@ -609,7 +1763,6 @@ func ToggleUserNewsPreferenceHandler(w http.ResponseWriter, r *http.Request) {
 	err = db.SetUserNewsPreference(db.DB, userID, sourceID, newState)
 	if err != nil {
 		http.Error(w, "Failed to update user preference", http.StatusInternalServerError)
-		fmt.Printf("Error updating user preference: %v\n", err)
 		return
 	}
 
@@ -620,9 +1773,6 @@ func ToggleUserNewsPreferenceHandler(w http.ResponseWriter, r *http.Request) {
 	category := r.URL.Query().Get("category")
 	language := r.URL.Query().Get("language")
 	search := r.URL.Query().Get("search")
-	
-	fmt.Printf("Toggle request: sourceID=%s, isDashboard=%t, newState=%t, category=%s, language=%s, search='%s'\n", 
-		sourceID, isDashboard, newState, category, language, search)
 	
 	if isDashboard {
 		// Return dashboard-style toggle
@@ -722,6 +1872,7 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 	// Convert to template article with processed content
 	fullContent := stringPtrToString(article.FullContent)
 	content := stringPtrToString(article.Content)
+	var extractedImageURL string
 	
 	// Process content based on category
 	if article.Category == "hackernews" {
@@ -731,6 +1882,26 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if content != "" {
 			content = formatHackerNewsContent(content)
+		}
+	} else if article.Category == "reddit" {
+		// Extract image from Reddit content if no main image exists
+		originalContent := stringPtrToString(article.Content)
+		hasMainImage := stringPtrToString(article.ImageURL) != ""
+		
+		if !hasMainImage {
+			extractedImageURL = extractFirstImageFromRedditContent(originalContent)
+			if extractedImageURL != "" {
+				hasMainImage = true
+			}
+		}
+		
+		// Format Reddit content and remove duplicate images
+		hasImage := hasMainImage || stringPtrToString(article.ThumbnailURL) != ""
+		if fullContent != "" {
+			fullContent = formatRedditContentWithImageCheck(fullContent, hasImage)
+		}
+		if content != "" {
+			content = formatRedditContentWithImageCheck(content, hasImage)
 		}
 	} else {
 		// Process line breaks for display for other content
@@ -744,6 +1915,17 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	
+	// Determine final image URL (use extracted image if available, otherwise original)
+	finalImageURL := stringPtrToString(article.ImageURL)
+	if extractedImageURL != "" {
+		finalImageURL = extractedImageURL
+	}
+	
+	// Decode HTML entities in the final image URL
+	if finalImageURL != "" {
+		finalImageURL = html.UnescapeString(finalImageURL)
+	}
+	
 	templateArticle := TemplateArticle{
 		ID:           article.ID.String(),
 		Title:        article.Title,
@@ -751,7 +1933,7 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 		Summary:      stringPtrToString(article.Summary),
 		FullContent:  template.HTML(fullContent),
 		OriginalURL:  article.OriginalURL,
-		ImageURL:     stringPtrToString(article.ImageURL),
+		ImageURL:     finalImageURL,
 		ThumbnailURL: stringPtrToString(article.ThumbnailURL),
 		AuthorName:   stringPtrToString(article.AuthorName),
 		Keywords:     stringPtrToString(article.Keywords),
@@ -774,14 +1956,12 @@ func FullArticleHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/base.html", "templates/full_article.html")
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
-		fmt.Printf("Template parsing error: %v\n", err)
 		return
 	}
 
 	err = tmpl.ExecuteTemplate(w, "base.html", data)
 	if err != nil {
 		http.Error(w, "Template execution error", http.StatusInternalServerError)
-		fmt.Printf("Template execution error: %v\n", err)
 	}
 }
 

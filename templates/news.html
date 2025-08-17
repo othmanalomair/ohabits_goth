@@ -195,7 +195,7 @@
                         {{ if .Content }}
                         <div class="article-summary {{ if eq .Language "ar" }}rtl-text{{ end }}">
                             {{ if gt (len .Content) 200 }}
-                                {{ substr .Content 0 200 }}...
+                                {{ substrHTML .Content 0 200 }}...
                             {{ else }}
                                 {{ .Content }}
                             {{ end }}
@@ -679,11 +679,7 @@
     color: #374151;
 }
 
-/* Reddit Layout (similar to Hacker News but with some modifications) */
-.articles-grid.reddit-layout {
-    grid-template-columns: 1fr;
-    gap: 16px;
-}
+/* Reddit Layout (uses default grid layout from main CSS) */
 
 .articles-grid.reddit-layout .news-article {
     border-radius: 8px;
@@ -1054,6 +1050,231 @@
         font-size: 0.8rem;
         padding: 6px 12px;
     }
+}
+
+/* Reddit-specific styles for enhanced content */
+.reddit-content-image {
+    margin: 12px 0;
+    text-align: center;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.reddit-inline-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 4px;
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.reddit-image-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    color: #1976d2 !important;
+    text-decoration: none;
+    font-size: 0.8rem;
+    border: 1px solid #bbdefb;
+    margin: 2px 0;
+}
+
+.reddit-image-link:hover {
+    background: #bbdefb;
+    text-decoration: none;
+}
+
+.reddit-image-link::before {
+    content: "🖼️";
+    font-size: 0.7rem;
+}
+
+/* Video link styles */
+.reddit-video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    color: white !important;
+    font-size: 0.8rem;
+}
+
+.reddit-video-link .video-icon {
+    font-size: 0.9rem;
+}
+
+.reddit-video-link .video-platform {
+    font-size: 0.65rem;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1px 4px;
+    border-radius: 2px;
+    margin-left: 3px;
+}
+
+.youtube-link {
+    background: linear-gradient(135deg, #ff0000, #cc0000);
+    border: 1px solid #b30000;
+}
+
+.youtube-link:hover {
+    background: linear-gradient(135deg, #cc0000, #990000);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(255, 0, 0, 0.3);
+}
+
+.peertube-link {
+    background: linear-gradient(135deg, #f1680d, #d1560b);
+    border: 1px solid #b8490a;
+}
+
+.peertube-link:hover {
+    background: linear-gradient(135deg, #d1560b, #b14409);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(241, 104, 13, 0.3);
+}
+
+.vimeo-link {
+    background: linear-gradient(135deg, #1ab7ea, #1593c4);
+    border: 1px solid #127ba3;
+}
+
+.vimeo-link:hover {
+    background: linear-gradient(135deg, #1593c4, #116fa0);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(26, 183, 234, 0.3);
+}
+
+.reddit-video {
+    background: linear-gradient(135deg, #ff4500, #d63600);
+    border: 1px solid #b82e00;
+}
+
+.reddit-video:hover {
+    background: linear-gradient(135deg, #d63600, #b82e00);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(255, 69, 0, 0.3);
+}
+
+/* Reddit meta styling for news list */
+.reddit-meta-top {
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(135deg, #ff4500, #e13d00);
+    border-radius: 6px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+}
+
+.reddit-meta-top .reddit-user-info,
+.reddit-meta-top .reddit-comments-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    font-weight: 500;
+}
+
+.reddit-meta-top .reddit-user-info a,
+.reddit-meta-top .reddit-comments-info a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.reddit-meta-top .reddit-user-info a:hover,
+.reddit-meta-top .reddit-comments-info a:hover {
+    text-decoration: underline;
+}
+
+.reddit-meta-top .reddit-icon {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.reddit-meta-top .reddit-flair {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.reddit-meta-secondary {
+    margin-bottom: 8px;
+    display: flex;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.reddit-meta-secondary .reddit-source {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.reddit-meta-secondary .reddit-date {
+    color: #6c757d;
+}
+
+/* Reddit submission info styling - legacy */
+.reddit-submission-info {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-left: 3px solid #ff4500;
+    border-radius: 0 3px 3px 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.reddit-submission-info a {
+    color: #ff4500;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.reddit-submission-info a:hover {
+    text-decoration: underline;
+}
+
+/* Reddit video section at top - compact for news list */
+.reddit-video-section {
+    margin: 8px 0;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 6px;
+    border-left: 3px solid #ff4500;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reddit-video-section .reddit-video-link {
+    margin: 0;
+    display: inline-flex;
+    max-width: fit-content;
+    font-size: 0.8rem;
+    padding: 4px 8px;
 }
 
 /* Template Functions */

@@ -243,6 +243,31 @@ func init() {
 		"basename": func(path string) string {
 			return filepath.Base(path)
 		},
+		"substrHTML": func(s interface{}, start, length int) template.HTML {
+			var str string
+			switch v := s.(type) {
+			case string:
+				str = v
+			case template.HTML:
+				str = string(v)
+			default:
+				return template.HTML("")
+			}
+			
+			if start < 0 {
+				start = 0
+			}
+			// Convert to runes to handle UTF-8 properly
+			runes := []rune(str)
+			if start >= len(runes) {
+				return template.HTML("")
+			}
+			end := start + length
+			if end > len(runes) {
+				end = len(runes)
+			}
+			return template.HTML(string(runes[start:end]))
+		},
 	})
 	var err error
 	tmpl, err = tmpl.ParseGlob("templates/*.html")
