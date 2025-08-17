@@ -1331,7 +1331,7 @@ main {
     color: #2d3748;
 }
 
-#date_fields_{{ .ID }} {
+.medication-date-fields {
     transition: all 0.3s ease-in-out;
 }
 

@@ -84,14 +84,30 @@ func NewRSSParser() *RSSParser {
 
 // ParseRSSFeed fetches and parses an RSS or Atom feed from the given URL
 func (p *RSSParser) ParseRSSFeed(url string) ([]ParsedArticle, error) {
+	// Create request with proper headers for Reddit compatibility
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request for %s: %w", url, err)
+	}
+	
+	// Set User-Agent header to identify as a legitimate bot
+	req.Header.Set("User-Agent", "ohabits-news-bot/1.0 (Personal news aggregator)")
+	
+	// Set additional headers that Reddit expects
+	req.Header.Set("Accept", "application/rss+xml, application/xml, text/xml")
+	req.Header.Set("Cache-Control", "no-cache")
+	
 	// Fetch feed
-	resp, err := p.client.Get(url)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch feed from %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == 429 {
+			return nil, fmt.Errorf("rate limited by server (429) for URL %s - will retry later", url)
+		}
 		return nil, fmt.Errorf("feed returned status %d for URL %s", resp.StatusCode, url)
 	}
 

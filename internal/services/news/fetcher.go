@@ -3,6 +3,7 @@ package news
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,8 +79,14 @@ func (s *FetchService) fetchAllDueSources() {
 
 	for _, source := range sources {
 		s.fetchFromSource(source)
-		// Add small delay between sources to be respectful
-		time.Sleep(2 * time.Second)
+		// Add delay between sources to be respectful, especially for Reddit
+		if strings.Contains(source.URL, "reddit.com") {
+			// Longer delay for Reddit due to strict rate limiting
+			time.Sleep(5 * time.Second)
+		} else {
+			// Standard delay for other sources
+			time.Sleep(2 * time.Second)
+		}
 	}
 }
 
