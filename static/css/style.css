@@ -13,6 +13,14 @@ body {
 }
 
 /* ----------- HACKER NEWS SPECIFIC STYLES ----------- */
+/* Hide article actions and summary for Hacker News in all views */
+.articles-grid.hackernews-layout .article-actions {
+    display: none !important;
+}
+
+.articles-grid.hackernews-layout .article-summary {
+    display: none !important;
+}
 .hn-title-with-meta {
     display: flex;
     flex-direction: column;
@@ -593,14 +601,1154 @@ main {
     gap: 2.5rem;
 }
 
-/* Single column on mobile */
-@media (max-width: 768px) {
+/* Mobile/Small tablets - Z Fold cover screen (folded) */
+@media (max-width: 739px) {
     .grid-container {
         grid-template-columns: 1fr;
         gap: 0;
     }
+}
 
-    /* Make date card exactly same as other cards on mobile */
+/* All tablets and foldables - ultra compact styling for everything below 1000px */
+@media (min-width: 740px) and (max-width: 999px) {
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.3rem;
+        padding: 0.2rem;
+        max-width: 100vw;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    
+    /* Ultra compact card styling for tablets */
+    .card {
+        padding: 0.4rem;
+        margin-bottom: 0.8rem;
+        font-size: 0.8rem;
+        max-width: 100%;
+        min-height: auto;
+        min-width: 0;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+    
+    .card h2, .card h3 {
+        font-size: 1rem;
+        margin-bottom: 0.3rem;
+        line-height: 1.2;
+    }
+    
+    /* Ultra compact habits styling */
+    .habit-item {
+        padding: 0.3rem;
+        margin-bottom: 0.2rem;
+        font-size: 0.75rem;
+    }
+    
+    .habit-name {
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Ultra compact medications styling */
+    .medication-item, .medication-daily-item {
+        padding: 0.2rem;
+        margin-bottom: 0.1rem;
+        font-size: 0.65rem;
+    }
+    
+    .medication-daily-header {
+        padding: 0.1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .medication-name-with-notes {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        flex: 1;
+    }
+    
+    .medication-name-with-notes h4 {
+        font-size: 0.7rem;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .medication-daily-details {
+        display: inline-flex;
+        gap: 0.2rem;
+        flex-wrap: wrap;
+        margin-left: 0.5rem;
+    }
+    
+    .dosage-badge, .frequency-badge, .duration-badge {
+        font-size: 0.55rem;
+        padding: 0.05rem 0.2rem;
+        border-radius: 3px;
+        white-space: nowrap;
+    }
+    
+    .dose-btn {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.3rem;
+        border-radius: 4px;
+    }
+    
+    .medication-daily-left {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .medication-daily-actions {
+        flex-shrink: 0;
+        margin-left: 0.3rem;
+    }
+    
+    /* Improved todos styling */
+    .todo-item {
+        padding: 0.4rem !important;
+        margin-bottom: 0.3rem !important;
+        font-size: 0.9rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    
+    .todo-text {
+        font-size: 0.9rem !important;
+        flex: 1 !important;
+        margin-left: 0.5rem !important;
+    }
+    
+    .todo-date {
+        font-size: 0.55rem;
+        margin-left: 0.3rem;
+        color: #666;
+    }
+    
+    .todo-delete-btn {
+        font-size: 0.6rem;
+        padding: 0.05rem 0.2rem;
+        margin-left: 0.2rem;
+    }
+    
+    .older-todos-title {
+        font-size: 0.75rem;
+        margin: 0.3rem 0 0.2rem 0;
+        font-weight: 600;
+    }
+    
+    .older-todo-list {
+        margin-top: 0.2rem;
+    }
+    
+    /* Very compact notes styling */
+    .notes textarea {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+        min-height: 60px;
+    }
+    
+    /* Very compact mood styling */
+    .mood-rating {
+        font-size: 0.75rem;
+    }
+    
+    .mood-rating button {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.7rem;
+        margin: 0.1rem;
+    }
+    
+    /* Very compact workout styling */
+    .workout-item, .exercise-item {
+        padding: 0.2rem;
+        margin-bottom: 0.2rem;
+        font-size: 0.7rem;
+    }
+    
+    .workout-select {
+        font-size: 0.7rem;
+        padding: 0.3rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .exercise-group {
+        margin: 0.3rem 0;
+    }
+    
+    .form-row {
+        margin-bottom: 0.2rem;
+    }
+    
+    .form-row label {
+        font-size: 0.7rem;
+        margin-bottom: 0.1rem;
+    }
+    
+    .workout-button {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+        margin-top: 0.3rem;
+    }
+    
+    /* Very small button sizes */
+    button {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.65rem;
+    }
+    
+    /* Very compact form inputs */
+    input, textarea, select {
+        padding: 0.25rem;
+        font-size: 0.7rem;
+    }
+    
+    /* Extra compact mood section */
+    .mood label {
+        margin: 0.1rem;
+    }
+    
+    .mood span {
+        font-size: 1.2rem;
+        padding: 0.2rem;
+    }
+    
+    /* Compact form sections */
+    form {
+        margin-top: 0.3rem;
+    }
+    
+    /* Ultra compact lists - remove gap */
+    .list {
+        margin: 0.2rem 0;
+        gap: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Prevent overflow and ensure responsive behavior */
+    .card, .habit-item, .medication-item, .todo-item, .workout-item {
+        max-width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Make sure the grid doesn't cause horizontal overflow */
+    .grid-container {
+        max-width: 100vw;
+        box-sizing: border-box;
+        margin: 0 auto;
+        overflow-x: hidden;
+    }
+    
+    /* Ultra compact main container */
+    main {
+        padding: 0.2rem;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: hidden;
+        margin: 0;
+    }
+}
+
+/* Override conflicting styles for all tablet ranges */
+@media (min-width: 740px) and (max-width: 999px) {
+    /* Improved readable medication items */
+    .medication-daily-item {
+        padding: 0.8rem !important;
+        margin-bottom: 0.5rem !important;
+        font-size: 0.9rem !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .medication-daily-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        gap: 0.3rem !important;
+    }
+    
+    .medication-name-with-notes {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    
+    .medication-name-with-notes h4 {
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+        color: #2d3748 !important;
+        line-height: 1.2 !important;
+    }
+    
+    .notes-icon {
+        flex-shrink: 0 !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+    
+    .medication-daily-details {
+        display: flex !important;
+        gap: 0.3rem !important;
+        flex-wrap: wrap !important;
+        margin-top: 0.3rem !important;
+        width: 100% !important;
+    }
+    
+    .dosage-badge, .frequency-badge, .duration-badge {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.4rem !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        font-weight: 500 !important;
+    }
+    
+    .medication-daily-actions {
+        align-self: flex-start !important;
+        margin-top: 0.3rem !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .dose-btn {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Zero padding for cards to maximize space */
+    .card {
+        padding: 0rem !important;
+        margin-bottom: 0.8rem !important;
+        border-radius: 16px !important;
+    }
+    
+    /* Force override any conflicting grid styles */
+    .grid-container {
+        padding: 0.2rem !important;
+        gap: 0.3rem !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+    
+    /* Override any large main padding */
+    main {
+        padding: 0.2rem !important;
+        margin: 0 !important;
+    }
+    
+    /* Smaller date card for fold view */
+    .date-card {
+        margin-top: 5rem !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .date-card h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    
+    .date-card p {
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+    }
+    
+    /* Balanced mood section - readable but constrained */
+    .mood {
+        gap: 0.2rem !important;
+        padding: 0.5rem !important;
+        margin-top: 0.5rem !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+    
+    .mood label {
+        padding: 0.3rem !important;
+        margin: 0.05rem !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    .mood label span {
+        font-size: 1.2rem !important;
+        padding: 0.1rem !important;
+    }
+    
+    .mood input[type="radio"] {
+        width: 0.7rem !important;
+        height: 0.7rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    
+    /* Readable notes textarea */
+    .notes textarea {
+        font-size: 1rem !important;
+        padding: 1rem !important;
+        min-height: 80px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .notes button {
+        font-size: 0.9rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+    
+    /* Readable workout section */
+    .workout-select {
+        font-size: 0.9rem !important;
+        padding: 0.5rem !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .exercise-group {
+        margin: 0.5rem 0 !important;
+        gap: 0.4rem !important;
+    }
+    
+    .form-row {
+        margin-bottom: 0.4rem !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .form-row input {
+        padding: 0.5rem !important;
+        font-size: 0.9rem !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        max-width: 100px !important;
+    }
+    
+    .form-row label {
+        font-size: 0.9rem !important;
+        white-space: nowrap !important;
+    }
+    
+    .workout-button {
+        font-size: 0.9rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+    
+    .exercise-show {
+        font-size: 0.9rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    /* Grid layout for overlay-links on tablet/fold */
+    .overlay-links {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .overlay-links li a {
+        flex-direction: column !important;
+        text-align: center !important;
+        padding: 1.5rem 1rem !important;
+    }
+    
+    .overlay-links li a img {
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Grid layout for habits page on tablet/fold */
+    .habits-container {
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    .habits-container h1 {
+        font-size: 1.5rem !important;
+        padding: 1rem !important;
+        margin-top: 5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    #habits-list {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .habit-item {
+        padding: 1rem !important;
+        margin-bottom: 0 !important;
+        border-radius: 16px !important;
+        flex-direction: column !important;
+    }
+    
+    .habit-header {
+        margin-bottom: 0.8rem !important;
+    }
+    
+    .habit-header h3 {
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .habit-days {
+        gap: 0.3rem !important;
+    }
+    
+    .day-button {
+        font-size: 0.8rem !important;
+        padding: 0.4rem !important;
+        min-width: 2rem !important;
+    }
+    
+    #add-habit-form {
+        padding: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        border-radius: 16px !important;
+        gap: 0.5rem !important;
+    }
+    
+    #add-habit-form input {
+        font-size: 0.9rem !important;
+        padding: 0.7rem !important;
+    }
+    
+    #add-habit-form button {
+        padding: 0.7rem !important;
+    }
+    
+    /* Grid layout for medications page on tablet/fold */
+    #medications-list {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .medication-item {
+        padding: 0 !important;
+        margin-bottom: 0 !important;
+        border-radius: 16px !important;
+    }
+    
+    .medication-card {
+        padding: 1rem !important;
+        border-radius: 16px !important;
+        position: relative !important;
+    }
+    
+    .medication-name {
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .medication-details {
+        margin-bottom: 0.8rem !important;
+        gap: 0.3rem !important;
+    }
+    
+    .medication-actions {
+        top: 0.5rem !important;
+        right: 3rem !important;
+    }
+    
+    .medication-actions button {
+        padding: 0.4rem !important;
+        margin-left: 0.2rem !important;
+    }
+    
+    .medication-days {
+        gap: 0.3rem !important;
+    }
+    
+    .medication-days .day-button {
+        font-size: 0.8rem !important;
+        padding: 0.4rem !important;
+        min-width: 2rem !important;
+    }
+    
+    #add-medication-form {
+        padding: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        border-radius: 16px !important;
+        gap: 0.5rem !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+    }
+    
+    #add-medication-form input,
+    #add-medication-form select {
+        font-size: 0.8rem !important;
+        padding: 0.6rem !important;
+    }
+    
+    #add-medication-form textarea {
+        grid-column: 1 / -1 !important;
+        font-size: 0.8rem !important;
+        padding: 0.6rem !important;
+    }
+    
+    #add-medication-form .scheduled-days-section {
+        grid-column: 1 / -1 !important;
+    }
+    
+    #add-medication-form button {
+        grid-column: 1 / -1 !important;
+        padding: 0.7rem !important;
+        justify-self: end !important;
+        width: auto !important;
+    }
+    
+    /* Grid layout for workout plans page on tablet/fold */
+    .workout-plan-container {
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    .workout-plan-container h1 {
+        font-size: 1.5rem !important;
+        padding: 1rem !important;
+        margin-top: 5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    #workout-plans-list {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .workout-plan-item {
+        padding: 0 !important;
+        margin-bottom: 0 !important;
+        border-radius: 16px !important;
+    }
+    
+    .workout-plan-header {
+        padding: 1rem !important;
+        border-radius: 16px !important;
+    }
+    
+    .workout-plan-title h2 {
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+    
+    .workout-plan-actions {
+        gap: 0.3rem !important;
+    }
+    
+    .workout-plan-actions button {
+        padding: 0.4rem !important;
+        width: 1.8rem !important;
+        height: 1.8rem !important;
+    }
+    
+    .add-workout-plan-form {
+        padding: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        border-radius: 16px !important;
+        gap: 0.5rem !important;
+        grid-column: 1 / -1 !important;
+    }
+    
+    .add-workout-plan-form input {
+        font-size: 0.9rem !important;
+        padding: 0.7rem !important;
+    }
+    
+    .add-workout-plan-form button {
+        padding: 0.7rem !important;
+    }
+    
+    /* Grid layout for TV shows page on tablet/fold */
+    .shows-container {
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    .shows-container h1 {
+        font-size: 1.5rem !important;
+        padding: 1rem !important;
+        margin-top: 5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .shows-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .show-item {
+        padding: 0.8rem !important;
+        margin-bottom: 0 !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .show-poster {
+        width: 60px !important;
+        height: 80px !important;
+        margin-bottom: 0.5rem !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .show-poster img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 6px !important;
+    }
+    
+    .show-info {
+        padding: 0 !important;
+    }
+    
+    .show-info h3 {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.3rem !important;
+        line-height: 1.2 !important;
+        font-weight: 600 !important;
+    }
+    
+    .show-meta {
+        margin-bottom: 0.4rem !important;
+        gap: 0.2rem !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .show-network, .show-status {
+        font-size: 0.7rem !important;
+        padding: 0.1rem 0.3rem !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+    }
+    
+    .episode-progress {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .episode-count {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.2rem !important;
+        display: block !important;
+    }
+    
+    .progress-bar {
+        height: 4px !important;
+        border-radius: 2px !important;
+    }
+    
+    .show-actions {
+        gap: 0.2rem !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .show-actions button {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.7rem !important;
+        border-radius: 6px !important;
+        line-height: 1 !important;
+    }
+    
+    .btn-primary {
+        min-width: auto !important;
+        width: auto !important;
+    }
+    
+    .btn-sync, .btn-danger {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        padding: 0.2rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .btn-sync img, .btn-danger img {
+        width: 12px !important;
+        height: 12px !important;
+    }
+    
+    /* Fix episodes page header being hidden behind navigation */
+    .episodes-container {
+        padding-top: 5rem !important;
+    }
+    
+    .episodes-header {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    .show-title-card {
+        margin-top: 0 !important;
+        padding-top: 1rem !important;
+    }
+    
+    /* Grid layout for projects page on tablet/fold */
+    .habits-container:has(#projects-list) {
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    .habits-container:has(#projects-list) h1 {
+        font-size: 1.5rem !important;
+        padding: 1rem !important;
+        margin-top: 5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .projects-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .project-card {
+        padding: 1rem !important;
+        margin-bottom: 0 !important;
+        border-radius: 12px !important;
+        min-height: auto !important;
+    }
+    
+    .project-header h3 {
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .project-description {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.6rem !important;
+        -webkit-line-clamp: 2 !important;
+    }
+    
+    .project-stats {
+        gap: 0.3rem !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    .project-stats span {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.4rem !important;
+    }
+    
+    .project-view {
+        margin-top: 0.6rem !important;
+        padding-top: 0.6rem !important;
+    }
+    
+    .view-button {
+        padding: 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .project-actions {
+        gap: 0.3rem !important;
+    }
+    
+    .edit-btn, .delete-btn {
+        width: 1.8rem !important;
+        height: 1.8rem !important;
+        padding: 0.3rem !important;
+    }
+    
+    .edit-btn img, .delete-btn img {
+        width: 12px !important;
+        height: 12px !important;
+    }
+    
+    #add-project-form {
+        padding: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        gap: 0.5rem !important;
+        grid-column: 1 / -1 !important;
+    }
+    
+    #add-project-form input[type="text"] {
+        font-size: 0.9rem !important;
+        padding: 0.7rem !important;
+    }
+    
+    #add-project-form button {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        padding: 0.6rem !important;
+    }
+    
+    /* Grid layout for News Dashboard page on tablet/fold */
+    .news-container {
+        padding: 1rem !important;
+        max-width: 100% !important;
+        margin-top: 5rem !important;
+    }
+    
+    .news-header {
+        margin-bottom: 1.5rem !important;
+        padding: 1.5rem !important;
+        border-radius: 12px !important;
+    }
+    
+    .news-title h1 {
+        font-size: 1.8rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .news-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .news-sections {
+        padding: 1rem !important;
+        margin-top: 1.5rem !important;
+    }
+    
+    .section-buttons {
+        gap: 0.8rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .section-btn {
+        padding: 0.8rem 1.2rem !important;
+        font-size: 0.8rem !important;
+        gap: 0.5rem !important;
+    }
+    
+    .news-search {
+        padding: 1rem 1.5rem !important;
+        margin-top: 1rem !important;
+    }
+    
+    #news-search {
+        padding: 0.8rem 2.5rem 0.8rem 1rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    /* Force Kuwait and Reddit news into 2-column grid layout */
+    .articles-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .articles-grid.kuwait-layout {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .articles-grid.reddit-layout {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    /* Keep Hacker News in original single-column layout */
+    .articles-grid.hackernews-layout {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 0.8rem !important;
+    }
+    
+    .articles-grid.hackernews-layout .news-article {
+        display: flex !important;
+        padding: 1rem !important;
+        border-radius: 8px !important;
+        align-items: center !important;
+        min-height: auto !important;
+    }
+    
+    .articles-grid.hackernews-layout .article-content {
+        padding: 0 !important;
+        flex: 1 !important;
+    }
+    
+    .articles-grid.hackernews-layout .article-title {
+        margin: 0 !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        line-height: 1.4 !important;
+    }
+    
+    .articles-grid.hackernews-layout .hn-inline-meta {
+        gap: 0.5rem !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .articles-grid.hackernews-layout .article-actions {
+        display: none !important;
+    }
+    
+    .articles-grid.hackernews-layout .article-summary {
+        display: none !important;
+    }
+    
+    /* Compact news articles for fold view */
+    .news-article {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+    
+    .article-image {
+        height: 120px !important;
+    }
+    
+    .article-content {
+        padding: 1rem !important;
+    }
+    
+    .article-meta {
+        margin-bottom: 0.6rem !important;
+        gap: 0.4rem !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .article-title {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.6rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .article-summary {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.8rem !important;
+        line-height: 1.4 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 3 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+    
+    .article-actions {
+        gap: 0.4rem !important;
+    }
+    
+    .read-more-btn, .external-link-btn {
+        font-size: 0.7rem !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+    
+    .news-stats {
+        margin-bottom: 1.5rem !important;
+        padding: 1rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .news-pagination {
+        margin-top: 2rem !important;
+        padding: 1rem !important;
+        gap: 1rem !important;
+    }
+    
+    .pagination-btn {
+        padding: 0.8rem 1.2rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    /* Fix full article page header being hidden behind navigation */
+    .full-article-container {
+        padding-top: 5rem !important;
+    }
+    
+    .article-header {
+        margin-top: 0 !important;
+        padding-top: 1rem !important;
+    }
+    
+    /* Fix profile page header being hidden behind navigation */
+    .profile-card {
+        margin-top: 5rem !important;
+        padding-top: 1rem !important;
+    }
+    
+    /* Fix notes page header being hidden behind navigation */
+    .notes-container {
+        padding-top: 5rem !important;
+    }
+    
+    .notes-header {
+        margin-top: 0 !important;
+        padding-top: 1rem !important;
+    }
+    
+    /* Fix view page header being hidden behind navigation */
+    .view-container {
+        padding-top: 5rem !important;
+    }
+    
+    .view-header {
+        margin-top: 0 !important;
+        padding-top: 1rem !important;
+    }
+}
+
+/* Large tablets/Z Fold unfolded landscape - optimized grid */
+@media (min-width: 1000px) and (max-width: 1199px) {
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    /* Slightly compact styling for large tablets */
+    .card {
+        padding: 1.4rem;
+        margin-bottom: 1.4rem;
+        font-size: 0.95rem;
+    }
+    
+    .card h2, .card h3 {
+        font-size: 1.15rem;
+        margin-bottom: 0.9rem;
+    }
+    
+    /* Prevent overflow and ensure responsive behavior */
+    .card, .habit-item, .medication-item, .todo-item, .workout-item {
+        max-width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+/* Desktop/Large screens */
+@media (min-width: 1200px) {
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+}
+
+/* Make date card exactly same as other cards on mobile */
+@media (max-width: 739px) {
     .date-card {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(20px);

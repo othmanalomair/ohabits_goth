@@ -163,7 +163,7 @@
                         {{ if eq .Category "hackernews" }}
                         <!-- Hacker News style with inline meta -->
                         <h2 class="article-title hn-title-with-meta">
-                            <a href="/news/article/{{ .ID }}" class="hn-title-link">
+                            <a href="{{ .OriginalURL }}" target="_blank" rel="noopener noreferrer" class="hn-title-link">
                                 {{ .Title }}
                             </a>
                             <span class="hn-inline-meta">
