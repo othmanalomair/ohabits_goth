@@ -27,23 +27,35 @@ func GetMarketDataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If user has no watchlist, initialize with default cryptos
+	// If user has no visible items, check if they have any watchlist entries at all
 	if len(marketData) == 0 {
-		log.Printf("User %v has no market watchlist, initializing defaults", userID)
-		err = db.InitializeDefaultWatchlist(r.Context(), db.DB, userID)
+		// Check if user has any watchlist entries (visible or not)
+		watchlist, err := db.GetUserWatchlist(r.Context(), db.DB, userID)
 		if err != nil {
-			log.Printf("Error initializing default watchlist: %v", err)
-			renderMarketError(w, "Failed to initialize watchlist")
+			log.Printf("Error checking user watchlist: %v", err)
+			renderMarketError(w, "Failed to check watchlist")
 			return
 		}
 
-		// Try to get data again
-		marketData, err = db.GetWatchlistWithMarketData(r.Context(), db.DB, userID)
-		if err != nil {
-			log.Printf("Error getting market data after initialization: %v", err)
-			renderMarketError(w, "Failed to load market data")
-			return
+		// Only initialize if user has no watchlist entries at all
+		if len(watchlist) == 0 {
+			log.Printf("User %v has no market watchlist, initializing defaults", userID)
+			err = db.InitializeDefaultWatchlist(r.Context(), db.DB, userID)
+			if err != nil {
+				log.Printf("Error initializing default watchlist: %v", err)
+				renderMarketError(w, "Failed to initialize watchlist")
+				return
+			}
+
+			// Try to get data again
+			marketData, err = db.GetWatchlistWithMarketData(r.Context(), db.DB, userID)
+			if err != nil {
+				log.Printf("Error getting market data after initialization: %v", err)
+				renderMarketError(w, "Failed to load market data")
+				return
+			}
 		}
+		// If user has entries but none are visible, show empty state (no initialization)
 	}
 
 	// Render the crypto prices partial

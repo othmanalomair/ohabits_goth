@@ -80,7 +80,7 @@ func GetMarketData(ctx context.Context, db *pgxpool.Pool, symbols []string) ([]M
 // GetUserWatchlist retrieves user's market watchlist
 func GetUserWatchlist(ctx context.Context, db *pgxpool.Pool, userID uuid.UUID) ([]MarketWatchlist, error) {
 	query := `
-		SELECT id, user_id, symbol, name, type, display_order, created_at
+		SELECT id, user_id, symbol, name, type, display_order, visible, created_at
 		FROM market_watchlist
 		WHERE user_id = $1
 		ORDER BY display_order, created_at
@@ -102,6 +102,7 @@ func GetUserWatchlist(ctx context.Context, db *pgxpool.Pool, userID uuid.UUID) (
 			&item.Name,
 			&item.Type,
 			&item.DisplayOrder,
+			&item.Visible,
 			&item.CreatedAt,
 		)
 		if err != nil {
@@ -125,12 +126,12 @@ func AddToWatchlist(ctx context.Context, db *pgxpool.Pool, userID uuid.UUID, sym
 	}
 
 	query := `
-		INSERT INTO market_watchlist (user_id, symbol, name, type, display_order)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO market_watchlist (user_id, symbol, name, type, display_order, visible)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (user_id, symbol) DO NOTHING
 	`
 	
-	_, err = db.Exec(ctx, query, userID, symbol, name, symbolType, maxOrder+1)
+	_, err = db.Exec(ctx, query, userID, symbol, name, symbolType, maxOrder+1, true)
 	return err
 }
 
@@ -141,29 +142,33 @@ func RemoveFromWatchlist(ctx context.Context, db *pgxpool.Pool, userID uuid.UUID
 	return err
 }
 
-// ToggleWatchlistItem toggles a symbol in user's watchlist (add if not exists, remove if exists)
+// ToggleWatchlistItem toggles a symbol's visibility in user's watchlist
 func ToggleWatchlistItem(ctx context.Context, db *pgxpool.Pool, userID uuid.UUID, symbol, name, symbolType string) (bool, error) {
-	// Check if item exists
+	// Check if item exists and get current visibility
 	var exists bool
+	var currentVisible bool
 	err := db.QueryRow(ctx, 
-		"SELECT EXISTS(SELECT 1 FROM market_watchlist WHERE user_id = $1 AND symbol = $2)", 
-		userID, symbol).Scan(&exists)
+		"SELECT EXISTS(SELECT 1 FROM market_watchlist WHERE user_id = $1 AND symbol = $2), COALESCE((SELECT visible FROM market_watchlist WHERE user_id = $1 AND symbol = $2), false)", 
+		userID, symbol).Scan(&exists, &currentVisible)
 	if err != nil {
 		return false, err
 	}
 
 	if exists {
-		// Remove from watchlist
-		err = RemoveFromWatchlist(ctx, db, userID, symbol)
-		return false, err // false means removed
+		// Toggle visibility
+		newVisible := !currentVisible
+		_, err = db.Exec(ctx, 
+			"UPDATE market_watchlist SET visible = $1 WHERE user_id = $2 AND symbol = $3",
+			newVisible, userID, symbol)
+		return newVisible, err
 	} else {
-		// Add to watchlist
+		// Add to watchlist as visible
 		err = AddToWatchlist(ctx, db, userID, symbol, name, symbolType)
-		return true, err // true means added
+		return true, err // true means added and visible
 	}
 }
 
-// GetWatchlistWithMarketData retrieves user's watchlist with current market data
+// GetWatchlistWithMarketData retrieves user's visible watchlist with current market data
 func GetWatchlistWithMarketData(ctx context.Context, db *pgxpool.Pool, userID uuid.UUID) ([]MarketData, error) {
 	query := `
 		SELECT 
@@ -171,7 +176,7 @@ func GetWatchlistWithMarketData(ctx context.Context, db *pgxpool.Pool, userID uu
 			md.volume, md.market_cap, md.last_updated
 		FROM market_watchlist mw
 		JOIN market_data md ON mw.symbol = md.symbol
-		WHERE mw.user_id = $1
+		WHERE mw.user_id = $1 AND mw.visible = true
 		ORDER BY mw.display_order, mw.created_at
 	`
 	
@@ -213,9 +218,13 @@ func InitializeDefaultWatchlist(ctx context.Context, db *pgxpool.Pool, userID uu
 		// Default cryptocurrencies
 		{"BTC", "Bitcoin", "crypto"},
 		{"ETH", "Ethereum", "crypto"},
+		{"XRP", "XRP", "crypto"},
+		{"DOGE", "Dogecoin", "crypto"},
 		// Default traditional markets
 		{"GOLD", "Gold ETF", "commodity"},
+		{"OIL", "Crude Oil", "commodity"},
 		{"SPX", "S&P 500", "index"},
+		{"BOURSA", "Boursa Kuwait", "index"},
 	}
 
 	for _, asset := range defaultAssets {

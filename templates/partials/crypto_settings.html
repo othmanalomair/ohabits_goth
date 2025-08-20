@@ -1,11 +1,16 @@
 {{ range . }}
-<div class="crypto-setting-item {{ if .InWatchlist }}enabled{{ else }}disabled{{ end }}">
-    <div class="crypto-setting-header"
-         hx-post="/api/market/watchlist/toggle"
-         hx-trigger="click"
-         hx-vals='{"symbol": "{{ .Symbol }}", "name": "{{ .Name }}", "type": "{{ .Type }}"}'
-         hx-target=".crypto-settings-grid"
-         hx-swap="innerHTML">
+<div class="crypto-setting-item {{ if and .InWatchlist .IsVisible }}enabled{{ else }}disabled{{ end }}">
+    <form hx-post="/api/market/watchlist/toggle"
+          hx-trigger="submit"
+          hx-target=".crypto-settings-grid"
+          hx-swap="innerHTML"
+          hx-indicator=".htmx-indicator"
+          hx-disabled-elt="this"
+          style="margin: 0; padding: 0;">
+        <input type="hidden" name="symbol" value="{{ .Symbol }}">
+        <input type="hidden" name="name" value="{{ .Name }}">
+        <input type="hidden" name="type" value="{{ .Type }}">
+        <button type="submit" class="crypto-setting-header" style="border: none; background: none; padding: 0; width: 100%; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px;">
         <div class="market-icon">
             {{ if eq .Symbol "BTC" }}<img src="/static/images/btc2@2x.png" alt="Bitcoin" class="crypto-setting-icon">
             {{ else if eq .Symbol "ETH" }}<img src="/static/images/eth2@2x.png" alt="Ethereum" class="crypto-setting-icon">
@@ -21,27 +26,34 @@
             <div class="crypto-name">{{ .Name }}</div>
             <div class="crypto-symbol">{{ .Symbol }} • {{ .Type }}</div>
         </div>
-    </div>
+        </button>
+    </form>
     <div class="crypto-controls">
         {{ if .InWatchlist }}
         <div class="crypto-reorder-controls">
-            <button class="reorder-btn up-btn"
-                    hx-post="/api/market/watchlist/move-up"
-                    hx-vals='{"symbol": "{{ .Symbol }}"}'
-                    hx-target=".crypto-settings-grid"
-                    hx-swap="innerHTML"
-                    title="Move up">↑</button>
-            <button class="reorder-btn down-btn"
-                    hx-post="/api/market/watchlist/move-down"
-                    hx-vals='{"symbol": "{{ .Symbol }}"}'
-                    hx-target=".crypto-settings-grid"
-                    hx-swap="innerHTML"
-                    title="Move down">↓</button>
+            <form hx-post="/api/market/watchlist/move-up"
+                  hx-trigger="submit"
+                  hx-target=".crypto-settings-grid"
+                  hx-swap="innerHTML"
+                  hx-disabled-elt="this"
+                  style="display: inline;">
+                <input type="hidden" name="symbol" value="{{ .Symbol }}">
+                <button type="submit" class="reorder-btn up-btn" title="Move up">↑</button>
+            </form>
+            <form hx-post="/api/market/watchlist/move-down"
+                  hx-trigger="submit"
+                  hx-target=".crypto-settings-grid"
+                  hx-swap="innerHTML"
+                  hx-disabled-elt="this"
+                  style="display: inline;">
+                <input type="hidden" name="symbol" value="{{ .Symbol }}">
+                <button type="submit" class="reorder-btn down-btn" title="Move down">↓</button>
+            </form>
         </div>
         {{ end }}
         <div class="crypto-status">
-            <span class="status-indicator {{ if .InWatchlist }}enabled{{ else }}disabled{{ end }}">
-                {{ if .InWatchlist }}✓ Enabled{{ else }}○ Disabled{{ end }}
+            <span class="status-indicator {{ if and .InWatchlist .IsVisible }}enabled{{ else }}disabled{{ end }}">
+                {{ if and .InWatchlist .IsVisible }}✓ Enabled{{ else }}○ Disabled{{ end }}
             </span>
         </div>
     </div>

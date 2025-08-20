@@ -424,5 +424,6 @@ type MarketWatchlist struct {
 	Name         string    `json:"name"`
 	Type         string    `json:"type"` // "crypto", "stock", "forex"
 	DisplayOrder int       `json:"display_order"`
+	Visible      bool      `json:"visible"`
 	CreatedAt    time.Time `json:"created_at"`
 }

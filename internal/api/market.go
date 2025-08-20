@@ -40,8 +40,9 @@ func ToggleWatchlistItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse form data from HTMX request
+	// Parse form data from HTMX request (hx-vals sends form data, not JSON)
 	if err := r.ParseForm(); err != nil {
+		log.Printf("Error parsing form: %v", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -56,17 +57,21 @@ func ToggleWatchlistItem(w http.ResponseWriter, r *http.Request) {
 		Type:   r.FormValue("type"),
 	}
 
+	log.Printf("Toggle request: Symbol=%s, Name=%s, Type=%s", request.Symbol, request.Name, request.Type)
+
 	if request.Symbol == "" || request.Name == "" || request.Type == "" {
 		http.Error(w, "Symbol, name, and type are required", http.StatusBadRequest)
 		return
 	}
 
-	_, err := db.ToggleWatchlistItem(r.Context(), db.DB, userID, request.Symbol, request.Name, request.Type)
+	newVisible, err := db.ToggleWatchlistItem(r.Context(), db.DB, userID, request.Symbol, request.Name, request.Type)
 	if err != nil {
 		log.Printf("Error toggling watchlist item: %v", err)
 		http.Error(w, "Failed to toggle watchlist item", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("Toggle successful: Symbol=%s, NewVisible=%t", request.Symbol, newVisible)
 
 	// Return updated crypto settings HTML
 	cryptoSettings, err := getUserCryptoSettings(r.Context(), userID)
@@ -131,6 +136,7 @@ type CryptoSetting struct {
 	Name         string `json:"name"`
 	Type         string `json:"type"`
 	InWatchlist  bool   `json:"in_watchlist"`
+	IsVisible    bool   `json:"is_visible"`
 	DisplayOrder int    `json:"display_order"`
 }
 
@@ -159,19 +165,21 @@ func getUserCryptoSettings(ctx context.Context, userID uuid.UUID) ([]CryptoSetti
 		return nil, err
 	}
 
-	// Create a map for quick lookup of watchlist items with display order
+	// Create a map for quick lookup of watchlist items with display order and visibility
 	watchlistMap := make(map[string]struct {
 		inWatchlist  bool
+		isVisible    bool
 		displayOrder int
 	})
 	for _, item := range watchlist {
 		watchlistMap[item.Symbol] = struct {
 			inWatchlist  bool
+			isVisible    bool
 			displayOrder int
-		}{true, item.DisplayOrder}
+		}{true, item.Visible, item.DisplayOrder}
 	}
 
-	// Build the settings list - watchlist items first (ordered), then disabled items
+	// Build the settings list - all available assets with their status
 	var settings []CryptoSetting
 	
 	// First add watchlist items in display order
@@ -182,6 +190,7 @@ func getUserCryptoSettings(ctx context.Context, userID uuid.UUID) ([]CryptoSetti
 				Name:         asset.name,
 				Type:         asset.assetType,
 				InWatchlist:  true,
+				IsVisible:    item.Visible,
 				DisplayOrder: item.DisplayOrder,
 			})
 		}
@@ -195,6 +204,7 @@ func getUserCryptoSettings(ctx context.Context, userID uuid.UUID) ([]CryptoSetti
 				Name:         asset.name,
 				Type:         asset.assetType,
 				InWatchlist:  false,
+				IsVisible:    false,
 				DisplayOrder: 0,
 			})
 		}
@@ -256,13 +266,16 @@ func MoveWatchlistItemUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse form data from HTMX request
+	// Parse form data from HTMX request (hx-vals sends form data, not JSON)
 	if err := r.ParseForm(); err != nil {
+		log.Printf("Error parsing form: %v", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
 	symbol := r.FormValue("symbol")
+	log.Printf("Move up request: Symbol=%s", symbol)
+
 	if symbol == "" {
 		http.Error(w, "Symbol is required", http.StatusBadRequest)
 		return
@@ -308,13 +321,16 @@ func MoveWatchlistItemDown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse form data from HTMX request
+	// Parse form data from HTMX request (hx-vals sends form data, not JSON)
 	if err := r.ParseForm(); err != nil {
+		log.Printf("Error parsing form: %v", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
 	symbol := r.FormValue("symbol")
+	log.Printf("Move down request: Symbol=%s", symbol)
+
 	if symbol == "" {
 		http.Error(w, "Symbol is required", http.StatusBadRequest)
 		return
