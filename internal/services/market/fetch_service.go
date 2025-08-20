@@ -41,8 +41,10 @@ func (s *FetchService) StartBackgroundFetching() {
 	// Run immediately on start
 	go s.fetchMarketData()
 
-	// Set up ticker for periodic fetching (every 5 minutes for crypto prices)
-	ticker := time.NewTicker(5 * time.Minute)
+	// Set up ticker for periodic fetching (every 40 minutes to stay within API limits)
+	// CoinCap API: 2500 requests/month = ~83 requests/day = ~3.5 requests/hour
+	// 40 minutes = 1.5 requests/hour = ~36 requests/day = ~1080 requests/month
+	ticker := time.NewTicker(40 * time.Minute)
 	go func() {
 		for {
 			select {
