@@ -160,7 +160,7 @@ CREATE TABLE public.market_watchlist (
     type text NOT NULL,
     display_order integer DEFAULT 0 NOT NULL,
     created_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT market_watchlist_type_check CHECK ((type = ANY (ARRAY['stock'::text, 'crypto'::text, 'forex'::text])))
+    CONSTRAINT market_watchlist_type_check CHECK ((type = ANY (ARRAY['stock'::text, 'crypto'::text, 'forex'::text, 'commodity'::text, 'index'::text])))
 );
 
 
@@ -697,6 +697,14 @@ ALTER TABLE ONLY public.market_data
 
 ALTER TABLE ONLY public.market_watchlist
     ADD CONSTRAINT market_watchlist_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: market_watchlist market_watchlist_user_symbol_unique; Type: CONSTRAINT; Schema: public; Owner: most3mr
+--
+
+ALTER TABLE ONLY public.market_watchlist
+    ADD CONSTRAINT market_watchlist_user_symbol_unique UNIQUE (user_id, symbol);
 
 
 --

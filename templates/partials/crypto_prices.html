@@ -1,0 +1,31 @@
+{{ if . }}
+    {{ range . }}
+    <div class="crypto-item">
+        <div class="crypto-header">
+            <div class="market-icon">
+                {{ if eq .Symbol "BTC" }}<img src="/static/images/btc2@2x.png" alt="Bitcoin" class="crypto-icon">
+                {{ else if eq .Symbol "ETH" }}<img src="/static/images/eth2@2x.png" alt="Ethereum" class="crypto-icon">
+                {{ else if eq .Symbol "XRP" }}<img src="/static/images/xrp2@2x.png" alt="XRP" class="crypto-icon">
+                {{ else if eq .Symbol "DOGE" }}<img src="/static/images/doge3@2x.png" alt="Dogecoin" class="crypto-icon">
+                {{ else if eq .Symbol "GOLD" }}<span class="symbol-icon gold">🏆</span>
+                {{ else if eq .Symbol "OIL" }}<span class="symbol-icon oil">🛢️</span>
+                {{ else if eq .Symbol "SPX" }}<span class="symbol-icon index">📈</span>
+                {{ else if eq .Symbol "BOURSA" }}<span class="symbol-icon boursa">🏛️</span>
+                {{ else }}<span class="symbol-icon default">💰</span>{{ end }}
+            </div>
+            <span class="crypto-symbol">{{ .Symbol }}</span>
+        </div>
+        <div class="crypto-price-row">
+            <span class="crypto-price">${{ printf "%.2f" .CurrentPrice }}</span>
+            <span class="crypto-change {{ if gt .ChangePercent 0.0 }}positive{{ else if lt .ChangePercent 0.0 }}negative{{ else }}neutral{{ end }}">
+                <span class="change-arrow">{{ if gt .ChangePercent 0.0 }}▲{{ else if lt .ChangePercent 0.0 }}▼{{ else }}●{{ end }}</span>
+                <span class="change-value">{{ printf "%.2f%%" .ChangePercent }}</span>
+            </span>
+        </div>
+    </div>
+    {{ end }}
+{{ else }}
+    <div class="crypto-error">
+        No market data available. Click refresh to fetch latest prices.
+    </div>
+{{ end }}

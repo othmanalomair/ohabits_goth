@@ -1,0 +1,49 @@
+{{ range . }}
+<div class="crypto-setting-item {{ if .InWatchlist }}enabled{{ else }}disabled{{ end }}">
+    <div class="crypto-setting-header"
+         hx-post="/api/market/watchlist/toggle"
+         hx-trigger="click"
+         hx-vals='{"symbol": "{{ .Symbol }}", "name": "{{ .Name }}", "type": "{{ .Type }}"}'
+         hx-target=".crypto-settings-grid"
+         hx-swap="innerHTML">
+        <div class="market-icon">
+            {{ if eq .Symbol "BTC" }}<img src="/static/images/btc2@2x.png" alt="Bitcoin" class="crypto-setting-icon">
+            {{ else if eq .Symbol "ETH" }}<img src="/static/images/eth2@2x.png" alt="Ethereum" class="crypto-setting-icon">
+            {{ else if eq .Symbol "XRP" }}<img src="/static/images/xrp2@2x.png" alt="XRP" class="crypto-setting-icon">
+            {{ else if eq .Symbol "DOGE" }}<img src="/static/images/doge3@2x.png" alt="Dogecoin" class="crypto-setting-icon">
+            {{ else if eq .Symbol "GOLD" }}<span class="symbol-icon gold large">🏆</span>
+            {{ else if eq .Symbol "OIL" }}<span class="symbol-icon oil large">🛢️</span>
+            {{ else if eq .Symbol "SPX" }}<span class="symbol-icon index large">📈</span>
+            {{ else if eq .Symbol "BOURSA" }}<span class="symbol-icon boursa large">🏛️</span>
+            {{ else }}<span class="symbol-icon default large">💰</span>{{ end }}
+        </div>
+        <div class="crypto-info">
+            <div class="crypto-name">{{ .Name }}</div>
+            <div class="crypto-symbol">{{ .Symbol }} • {{ .Type }}</div>
+        </div>
+    </div>
+    <div class="crypto-controls">
+        {{ if .InWatchlist }}
+        <div class="crypto-reorder-controls">
+            <button class="reorder-btn up-btn"
+                    hx-post="/api/market/watchlist/move-up"
+                    hx-vals='{"symbol": "{{ .Symbol }}"}'
+                    hx-target=".crypto-settings-grid"
+                    hx-swap="innerHTML"
+                    title="Move up">↑</button>
+            <button class="reorder-btn down-btn"
+                    hx-post="/api/market/watchlist/move-down"
+                    hx-vals='{"symbol": "{{ .Symbol }}"}'
+                    hx-target=".crypto-settings-grid"
+                    hx-swap="innerHTML"
+                    title="Move down">↓</button>
+        </div>
+        {{ end }}
+        <div class="crypto-status">
+            <span class="status-indicator {{ if .InWatchlist }}enabled{{ else }}disabled{{ end }}">
+                {{ if .InWatchlist }}✓ Enabled{{ else }}○ Disabled{{ end }}
+            </span>
+        </div>
+    </div>
+</div>
+{{ end }}

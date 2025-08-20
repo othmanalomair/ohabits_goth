@@ -7,7 +7,6 @@
         <div class="news-title">
             <div class="title-content">
                 <h1>📰 News Dashboard</h1>
-                <p class="news-subtitle">Stay updated with Kuwait local news and global stories</p>
             </div>
             <div class="header-actions">
                 <a href="/news/sources" class="header-btn sources-btn" title="Manage News Sources">
@@ -23,6 +22,28 @@
                         title="Refresh News">
                     <img src="/static/images/svg/refresh.svg" alt="Refresh" />
                 </button>
+            </div>
+        </div>
+
+        <!-- Crypto Prices Section -->
+        <div class="crypto-prices-section">
+            <div class="crypto-header">
+                <h3>💰 Market Tracker</h3>
+                <button class="crypto-refresh-btn"
+                        hx-post="/api/market/refresh"
+                        hx-trigger="click"
+                        hx-target="#crypto-prices"
+                        hx-swap="none"
+                        hx-on::after-request="setTimeout(() => { htmx.ajax('GET', '/api/market/data', {target: '#crypto-prices', swap: 'innerHTML'}); }, 1000);"
+                        title="Refresh Prices">
+                    <img src="/static/images/svg/refresh.svg" alt="Refresh" />
+                </button>
+            </div>
+            <div id="crypto-prices" class="crypto-prices-grid"
+                 hx-get="/api/market/data"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <div class="crypto-loading">Loading market data...</div>
             </div>
         </div>
 
@@ -272,6 +293,201 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+}
+
+/* Crypto Prices Section */
+.crypto-prices-section {
+    margin: 25px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.crypto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.crypto-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.crypto-refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.crypto-refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.crypto-refresh-btn img {
+    width: 12px;
+    height: 12px;
+    filter: brightness(0) invert(1);
+}
+
+.crypto-prices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.crypto-item {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.crypto-item:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.crypto-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.market-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crypto-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.symbol-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.symbol-icon.gold { background: linear-gradient(135deg, #ffd700, #ffed4e); }
+.symbol-icon.oil { background: linear-gradient(135deg, #1f2937, #374151); }
+.symbol-icon.index { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.symbol-icon.boursa { background: linear-gradient(135deg, #059669, #047857); }
+.symbol-icon.default { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.crypto-symbol {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #1a1a1a;
+    letter-spacing: 0.5px;
+}
+
+.crypto-price-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0;
+}
+
+.crypto-price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.crypto-change {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.crypto-change.positive {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.crypto-change.negative {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.crypto-change.neutral {
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.1);
+}
+
+.change-arrow {
+    font-size: 0.6rem;
+    opacity: 0.9;
+}
+
+.change-value {
+    font-weight: 600;
+    font-size: 0.65rem;
+}
+
+.crypto-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
+    padding: 20px;
+}
+
+.crypto-error {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #fca5a5;
+    font-size: 0.875rem;
+    padding: 20px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .news-header {
@@ -940,20 +1156,169 @@
 }
 
 /* Mobile Responsive */
-@media (max-width: 768px) {
+
+/* Fold Phone and Tablet View - Compact crypto for 3 items per row */
+@media (max-width: 999px) and (min-width: 740px) {
+    .news-title {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .news-title h1 {
+        font-size: 1.2rem;
+        margin: 0;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .title-content {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .header-actions {
+        gap: 6px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-btn {
+        width: 30px;
+        height: 30px;
+        padding: 5px;
+        border-radius: 6px;
+        min-width: 30px;
+        flex-shrink: 0;
+    }
+
+    .header-btn img {
+        width: 14px;
+        height: 14px;
+    }
+
+    .crypto-prices-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .crypto-item {
+        padding: 10px;
+        gap: 6px;
+        border-radius: 8px;
+    }
+
+    .crypto-header {
+        gap: 6px;
+        margin-bottom: 3px;
+    }
+
+    .crypto-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .symbol-icon {
+        font-size: 1.1rem;
+        width: 22px;
+        height: 22px;
+    }
+
+    .crypto-symbol {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .crypto-price-row {
+        gap: 6px;
+        margin: 1px 0;
+    }
+
+    .crypto-price {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .crypto-change {
+        font-size: 0.65rem;
+        padding: 2px 5px;
+        border-radius: 4px;
+    }
+
+    .change-arrow {
+        font-size: 0.55rem;
+    }
+
+    .change-value {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 739px) {
     .news-container {
         padding: 15px;
     }
 
     /* Compact news header for mobile */
     .news-header {
-        margin-bottom: 20px;
-        padding: 20px;
+        margin-bottom: 15px;
+        padding: 15px 20px;
+    }
+
+    .news-title {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
     }
 
     .news-title h1 {
-        font-size: 1.75rem;
-        margin-bottom: 8px;
+        font-size: 1.1rem;
+        margin: 0;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .title-content {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .header-actions {
+        gap: 4px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-btn {
+        width: 28px;
+        height: 28px;
+        padding: 4px;
+        border-radius: 6px;
+        min-width: 28px;
+        flex-shrink: 0;
+    }
+
+    .header-btn img {
+        width: 12px;
+        height: 12px;
     }
 
     .news-subtitle {
@@ -1049,6 +1414,63 @@
         margin-bottom: 8px;
         font-size: 0.8rem;
         padding: 6px 12px;
+    }
+
+    /* Compact crypto items for mobile - 2 per row */
+    .crypto-prices-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .crypto-item {
+        padding: 8px;
+        gap: 6px;
+        border-radius: 8px;
+    }
+
+    .crypto-header {
+        gap: 6px;
+        margin-bottom: 2px;
+    }
+
+    .crypto-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .symbol-icon {
+        font-size: 1rem;
+        width: 20px;
+        height: 20px;
+    }
+
+    .crypto-symbol {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .crypto-price-row {
+        gap: 6px;
+        margin: 0;
+    }
+
+    .crypto-price {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .crypto-change {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+        border-radius: 3px;
+    }
+
+    .change-arrow {
+        font-size: 0.5rem;
+    }
+
+    .change-value {
+        font-size: 0.6rem;
     }
 }
 

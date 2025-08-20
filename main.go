@@ -12,6 +12,7 @@ import (
 	"ohabits.com/internal/db"
 	"ohabits.com/internal/services"
 	"ohabits.com/internal/services/news"
+	"ohabits.com/internal/services/market"
 )
 
 func main() {
@@ -27,6 +28,11 @@ func main() {
 	newsService := news.NewFetchService(db.DB)
 	newsService.StartBackgroundFetching()
 	defer newsService.StopBackgroundFetching()
+
+	// Start the market data fetching service
+	marketService := market.NewFetchService(db.DB)
+	marketService.StartBackgroundFetching()
+	defer marketService.StopBackgroundFetching()
 
 	srv := server.Server() // Now returns an *http.Server
 
@@ -44,6 +50,7 @@ func main() {
 	log.Println("Shutting down the server...")
 	syncService.Stop()
 	newsService.StopBackgroundFetching()
+	marketService.StopBackgroundFetching()
 	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Fatalf("Server Shutdown: %v", err)
 	}

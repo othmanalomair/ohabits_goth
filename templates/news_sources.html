@@ -108,6 +108,21 @@
         </div>
         {{ end }}
     </div>
+
+    <!-- Market Tracker Settings -->
+    <div class="market-settings-section">
+        <div class="section-header">
+            <h2>💰 Market Tracker Settings</h2>
+            <p class="section-subtitle">Choose which assets to display in your news dashboard: cryptocurrencies, stocks, commodities, and indices</p>
+        </div>
+
+        <div class="crypto-settings-grid" 
+             hx-get="/api/market/watchlist" 
+             hx-trigger="load" 
+             hx-swap="innerHTML">
+            <div class="crypto-loading">Loading market preferences...</div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -394,8 +409,300 @@
     filter: brightness(0) invert(1);
 }
 
+/* Market Settings Section */
+.market-settings-section {
+    margin-top: 40px;
+    padding: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.section-header {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.section-header h2 {
+    margin: 0 0 12px 0;
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.section-subtitle {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.crypto-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.crypto-setting-item {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+.crypto-setting-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.crypto-setting-item.enabled {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+.crypto-setting-item.disabled {
+    background: rgba(107, 114, 128, 0.3);
+    border-color: rgba(107, 114, 128, 0.5);
+}
+
+.crypto-setting-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.crypto-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.crypto-reorder-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.reorder-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.8);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+}
+
+.reorder-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    transform: scale(1.1);
+}
+
+.reorder-btn:active {
+    transform: scale(0.95);
+}
+
+.crypto-setting-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.symbol-icon.large {
+    font-size: 1.5rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.symbol-icon.gold { background: linear-gradient(135deg, #ffd700, #ffed4e); }
+.symbol-icon.oil { background: linear-gradient(135deg, #1f2937, #374151); }
+.symbol-icon.index { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.symbol-icon.boursa { background: linear-gradient(135deg, #059669, #047857); }
+.symbol-icon.default { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.crypto-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.crypto-setting-item .crypto-name {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    margin: 0;
+}
+
+.crypto-setting-item .crypto-symbol {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.crypto-status {
+    display: flex;
+    justify-content: center;
+}
+
+.status-indicator {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.status-indicator.enabled {
+    background: rgba(16, 185, 129, 0.4);
+    color: #ffffff;
+    border: 1px solid rgba(16, 185, 129, 0.6);
+}
+
+.status-indicator.disabled {
+    background: rgba(107, 114, 128, 0.4);
+    color: #ffffff;
+    border: 1px solid rgba(107, 114, 128, 0.6);
+}
+
+.crypto-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
+    padding: 40px;
+    font-size: 1rem;
+}
+
+.crypto-error {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #fca5a5;
+    font-size: 0.875rem;
+    padding: 40px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 /* Mobile Responsive */
-@media (max-width: 768px) {
+
+/* Medium Tablet View (999px - 769px) */
+@media (max-width: 999px) and (min-width: 769px) {
+    .news-sources-container {
+        margin-top: 5em;
+    }
+}
+
+/* Tablet View (768px - 741px) */
+@media (max-width: 768px) and (min-width: 741px) {
+    .news-sources-container {
+        padding: 15px;
+        margin-top: 5em;
+    }
+
+    .sources-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .crypto-settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+/* Fold Phone View (740px - 481px) */
+@media (max-width: 740px) and (min-width: 481px) {
+    .news-sources-container {
+        padding: 15px;
+        margin-top: 5em;
+    }
+
+    .news-sources-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 20px;
+        gap: 15px;
+    }
+
+    .sources-title h1 {
+        font-size: 1.85rem;
+    }
+
+    .sources-controls {
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .back-to-news-btn,
+    .refresh-all-btn {
+        padding: 12px 18px;
+        font-size: 0.85rem;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .sources-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+    }
+
+    .crypto-settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .source-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .source-actions {
+        gap: 10px;
+    }
+
+    .fetch-btn,
+    .user-pref-btn {
+        font-size: 0.85rem;
+        padding: 11px 14px;
+    }
+}
+
+/* Mobile Phone View (480px and below) */
+@media (max-width: 480px) {
     .news-sources-container {
         padding: 15px;
     }

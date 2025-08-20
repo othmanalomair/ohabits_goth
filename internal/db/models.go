@@ -401,3 +401,28 @@ type TaskHierarchy struct {
 	HasChildren bool            `json:"has_children"`
 	Children    []TaskHierarchy `json:"children,omitempty"`
 }
+
+// Market Data Models
+
+// MarketData represents current market data for crypto/stocks
+type MarketData struct {
+	ID            uuid.UUID `json:"id"`
+	Symbol        string    `json:"symbol"`
+	CurrentPrice  float64   `json:"current_price"`
+	ChangeAmount  float64   `json:"change_amount"`
+	ChangePercent float64   `json:"change_percent"`
+	Volume        int64     `json:"volume"`
+	MarketCap     int64     `json:"market_cap"`
+	LastUpdated   time.Time `json:"last_updated"`
+}
+
+// MarketWatchlist represents user's preferred market symbols to track
+type MarketWatchlist struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	Symbol       string    `json:"symbol"`
+	Name         string    `json:"name"`
+	Type         string    `json:"type"` // "crypto", "stock", "forex"
+	DisplayOrder int       `json:"display_order"`
+	CreatedAt    time.Time `json:"created_at"`
+}

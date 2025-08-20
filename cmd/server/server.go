@@ -133,6 +133,14 @@ func Server() *http.Server {
 	protected.HandleFunc("/news/section-sources", handlers.GetSectionSourcesHandler).Methods("GET")
 	protected.HandleFunc("/news/article/{id}", handlers.FullArticleHandler).Methods("GET")
 
+	// Market API Routes
+	protected.HandleFunc("/api/market/data", handlers.GetMarketDataHandler).Methods("GET")
+	protected.HandleFunc("/api/market/refresh", api.RefreshMarketData).Methods("POST")
+	protected.HandleFunc("/api/market/watchlist", api.GetUserWatchlist).Methods("GET")
+	protected.HandleFunc("/api/market/watchlist/toggle", api.ToggleWatchlistItem).Methods("POST")
+	protected.HandleFunc("/api/market/watchlist/move-up", api.MoveWatchlistItemUp).Methods("POST")
+	protected.HandleFunc("/api/market/watchlist/move-down", api.MoveWatchlistItemDown).Methods("POST")
+
 	// Serve static files (css, js, etc.)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	
