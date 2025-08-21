@@ -268,6 +268,213 @@ func init() {
 			}
 			return template.HTML(string(runes[start:end]))
 		},
+		"renderMarkdown": func(content string) template.HTML {
+			// Process content line by line for proper markdown parsing
+			lines := strings.Split(content, "\n")
+			var processedLines []string
+			var inList bool
+			var listItems []string
+			
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				
+				// Handle headers (must be on their own line)
+				if strings.HasPrefix(line, "### ") {
+					// Close any open list
+					if inList {
+						processedLines = append(processedLines, "<ul>"+strings.Join(listItems, "")+"</ul>")
+						listItems = []string{}
+						inList = false
+					}
+					processedLines = append(processedLines, "<h3>"+strings.TrimSpace(line[4:])+"</h3>")
+					continue
+				} else if strings.HasPrefix(line, "## ") {
+					// Close any open list
+					if inList {
+						processedLines = append(processedLines, "<ul>"+strings.Join(listItems, "")+"</ul>")
+						listItems = []string{}
+						inList = false
+					}
+					processedLines = append(processedLines, "<h2>"+strings.TrimSpace(line[3:])+"</h2>")
+					continue
+				} else if strings.HasPrefix(line, "# ") {
+					// Close any open list
+					if inList {
+						processedLines = append(processedLines, "<ul>"+strings.Join(listItems, "")+"</ul>")
+						listItems = []string{}
+						inList = false
+					}
+					processedLines = append(processedLines, "<h1>"+strings.TrimSpace(line[2:])+"</h1>")
+					continue
+				}
+				
+				// Handle list items
+				if strings.HasPrefix(line, "- ") {
+					listItems = append(listItems, "<li>"+strings.TrimSpace(line[2:])+"</li>")
+					inList = true
+					continue
+				} else if strings.HasPrefix(line, "* ") {
+					listItems = append(listItems, "<li>"+strings.TrimSpace(line[2:])+"</li>")
+					inList = true
+					continue
+				} else {
+					// Close list if we encounter non-list content
+					if inList {
+						processedLines = append(processedLines, "<ul>"+strings.Join(listItems, "")+"</ul>")
+						listItems = []string{}
+						inList = false
+					}
+				}
+				
+				// Handle empty lines
+				if line == "" {
+					if len(processedLines) > 0 && processedLines[len(processedLines)-1] != "<br>" {
+						processedLines = append(processedLines, "<br>")
+					}
+					continue
+				}
+				
+				// Regular content
+				processedLines = append(processedLines, line)
+			}
+			
+			// Close any remaining open list
+			if inList {
+				processedLines = append(processedLines, "<ul>"+strings.Join(listItems, "")+"</ul>")
+			}
+			
+			html := strings.Join(processedLines, "\n")
+			
+			// Bold **text** using regex-like approach
+			for strings.Contains(html, "**") {
+				firstPos := strings.Index(html, "**")
+				if firstPos == -1 {
+					break
+				}
+				secondPos := strings.Index(html[firstPos+2:], "**")
+				if secondPos == -1 {
+					break
+				}
+				secondPos += firstPos + 2
+				
+				before := html[:firstPos]
+				boldText := html[firstPos+2:secondPos]
+				after := html[secondPos+2:]
+				html = before + "<strong>" + boldText + "</strong>" + after
+			}
+			
+			// Italic *text* (but not when part of **)
+			for strings.Contains(html, "*") && !strings.Contains(html, "**") {
+				firstPos := strings.Index(html, "*")
+				if firstPos == -1 {
+					break
+				}
+				secondPos := strings.Index(html[firstPos+1:], "*")
+				if secondPos == -1 {
+					break
+				}
+				secondPos += firstPos + 1
+				
+				before := html[:firstPos]
+				italicText := html[firstPos+1:secondPos]
+				after := html[secondPos+1:]
+				html = before + "<em>" + italicText + "</em>" + after
+			}
+			
+			// Code `text`
+			for strings.Contains(html, "`") {
+				firstPos := strings.Index(html, "`")
+				if firstPos == -1 {
+					break
+				}
+				secondPos := strings.Index(html[firstPos+1:], "`")
+				if secondPos == -1 {
+					break
+				}
+				secondPos += firstPos + 1
+				
+				before := html[:firstPos]
+				codeText := html[firstPos+1:secondPos]
+				after := html[secondPos+1:]
+				html = before + "<code>" + codeText + "</code>" + after
+			}
+			
+			// Images ![alt](url) - Process BEFORE links to avoid conflicts
+			for strings.Contains(html, "![") && strings.Contains(html, "](") {
+				start := strings.Index(html, "![")
+				if start == -1 {
+					break
+				}
+				
+				linkStart := strings.Index(html[start:], "](")
+				if linkStart == -1 {
+					break
+				}
+				linkStart += start
+				
+				end := strings.Index(html[linkStart:], ")")
+				if end == -1 {
+					break
+				}
+				end += linkStart
+				
+				before := html[:start]
+				altText := html[start+2:linkStart]
+				imageUrl := html[linkStart+2:end]
+				after := html[end+1:]
+				
+				// Escape quotes for onclick attribute
+				escapedImageUrl := strings.ReplaceAll(imageUrl, "'", "\\'")
+				escapedAltText := strings.ReplaceAll(altText, "'", "\\'")
+				html = before + `<img src="` + imageUrl + `" alt="` + altText + `" class="responsive-image" style="max-width: 300px; height: auto; border-radius: 8px; margin: 1em 0; cursor: pointer;" onclick="openImageModal('` + escapedImageUrl + `', '` + escapedAltText + `')" />` + after
+			}
+			
+			// Links [text](url) - Process AFTER images
+			for strings.Contains(html, "](") {
+				start := strings.LastIndex(html[:strings.Index(html, "](")+1], "[")
+				if start == -1 {
+					break
+				}
+				end := strings.Index(html[start:], ")")
+				if end == -1 {
+					break
+				}
+				end += start
+				
+				linkStart := strings.Index(html[start:], "](")
+				if linkStart == -1 {
+					break
+				}
+				linkStart += start
+				
+				before := html[:start]
+				linkText := html[start+1:linkStart]
+				linkUrl := html[linkStart+2:end]
+				after := html[end+1:]
+				
+				html = before + `<a href="` + linkUrl + `" target="_blank" rel="noopener noreferrer">` + linkText + `</a>` + after
+			}
+			
+			// Wrap non-header, non-list content in paragraphs
+			lines = strings.Split(html, "\n")
+			var finalLines []string
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line == "" || line == "<br>" {
+					continue
+				}
+				
+				// Don't wrap headers, lists, or already wrapped content
+				if !strings.HasPrefix(line, "<h") && !strings.HasPrefix(line, "<ul") && 
+				   !strings.HasPrefix(line, "<li") && !strings.HasPrefix(line, "<p") {
+					finalLines = append(finalLines, "<p>"+line+"</p>")
+				} else {
+					finalLines = append(finalLines, line)
+				}
+			}
+			
+			return template.HTML(strings.Join(finalLines, "\n"))
+		},
 	})
 	var err error
 	tmpl, err = tmpl.ParseGlob("templates/*.html")
@@ -4832,6 +5039,178 @@ func syncAnimeEpisodesManual(show db.Show, userID uuid.UUID) ([]db.Episode, erro
 	}
 
 	return newEpisodes, nil
+}
+
+// MarkdownNotesListHandler renders the markdown notes list page
+func MarkdownNotesListHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the user from database
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		User db.User
+	}{
+		User: user,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "markdown_notes_list", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// NewMarkdownNoteHandler renders the new note creation page
+func NewMarkdownNoteHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the user from database
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		User   db.User
+		IsEdit bool
+		Note   *db.MarkdownNote
+	}{
+		User:   user,
+		IsEdit: false,
+		Note:   nil,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "markdown_note_edit", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// ViewMarkdownNoteHandler renders a single note in view mode
+func ViewMarkdownNoteHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the user from database
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	params := mux.Vars(r)
+	noteID, err := uuid.Parse(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid note ID", http.StatusBadRequest)
+		return
+	}
+
+	note, err := db.GetMarkdownNoteByID(db.DB, noteID, userID)
+	if err != nil {
+		if err.Error() == "note not found" {
+			http.Error(w, "Note not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		User db.User
+		Note *db.MarkdownNote
+	}{
+		User: user,
+		Note: note,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "markdown_note_view", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// EditMarkdownNoteHandler renders the note edit page
+func EditMarkdownNoteHandler(w http.ResponseWriter, r *http.Request) {
+	userIDValue := r.Context().Value("userID")
+	if userIDValue == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the user from database
+	user, err := db.GetUser(db.DB, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	params := mux.Vars(r)
+	noteID, err := uuid.Parse(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid note ID", http.StatusBadRequest)
+		return
+	}
+
+	note, err := db.GetMarkdownNoteByID(db.DB, noteID, userID)
+	if err != nil {
+		if err.Error() == "note not found" {
+			http.Error(w, "Note not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		User   db.User
+		IsEdit bool
+		Note   *db.MarkdownNote
+	}{
+		User:   user,
+		IsEdit: true,
+		Note:   note,
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "markdown_note_edit", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // NotFoundHandler renders the 404 error page.

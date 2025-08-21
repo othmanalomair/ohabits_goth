@@ -46,6 +46,13 @@ func Server() *http.Server {
 	protected.HandleFunc("/habits/{id}/cancel", handlers.CancelHabitEdit).Methods("GET")
 	protected.HandleFunc("/view", handlers.ViewHandler).Methods("GET")
 	protected.HandleFunc("/mnotes", handlers.NotesHandler).Methods("GET")
+	
+	// Markdown Notes Frontend Routes  
+	protected.HandleFunc("/markdown_notes", handlers.MarkdownNotesListHandler).Methods("GET")
+	protected.HandleFunc("/markdown_notes/new", handlers.NewMarkdownNoteHandler).Methods("GET")
+	protected.HandleFunc("/markdown_notes/{id}", handlers.ViewMarkdownNoteHandler).Methods("GET")
+	protected.HandleFunc("/markdown_notes/{id}/edit", handlers.EditMarkdownNoteHandler).Methods("GET")
+	
 	protected.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
 	protected.HandleFunc("/profile", handlers.UpdateProfileHandler).Methods("POST")
 	protected.HandleFunc("/signout", handlers.SignOutHandler).Methods("GET")
@@ -100,6 +107,13 @@ func Server() *http.Server {
 	protected.HandleFunc("/notifications/{id}", handlers.DismissNotificationHandler).Methods("DELETE")
 	protected.HandleFunc("/api/notifications", handlers.NotificationAPIHandler).Methods("GET")
 	protected.HandleFunc("/api/projects/{id}/stats", api.GetProjectStats).Methods("GET")
+	
+	// Markdown Notes API Routes
+	protected.HandleFunc("/api/markdown_notes", api.GetMarkdownNotes).Methods("GET")
+	protected.HandleFunc("/api/markdown_notes", api.CreateMarkdownNote).Methods("POST")
+	protected.HandleFunc("/api/markdown_notes/{id}", api.GetMarkdownNote).Methods("GET")
+	protected.HandleFunc("/api/markdown_notes/{id}", api.UpdateMarkdownNote).Methods("PUT")
+	protected.HandleFunc("/api/markdown_notes/{id}", api.DeleteMarkdownNote).Methods("DELETE")
 
 	// Project Management Routes
 	protected.HandleFunc("/projects", handlers.ProjectsPage).Methods("GET")

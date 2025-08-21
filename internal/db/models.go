@@ -89,6 +89,17 @@ type Notes struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// MarkdownNote entity for large notes with markdown support
+type MarkdownNote struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	IsRTL     bool      `json:"is_rtl"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Mood ratings entity
 type MoodRating struct {
 	ID        uuid.UUID `json:"id"`

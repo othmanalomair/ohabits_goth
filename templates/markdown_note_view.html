@@ -1,0 +1,351 @@
+{{ define "markdown_note_view" }}
+<div class="markdown-note-view">
+    <div class="note-header">
+        <div class="note-title-section">
+            <h1 class="note-title">{{ .Note.Title }}</h1>
+            <div class="note-meta">
+                <span class="note-date">Created: {{ formatDate .Note.CreatedAt }}</span>
+                {{ if ne (formatDate .Note.CreatedAt) (formatDate .Note.UpdatedAt) }}
+                <span class="note-date">Updated: {{ formatDate .Note.UpdatedAt }}</span>
+                {{ end }}
+            </div>
+        </div>
+        <div class="note-actions">
+            <a href="/markdown_notes/{{ .Note.ID }}/edit" 
+               hx-get="/markdown_notes/{{ .Note.ID }}/edit" 
+               hx-target="main" 
+               hx-swap="innerHTML" 
+               class="edit-btn" 
+               title="Edit Note">
+                <img src="/static/images/svg/edit.svg" alt="Edit" />
+            </a>
+            <button onclick="deleteNote('{{ .Note.ID }}')" 
+                    class="delete-btn" 
+                    title="Delete Note">
+                <img src="/static/images/svg/trash-red.svg" alt="Delete" />
+            </button>
+            <a href="/markdown_notes" 
+               hx-get="/markdown_notes" 
+               hx-target="main" 
+               hx-swap="innerHTML" 
+               class="back-btn"
+               title="Back to Notes">
+                <img src="/static/images/svg/arrow-left.svg" alt="Back" />
+                Back to Notes
+            </a>
+        </div>
+    </div>
+    
+    <div class="note-content">
+        <div class="markdown-content" dir="{{ if .Note.IsRTL }}rtl{{ else }}ltr{{ end }}">
+            {{ renderMarkdown .Note.Content }}
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Simple toast function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                ${type === 'success' ? 'background: #48bb78;' : type === 'error' ? 'background: #e53e3e;' : 'background: #4299e1;'}
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.style.opacity = '1', 10);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Delete note function - make it globally accessible for view page
+        window.deleteNote = async function(noteId) {
+            if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/markdown_notes/${noteId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('Note deleted successfully', 'success');
+                    // Navigate back to notes list immediately
+                    setTimeout(() => {
+                        htmx.ajax('GET', '/markdown_notes', {target: 'main', swap: 'innerHTML'});
+                    }, 500); // Reduced timeout for faster navigation
+                } else {
+                    showToast('Failed to delete note', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting note:', error);
+                showToast('Failed to delete note', 'error');
+            }
+        }
+    
+    // Enhanced markdown rendering
+    function enhanceMarkdownRendering() {
+        const content = document.querySelector('.markdown-content');
+        if (!content) return;
+        
+        // Add syntax highlighting classes to code blocks if needed
+        const codeBlocks = content.querySelectorAll('code');
+        codeBlocks.forEach(block => {
+            block.classList.add('syntax-highlight');
+        });
+        
+        // Make external links open in new tab
+        const links = content.querySelectorAll('a[href^="http"]');
+        links.forEach(link => {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+        });
+        
+        // Add responsive classes to images
+        const images = content.querySelectorAll('img');
+        images.forEach(img => {
+            img.classList.add('responsive-image');
+            
+            // Add click-to-zoom functionality
+            img.addEventListener('click', function() {
+                openImageModal(this.src, this.alt);
+            });
+            
+            img.style.cursor = 'pointer';
+            img.title = 'Click to view full size';
+        });
+        
+        // Style tables if any
+        const tables = content.querySelectorAll('table');
+        tables.forEach(table => {
+            table.classList.add('markdown-table');
+            // Wrap table in a container for horizontal scrolling
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('table-wrapper');
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        });
+    }
+    
+    // Image modal for full-size viewing
+    function openImageModal(src, alt) {
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'image-modal';
+        modal.innerHTML = `
+            <div class="image-modal-content">
+                <img src="${src}" alt="${alt}" class="modal-image" />
+                <button class="close-modal">&times;</button>
+                ${window.innerWidth <= 768 ? '<div class="tap-hint">Tap anywhere to close</div>' : ''}
+            </div>
+        `;
+        
+        // Add styles for modal
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+            padding: 60px 20px 20px 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+        `;
+        
+        const modalContent = modal.querySelector('.image-modal-content');
+        modalContent.style.cssText = `
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100vw;
+            max-height: calc(100vh - 80px);
+        `;
+        
+        const modalImage = modal.querySelector('.modal-image');
+        
+        // Conservative image sizing to ensure it always fits within viewport
+        let maxWidth, maxHeight;
+        if (window.innerWidth <= 480) {
+            // Small mobile
+            maxWidth = '90vw';
+            maxHeight = '50vh';
+        } else if (window.innerWidth <= 768) {
+            // Mobile/fold - matches your working view
+            maxWidth = '85vw';
+            maxHeight = '55vh';
+        } else if (window.innerWidth <= 999) {
+            // Tablets/fold in landscape - more conservative
+            maxWidth = '80vw';
+            maxHeight = '55vh';
+        } else {
+            // Desktop - conservative sizing like mobile
+            maxWidth = '75vw';
+            maxHeight = '60vh';
+        }
+        
+        modalImage.style.cssText = `
+            max-width: ${maxWidth};
+            max-height: ${maxHeight};
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        `;
+        
+        const closeBtn = modal.querySelector('.close-modal');
+        
+        // Responsive button positioning
+        const isMobile = window.innerWidth <= 768;
+        const buttonSize = isMobile ? '50px' : '40px';
+        const fontSize = isMobile ? '28px' : '24px';
+        const position = isMobile ? '5px' : '10px';
+        
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: ${position};
+            right: ${position};
+            background: rgba(0, 0, 0, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: ${buttonSize};
+            height: ${buttonSize};
+            font-size: ${fontSize};
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+        `;
+        
+        // Style the tap hint if it exists
+        const tapHint = modal.querySelector('.tap-hint');
+        if (tapHint) {
+            tapHint.style.cssText = `
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 14px;
+                z-index: 1002;
+                animation: fadeInOut 3s ease-in-out infinite;
+            `;
+        }
+        
+        document.body.appendChild(modal);
+        
+        // Add close button event listener
+        const closeButton = modal.querySelector('.close-modal');
+        closeButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeImageModal();
+        });
+        
+        // Close on click outside image
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeImageModal();
+            }
+        });
+        
+        // Close on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+    }
+    
+    function closeImageModal() {
+        const modal = document.querySelector('.image-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    // Copy note content functionality
+    function copyNoteContent() {
+        const content = document.querySelector('.note-content').innerText;
+        
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(content).then(() => {
+                showToast('Note content copied to clipboard', 'success');
+            });
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = content;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Note content copied to clipboard', 'success');
+        }
+    }
+    
+    // Add copy button to note actions
+    function addCopyButton() {
+        const actionsDiv = document.querySelector('.note-actions');
+        if (actionsDiv) {
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.title = 'Copy Note Content';
+            copyBtn.innerHTML = `
+                <img src="/static/images/svg/share.svg" alt="Copy" />
+            `;
+            copyBtn.onclick = copyNoteContent;
+            
+            // Insert before the back button
+            const backBtn = actionsDiv.querySelector('.back-btn');
+            actionsDiv.insertBefore(copyBtn, backBtn);
+        }
+    }
+    
+    // Initialize enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+        enhanceMarkdownRendering();
+        addCopyButton();
+    });
+    
+        // Initialize when loaded via HTMX
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                enhanceMarkdownRendering();
+                addCopyButton();
+            });
+        } else {
+            enhanceMarkdownRendering();
+            addCopyButton();
+        }
+    })(); // Close the IIFE
+</script>
+{{ end }}

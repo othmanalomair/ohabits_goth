@@ -1,0 +1,279 @@
+{{ define "markdown_notes_list" }}
+<div class="markdown-notes-container">
+    <div class="notes-header">
+        <h1>Notes</h1>
+        <a
+            href="/markdown_notes/new"
+            class="create-note-btn"
+            hx-get="/markdown_notes/new"
+            hx-target="main"
+            hx-swap="innerHTML"
+        >
+            <img src="/static/images/svg/plus.svg" alt="New Note" />
+            New Note
+        </a>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <input
+            type="text"
+            id="search-input"
+            placeholder="Search notes by title or content..."
+            class="search-input"
+        />
+        <button
+            id="clear-search"
+            class="clear-search-btn"
+            style="display: none"
+        >
+            <img src="/static/images/svg/x-dark.svg" alt="Clear" />
+        </button>
+    </div>
+
+    <!-- Notes List -->
+    <div id="notes-list" class="notes-list">
+        <!-- Notes will be loaded here via JavaScript -->
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="pagination">
+        <!-- Pagination will be loaded here via JavaScript -->
+    </div>
+</div>
+
+<script>
+    (function () {
+        // Prevent variable conflicts when loaded via HTMX
+        let currentPage = 1;
+        let currentSearch = "";
+        let isLoading = false;
+
+        // Simple toast function
+        function showToast(message, type = "info") {
+            const toast = document.createElement("div");
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                ${type === "success" ? "background: #48bb78;" : type === "error" ? "background: #e53e3e;" : "background: #4299e1;"}
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => (toast.style.opacity = "1"), 10);
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Load notes function
+        async function loadNotes(page = 1, search = "") {
+            if (isLoading) return;
+            isLoading = true;
+
+            try {
+                const params = new URLSearchParams({
+                    page: page,
+                    limit: 10,
+                });
+
+                if (search) {
+                    params.append("search", search);
+                }
+
+                const response = await fetch(`/api/markdown_notes?${params}`);
+                const data = await response.json();
+
+                renderNotes(data.notes || []);
+                renderPagination(data);
+
+                currentPage = page;
+                currentSearch = search;
+            } catch (error) {
+                console.error("Error loading notes:", error);
+                document.getElementById("notes-list").innerHTML =
+                    '<p class="error">Failed to load notes. Please try again.</p>';
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Render notes
+        function renderNotes(notes) {
+            const notesList = document.getElementById("notes-list");
+
+            if (notes.length === 0) {
+                notesList.innerHTML = currentSearch
+                    ? '<p class="no-results">No notes found matching your search.</p>'
+                    : '<p class="no-notes">No notes yet. <a href="/markdown_notes/new" hx-get="/markdown_notes/new" hx-target="main" hx-swap="innerHTML">Create your first note!</a></p>';
+                return;
+            }
+
+            const notesHtml = notes
+                .map(
+                    (note) => `
+            <div class="note-item">
+                <div class="note-content">
+                    <h3 class="note-title">${escapeHtml(note.title)}</h3>
+                    <p class="note-preview">${escapeHtml(truncateText(note.content, 150))}</p>
+                    <div class="note-meta">
+                        <span class="note-date">Updated: ${formatDate(note.updated_at)}</span>
+                    </div>
+                </div>
+                <div class="note-actions">
+                    <a href="/markdown_notes/${note.id}"
+                       hx-get="/markdown_notes/${note.id}"
+                       hx-target="main"
+                       hx-swap="innerHTML"
+                       class="view-btn"
+                       title="View Note">
+                        <img src="/static/images/svg/view.svg" alt="View" />
+                    </a>
+                    <a href="/markdown_notes/${note.id}/edit"
+                       hx-get="/markdown_notes/${note.id}/edit"
+                       hx-target="main"
+                       hx-swap="innerHTML"
+                       class="edit-btn"
+                       title="Edit Note">
+                        <img src="/static/images/svg/edit.svg" alt="Edit" />
+                    </a>
+                    <button onclick="deleteNote('${note.id}')"
+                            class="delete-btn"
+                            title="Delete Note">
+                        <img src="/static/images/svg/trash-red.svg" alt="Delete" />
+                    </button>
+                </div>
+            </div>
+        `,
+                )
+                .join("");
+
+            notesList.innerHTML = notesHtml;
+            
+            // Process HTMX attributes for dynamically added content
+            htmx.process(notesList);
+        }
+
+        // Render pagination
+        function renderPagination(data) {
+            const pagination = document.getElementById("pagination");
+
+            if (!data.has_prev && !data.has_next) {
+                pagination.innerHTML = "";
+                return;
+            }
+
+            let paginationHtml = '<div class="pagination-controls">';
+
+            if (data.has_prev) {
+                paginationHtml += `<button onclick="loadNotes(${data.page - 1}, '${currentSearch}')" class="pagination-btn">Previous</button>`;
+            }
+
+            paginationHtml += `<span class="pagination-info">Page ${data.page}</span>`;
+
+            if (data.has_next) {
+                paginationHtml += `<button onclick="loadNotes(${data.page + 1}, '${currentSearch}')" class="pagination-btn">Next</button>`;
+            }
+
+            paginationHtml += "</div>";
+            pagination.innerHTML = paginationHtml;
+        }
+
+        // Delete note function - make it globally accessible
+        window.deleteNote = async function(noteId) {
+            if (
+                !confirm(
+                    "Are you sure you want to delete this note? This action cannot be undone.",
+                )
+            ) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/markdown_notes/${noteId}`, {
+                    method: "DELETE",
+                });
+
+                if (response.ok) {
+                    loadNotes(currentPage, currentSearch);
+                    showToast("Note deleted successfully", "success");
+                } else {
+                    showToast("Failed to delete note", "error");
+                }
+            } catch (error) {
+                console.error("Error deleting note:", error);
+                showToast("Failed to delete note", "error");
+            }
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return "";
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + "...";
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return (
+                date.toLocaleDateString() +
+                " " +
+                date.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                })
+            );
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById("search-input");
+        const clearSearchBtn = document.getElementById("clear-search");
+        let searchTimeout;
+
+        searchInput.addEventListener("input", function () {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            clearSearchBtn.style.display = query ? "block" : "none";
+
+            searchTimeout = setTimeout(() => {
+                loadNotes(1, query);
+            }, 300);
+        });
+
+        clearSearchBtn.addEventListener("click", function () {
+            searchInput.value = "";
+            clearSearchBtn.style.display = "none";
+            loadNotes(1, "");
+        });
+
+        // Load initial notes
+        document.addEventListener("DOMContentLoaded", function () {
+            loadNotes();
+        });
+
+        // Load notes when this template is swapped in via HTMX
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", function () {
+                loadNotes();
+            });
+        } else {
+            loadNotes();
+        }
+    })(); // Close the IIFE
+</script>
+{{ end }}

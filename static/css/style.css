@@ -71,12 +71,12 @@ body {
         font-size: 1rem;
         line-height: 1.3;
     }
-    
+
     .hn-inline-meta {
         gap: 8px;
         font-size: 0.7rem;
     }
-    
+
     .hn-source {
         font-size: 0.65rem;
         padding: 1px 5px;
@@ -389,54 +389,54 @@ header {
         right: -20px;
         left: auto;
     }
-    
+
     .notification-item {
         padding: 10px 12px;
         gap: 8px;
     }
-    
+
     .notification-header {
         padding: 12px 16px;
     }
-    
+
     .notification-content {
         min-width: 0;
         flex: 1;
         margin-right: 8px;
     }
-    
+
     .notification-title {
         font-size: 13px;
         line-height: 1.2;
     }
-    
+
     .notification-message {
         font-size: 12px;
         line-height: 1.3;
     }
-    
+
     .notification-time {
         font-size: 10px;
     }
-    
+
     .notification-dismiss {
         flex-shrink: 0;
         width: 32px;
         height: 32px;
         padding: 4px;
     }
-    
+
     .notification-dismiss img {
         width: 14px;
         height: 14px;
     }
-    
+
     .notification-icon {
         width: 28px;
         height: 28px;
         margin-right: 8px;
     }
-    
+
     .notification-icon img {
         width: 14px;
         height: 14px;
@@ -448,15 +448,15 @@ header {
         width: 280px;
         right: -10px;
     }
-    
+
     .notification-item {
         padding: 8px 10px;
     }
-    
+
     .notification-content {
         margin-right: 6px;
     }
-    
+
     .notification-dismiss {
         width: 30px;
         height: 30px;
@@ -469,30 +469,30 @@ header {
         width: 260px;
         right: 0px;
     }
-    
+
     .notification-item {
         padding: 8px;
     }
-    
+
     .notification-title {
         font-size: 12px;
     }
-    
+
     .notification-message {
         font-size: 11px;
     }
-    
+
     .notification-dismiss {
         width: 28px;
         height: 28px;
         padding: 2px;
     }
-    
+
     .notification-dismiss img {
         width: 12px;
         height: 12px;
     }
-    
+
     .notification-icon {
         width: 24px;
         height: 24px;
@@ -507,19 +507,19 @@ header {
         right: 10px;
         max-width: calc(100vw - 20px);
     }
-    
+
     .notification-item {
         padding: 6px 8px;
     }
-    
+
     .notification-header {
         padding: 10px 12px;
     }
-    
+
     .notification-header h3 {
         font-size: 14px;
     }
-    
+
     .notification-dismiss {
         width: 26px;
         height: 26px;
@@ -620,7 +620,7 @@ main {
         box-sizing: border-box;
         width: 100%;
     }
-    
+
     /* Ultra compact card styling for tablets */
     .card {
         padding: 0.4rem;
@@ -632,84 +632,84 @@ main {
         overflow: hidden;
         box-sizing: border-box;
     }
-    
+
     .card h2, .card h3 {
         font-size: 1rem;
         margin-bottom: 0.3rem;
         line-height: 1.2;
     }
-    
+
     /* Ultra compact habits styling */
     .habit-item {
         padding: 0.3rem;
         margin-bottom: 0.2rem;
         font-size: 0.75rem;
     }
-    
+
     .habit-name {
         font-size: 0.8rem;
         font-weight: 500;
         text-align: center;
         width: 100%;
     }
-    
+
     /* Ultra compact medications styling */
     .medication-item, .medication-daily-item {
         padding: 0.2rem;
         margin-bottom: 0.1rem;
         font-size: 0.65rem;
     }
-    
+
     .medication-daily-header {
         padding: 0.1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-    
+
     .medication-name-with-notes {
         display: flex;
         align-items: center;
         gap: 0.3rem;
         flex: 1;
     }
-    
+
     .medication-name-with-notes h4 {
         font-size: 0.7rem;
         margin: 0;
         font-weight: 500;
     }
-    
+
     .medication-daily-details {
         display: inline-flex;
         gap: 0.2rem;
         flex-wrap: wrap;
         margin-left: 0.5rem;
     }
-    
+
     .dosage-badge, .frequency-badge, .duration-badge {
         font-size: 0.55rem;
         padding: 0.05rem 0.2rem;
         border-radius: 3px;
         white-space: nowrap;
     }
-    
+
     .dose-btn {
         font-size: 0.6rem;
         padding: 0.15rem 0.3rem;
         border-radius: 4px;
     }
-    
+
     .medication-daily-left {
         flex: 1;
         min-width: 0;
     }
-    
+
     .medication-daily-actions {
         flex-shrink: 0;
         margin-left: 0.3rem;
     }
-    
+
     /* Improved todos styling */
     .todo-item {
         padding: 0.4rem !important;
@@ -719,112 +719,112 @@ main {
         align-items: center !important;
         justify-content: space-between !important;
     }
-    
+
     .todo-text {
         font-size: 0.9rem !important;
         flex: 1 !important;
         margin-left: 0.5rem !important;
     }
-    
+
     .todo-date {
         font-size: 0.55rem;
         margin-left: 0.3rem;
         color: #666;
     }
-    
+
     .todo-delete-btn {
         font-size: 0.6rem;
         padding: 0.05rem 0.2rem;
         margin-left: 0.2rem;
     }
-    
+
     .older-todos-title {
         font-size: 0.75rem;
         margin: 0.3rem 0 0.2rem 0;
         font-weight: 600;
     }
-    
+
     .older-todo-list {
         margin-top: 0.2rem;
     }
-    
+
     /* Very compact notes styling */
     .notes textarea {
         font-size: 0.75rem;
         padding: 0.5rem;
         min-height: 60px;
     }
-    
+
     /* Very compact mood styling */
     .mood-rating {
         font-size: 0.75rem;
     }
-    
+
     .mood-rating button {
         padding: 0.3rem 0.4rem;
         font-size: 0.7rem;
         margin: 0.1rem;
     }
-    
+
     /* Very compact workout styling */
     .workout-item, .exercise-item {
         padding: 0.2rem;
         margin-bottom: 0.2rem;
         font-size: 0.7rem;
     }
-    
+
     .workout-select {
         font-size: 0.7rem;
         padding: 0.3rem;
         margin-bottom: 0.3rem;
     }
-    
+
     .exercise-group {
         margin: 0.3rem 0;
     }
-    
+
     .form-row {
         margin-bottom: 0.2rem;
     }
-    
+
     .form-row label {
         font-size: 0.7rem;
         margin-bottom: 0.1rem;
     }
-    
+
     .workout-button {
         font-size: 0.65rem;
         padding: 0.3rem 0.5rem;
         margin-top: 0.3rem;
     }
-    
+
     /* Very small button sizes */
     button {
         padding: 0.2rem 0.4rem;
         font-size: 0.65rem;
     }
-    
+
     /* Very compact form inputs */
     input, textarea, select {
         padding: 0.25rem;
         font-size: 0.7rem;
     }
-    
+
     /* Extra compact mood section */
     .mood label {
         margin: 0.1rem;
     }
-    
+
     .mood span {
         font-size: 1.2rem;
         padding: 0.2rem;
     }
-    
+
     /* Compact form sections */
     form {
         margin-top: 0.3rem;
     }
-    
+
     /* Ultra compact lists - remove gap */
     .list {
         margin: 0.2rem 0;
@@ -832,7 +832,7 @@ main {
         display: flex;
         flex-direction: column;
     }
-    
+
     /* Prevent overflow and ensure responsive behavior */
     .card, .habit-item, .medication-item, .todo-item, .workout-item {
         max-width: 100%;
@@ -840,7 +840,7 @@ main {
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
-    
+
     /* Make sure the grid doesn't cause horizontal overflow */
     .grid-container {
         max-width: 100vw;
@@ -848,7 +848,7 @@ main {
         margin: 0 auto;
         overflow-x: hidden;
     }
-    
+
     /* Ultra compact main container */
     main {
         padding: 0.2rem;
@@ -872,7 +872,7 @@ main {
         border-radius: 12px !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
     }
-    
+
     .medication-daily-header {
         display: flex !important;
         justify-content: space-between !important;
@@ -881,7 +881,7 @@ main {
         flex-wrap: wrap !important;
         gap: 0.3rem !important;
     }
-    
+
     .medication-name-with-notes {
         display: flex !important;
         align-items: center !important;
@@ -889,7 +889,7 @@ main {
         flex: 1 !important;
         min-width: 0 !important;
     }
-    
+
     .medication-name-with-notes h4 {
         font-size: 0.9rem !important;
         margin: 0 !important;
@@ -897,13 +897,13 @@ main {
         color: #2d3748 !important;
         line-height: 1.2 !important;
     }
-    
+
     .notes-icon {
         flex-shrink: 0 !important;
         width: 16px !important;
         height: 16px !important;
     }
-    
+
     .medication-daily-details {
         display: flex !important;
         gap: 0.3rem !important;
@@ -911,7 +911,7 @@ main {
         margin-top: 0.3rem !important;
         width: 100% !important;
     }
-    
+
     .dosage-badge, .frequency-badge, .duration-badge {
         font-size: 0.7rem !important;
         padding: 0.2rem 0.4rem !important;
@@ -919,14 +919,14 @@ main {
         white-space: nowrap !important;
         font-weight: 500 !important;
     }
-    
+
     .medication-daily-actions {
         align-self: flex-start !important;
         margin-top: 0.3rem !important;
         margin-left: 0 !important;
         width: 100% !important;
     }
-    
+
     .dose-btn {
         font-size: 0.8rem !important;
         padding: 0.5rem 1rem !important;
@@ -935,14 +935,14 @@ main {
         width: 100% !important;
         box-sizing: border-box !important;
     }
-    
+
     /* Zero padding for cards to maximize space */
     .card {
         padding: 0rem !important;
         margin-bottom: 0.8rem !important;
         border-radius: 16px !important;
     }
-    
+
     /* Force override any conflicting grid styles */
     .grid-container {
         padding: 0.2rem !important;
@@ -950,30 +950,30 @@ main {
         width: 100% !important;
         max-width: 100vw !important;
     }
-    
+
     /* Override any large main padding */
     main {
         padding: 0.2rem !important;
         margin: 0 !important;
     }
-    
+
     /* Smaller date card for fold view */
     .date-card {
         margin-top: 5rem !important;
         padding: 1rem !important;
         margin-bottom: 1rem !important;
     }
-    
+
     .date-card h1 {
         font-size: 1.5rem !important;
         margin-bottom: 0.3rem !important;
     }
-    
+
     .date-card p {
         font-size: 0.9rem !important;
         margin: 0 !important;
     }
-    
+
     /* Balanced mood section - readable but constrained */
     .mood {
         gap: 0.2rem !important;
@@ -982,7 +982,7 @@ main {
         flex-wrap: wrap !important;
         justify-content: center !important;
     }
-    
+
     .mood label {
         padding: 0.3rem !important;
         margin: 0.05rem !important;
@@ -992,18 +992,18 @@ main {
         flex-direction: column !important;
         align-items: center !important;
     }
-    
+
     .mood label span {
         font-size: 1.2rem !important;
         padding: 0.1rem !important;
     }
-    
+
     .mood input[type="radio"] {
         width: 0.7rem !important;
         height: 0.7rem !important;
         margin-bottom: 0.2rem !important;
     }
-    
+
     /* Readable notes textarea */
     .notes textarea {
         font-size: 1rem !important;
@@ -1013,12 +1013,12 @@ main {
         width: 100% !important;
         box-sizing: border-box !important;
     }
-    
+
     .notes button {
         font-size: 0.9rem !important;
         padding: 0.6rem 1rem !important;
     }
-    
+
     /* Readable workout section */
     .workout-select {
         font-size: 0.9rem !important;
@@ -1027,18 +1027,18 @@ main {
         width: 100% !important;
         box-sizing: border-box !important;
     }
-    
+
     .exercise-group {
         margin: 0.5rem 0 !important;
         gap: 0.4rem !important;
     }
-    
+
     .form-row {
         margin-bottom: 0.4rem !important;
         gap: 0.5rem !important;
         flex-wrap: wrap !important;
     }
-    
+
     .form-row input {
         padding: 0.5rem !important;
         font-size: 0.9rem !important;
@@ -1046,149 +1046,149 @@ main {
         flex-shrink: 1 !important;
         max-width: 100px !important;
     }
-    
+
     .form-row label {
         font-size: 0.9rem !important;
         white-space: nowrap !important;
     }
-    
+
     .workout-button {
         font-size: 0.9rem !important;
         padding: 0.6rem 1rem !important;
     }
-    
+
     .exercise-show {
         font-size: 0.9rem !important;
         padding: 0.5rem !important;
     }
-    
+
     /* Grid layout for overlay-links on tablet/fold */
     .overlay-links {
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .overlay-links li a {
         flex-direction: column !important;
         text-align: center !important;
         padding: 1.5rem 1rem !important;
     }
-    
+
     .overlay-links li a img {
         margin-right: 0 !important;
         margin-bottom: 0.5rem !important;
     }
-    
+
     /* Grid layout for habits page on tablet/fold */
     .habits-container {
         padding: 1rem !important;
         max-width: 100% !important;
     }
-    
+
     .habits-container h1 {
         font-size: 1.5rem !important;
         padding: 1rem !important;
         margin-top: 5rem !important;
         margin-bottom: 1.5rem !important;
     }
-    
+
     #habits-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .habit-item {
         padding: 1rem !important;
         margin-bottom: 0 !important;
         border-radius: 16px !important;
         flex-direction: column !important;
     }
-    
+
     .habit-header {
         margin-bottom: 0.8rem !important;
     }
-    
+
     .habit-header h3 {
         font-size: 1rem !important;
         margin-bottom: 0.5rem !important;
     }
-    
+
     .habit-days {
         gap: 0.3rem !important;
     }
-    
+
     .day-button {
         font-size: 0.8rem !important;
         padding: 0.4rem !important;
         min-width: 2rem !important;
     }
-    
+
     #add-habit-form {
         padding: 1rem !important;
         margin-bottom: 1.5rem !important;
         border-radius: 16px !important;
         gap: 0.5rem !important;
     }
-    
+
     #add-habit-form input {
         font-size: 0.9rem !important;
         padding: 0.7rem !important;
     }
-    
+
     #add-habit-form button {
         padding: 0.7rem !important;
     }
-    
+
     /* Grid layout for medications page on tablet/fold */
     #medications-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .medication-item {
         padding: 0 !important;
         margin-bottom: 0 !important;
         border-radius: 16px !important;
     }
-    
+
     .medication-card {
         padding: 1rem !important;
         border-radius: 16px !important;
         position: relative !important;
     }
-    
+
     .medication-name {
         font-size: 1rem !important;
         margin-bottom: 0.5rem !important;
     }
-    
+
     .medication-details {
         margin-bottom: 0.8rem !important;
         gap: 0.3rem !important;
     }
-    
+
     .medication-actions {
         top: 0.5rem !important;
         right: 3rem !important;
     }
-    
+
     .medication-actions button {
         padding: 0.4rem !important;
         margin-left: 0.2rem !important;
     }
-    
+
     .medication-days {
         gap: 0.3rem !important;
     }
-    
+
     .medication-days .day-button {
         font-size: 0.8rem !important;
         padding: 0.4rem !important;
         min-width: 2rem !important;
     }
-    
+
     #add-medication-form {
         padding: 1rem !important;
         margin-bottom: 1.5rem !important;
@@ -1197,76 +1197,76 @@ main {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
     }
-    
+
     #add-medication-form input,
     #add-medication-form select {
         font-size: 0.8rem !important;
         padding: 0.6rem !important;
     }
-    
+
     #add-medication-form textarea {
         grid-column: 1 / -1 !important;
         font-size: 0.8rem !important;
         padding: 0.6rem !important;
     }
-    
+
     #add-medication-form .scheduled-days-section {
         grid-column: 1 / -1 !important;
     }
-    
+
     #add-medication-form button {
         grid-column: 1 / -1 !important;
         padding: 0.7rem !important;
         justify-self: end !important;
         width: auto !important;
     }
-    
+
     /* Grid layout for workout plans page on tablet/fold */
     .workout-plan-container {
         padding: 1rem !important;
         max-width: 100% !important;
     }
-    
+
     .workout-plan-container h1 {
         font-size: 1.5rem !important;
         padding: 1rem !important;
         margin-top: 5rem !important;
         margin-bottom: 1.5rem !important;
     }
-    
+
     #workout-plans-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .workout-plan-item {
         padding: 0 !important;
         margin-bottom: 0 !important;
         border-radius: 16px !important;
     }
-    
+
     .workout-plan-header {
         padding: 1rem !important;
         border-radius: 16px !important;
     }
-    
+
     .workout-plan-title h2 {
         font-size: 0.9rem !important;
         margin: 0 !important;
         line-height: 1.2 !important;
     }
-    
+
     .workout-plan-actions {
         gap: 0.3rem !important;
     }
-    
+
     .workout-plan-actions button {
         padding: 0.4rem !important;
         width: 1.8rem !important;
         height: 1.8rem !important;
     }
-    
+
     .add-workout-plan-form {
         padding: 1rem !important;
         margin-bottom: 1.5rem !important;
@@ -1274,35 +1274,35 @@ main {
         gap: 0.5rem !important;
         grid-column: 1 / -1 !important;
     }
-    
+
     .add-workout-plan-form input {
         font-size: 0.9rem !important;
         padding: 0.7rem !important;
     }
-    
+
     .add-workout-plan-form button {
         padding: 0.7rem !important;
     }
-    
+
     /* Grid layout for TV shows page on tablet/fold */
     .shows-container {
         padding: 1rem !important;
         max-width: 100% !important;
     }
-    
+
     .shows-container h1 {
         font-size: 1.5rem !important;
         padding: 1rem !important;
         margin-top: 5rem !important;
         margin-bottom: 1.5rem !important;
     }
-    
+
     .shows-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .show-item {
         padding: 0.8rem !important;
         margin-bottom: 0 !important;
@@ -1310,77 +1310,77 @@ main {
         background: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
     }
-    
+
     .show-poster {
         width: 60px !important;
         height: 80px !important;
         margin-bottom: 0.5rem !important;
         flex-shrink: 0 !important;
     }
-    
+
     .show-poster img {
         width: 100% !important;
         height: 100% !important;
         object-fit: cover !important;
         border-radius: 6px !important;
     }
-    
+
     .show-info {
         padding: 0 !important;
     }
-    
+
     .show-info h3 {
         font-size: 0.9rem !important;
         margin-bottom: 0.3rem !important;
         line-height: 1.2 !important;
         font-weight: 600 !important;
     }
-    
+
     .show-meta {
         margin-bottom: 0.4rem !important;
         gap: 0.2rem !important;
         flex-wrap: wrap !important;
     }
-    
+
     .show-network, .show-status {
         font-size: 0.7rem !important;
         padding: 0.1rem 0.3rem !important;
         border-radius: 4px !important;
         white-space: nowrap !important;
     }
-    
+
     .episode-progress {
         margin-bottom: 0.5rem !important;
     }
-    
+
     .episode-count {
         font-size: 0.75rem !important;
         margin-bottom: 0.2rem !important;
         display: block !important;
     }
-    
+
     .progress-bar {
         height: 4px !important;
         border-radius: 2px !important;
     }
-    
+
     .show-actions {
         gap: 0.2rem !important;
         flex-wrap: wrap !important;
     }
-    
+
     .show-actions button {
         padding: 0.3rem 0.5rem !important;
         font-size: 0.7rem !important;
         border-radius: 6px !important;
         line-height: 1 !important;
     }
-    
+
     .btn-primary {
         min-width: auto !important;
         width: auto !important;
     }
-    
+
     .btn-sync, .btn-danger {
         width: 1.5rem !important;
         height: 1.5rem !important;
@@ -1389,192 +1389,192 @@ main {
         align-items: center !important;
         justify-content: center !important;
     }
-    
+
     .btn-sync img, .btn-danger img {
         width: 12px !important;
         height: 12px !important;
     }
-    
+
     /* Fix episodes page header being hidden behind navigation */
     .episodes-container {
         padding-top: 5rem !important;
     }
-    
+
     .episodes-header {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     .show-title-card {
         margin-top: 0 !important;
         padding-top: 1rem !important;
     }
-    
+
     /* Grid layout for projects page on tablet/fold */
     .habits-container:has(#projects-list) {
         padding: 1rem !important;
         max-width: 100% !important;
     }
-    
+
     .habits-container:has(#projects-list) h1 {
         font-size: 1.5rem !important;
         padding: 1rem !important;
         margin-top: 5rem !important;
         margin-bottom: 1.5rem !important;
     }
-    
+
     .projects-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .project-card {
         padding: 1rem !important;
         margin-bottom: 0 !important;
         border-radius: 12px !important;
         min-height: auto !important;
     }
-    
+
     .project-header h3 {
         font-size: 1rem !important;
         margin-bottom: 0.5rem !important;
         line-height: 1.2 !important;
     }
-    
+
     .project-description {
         font-size: 0.8rem !important;
         margin-bottom: 0.6rem !important;
         -webkit-line-clamp: 2 !important;
     }
-    
+
     .project-stats {
         gap: 0.3rem !important;
         margin-top: 0.5rem !important;
     }
-    
+
     .project-stats span {
         font-size: 0.7rem !important;
         padding: 0.2rem 0.4rem !important;
     }
-    
+
     .project-view {
         margin-top: 0.6rem !important;
         padding-top: 0.6rem !important;
     }
-    
+
     .view-button {
         padding: 0.5rem !important;
         font-size: 0.8rem !important;
     }
-    
+
     .project-actions {
         gap: 0.3rem !important;
     }
-    
+
     .edit-btn, .delete-btn {
         width: 1.8rem !important;
         height: 1.8rem !important;
         padding: 0.3rem !important;
     }
-    
+
     .edit-btn img, .delete-btn img {
         width: 12px !important;
         height: 12px !important;
     }
-    
+
     #add-project-form {
         padding: 1rem !important;
         margin-bottom: 1.5rem !important;
         gap: 0.5rem !important;
         grid-column: 1 / -1 !important;
     }
-    
+
     #add-project-form input[type="text"] {
         font-size: 0.9rem !important;
         padding: 0.7rem !important;
     }
-    
+
     #add-project-form button {
         width: 2.5rem !important;
         height: 2.5rem !important;
         padding: 0.6rem !important;
     }
-    
+
     /* Grid layout for News Dashboard page on tablet/fold */
     .news-container {
         padding: 1rem !important;
         max-width: 100% !important;
         margin-top: 5rem !important;
     }
-    
+
     .news-header {
         margin-bottom: 1.5rem !important;
         padding: 1.5rem !important;
         border-radius: 12px !important;
     }
-    
+
     .news-title h1 {
         font-size: 1.8rem !important;
         margin-bottom: 0.5rem !important;
     }
-    
+
     .news-subtitle {
         font-size: 1rem !important;
     }
-    
+
     .news-sections {
         padding: 1rem !important;
         margin-top: 1.5rem !important;
     }
-    
+
     .section-buttons {
         gap: 0.8rem !important;
         margin-bottom: 1rem !important;
     }
-    
+
     .section-btn {
         padding: 0.8rem 1.2rem !important;
         font-size: 0.8rem !important;
         gap: 0.5rem !important;
     }
-    
+
     .news-search {
         padding: 1rem 1.5rem !important;
         margin-top: 1rem !important;
     }
-    
+
     #news-search {
         padding: 0.8rem 2.5rem 0.8rem 1rem !important;
         font-size: 0.8rem !important;
     }
-    
+
     /* Force Kuwait and Reddit news into 2-column grid layout */
     .articles-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .articles-grid.kuwait-layout {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     .articles-grid.reddit-layout {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
     }
-    
+
     /* Keep Hacker News in original single-column layout */
     .articles-grid.hackernews-layout {
         display: grid !important;
         grid-template-columns: 1fr !important;
         gap: 0.8rem !important;
     }
-    
+
     .articles-grid.hackernews-layout .news-article {
         display: flex !important;
         padding: 1rem !important;
@@ -1582,58 +1582,58 @@ main {
         align-items: center !important;
         min-height: auto !important;
     }
-    
+
     .articles-grid.hackernews-layout .article-content {
         padding: 0 !important;
         flex: 1 !important;
     }
-    
+
     .articles-grid.hackernews-layout .article-title {
         margin: 0 !important;
         font-size: 0.9rem !important;
         font-weight: 500 !important;
         line-height: 1.4 !important;
     }
-    
+
     .articles-grid.hackernews-layout .hn-inline-meta {
         gap: 0.5rem !important;
         font-size: 0.7rem !important;
     }
-    
+
     .articles-grid.hackernews-layout .article-actions {
         display: none !important;
     }
-    
+
     .articles-grid.hackernews-layout .article-summary {
         display: none !important;
     }
-    
+
     /* Compact news articles for fold view */
     .news-article {
         border-radius: 12px !important;
         overflow: hidden !important;
     }
-    
+
     .article-image {
         height: 120px !important;
     }
-    
+
     .article-content {
         padding: 1rem !important;
     }
-    
+
     .article-meta {
         margin-bottom: 0.6rem !important;
         gap: 0.4rem !important;
         font-size: 0.7rem !important;
     }
-    
+
     .article-title {
         font-size: 0.9rem !important;
         margin-bottom: 0.6rem !important;
         line-height: 1.3 !important;
     }
-    
+
     .article-summary {
         font-size: 0.8rem !important;
         margin-bottom: 0.8rem !important;
@@ -1643,64 +1643,64 @@ main {
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
     }
-    
+
     .article-actions {
         gap: 0.4rem !important;
     }
-    
+
     .read-more-btn, .external-link-btn {
         font-size: 0.7rem !important;
         padding: 0.4rem 0.6rem !important;
     }
-    
+
     .news-stats {
         margin-bottom: 1.5rem !important;
         padding: 1rem !important;
         font-size: 0.8rem !important;
     }
-    
+
     .news-pagination {
         margin-top: 2rem !important;
         padding: 1rem !important;
         gap: 1rem !important;
     }
-    
+
     .pagination-btn {
         padding: 0.8rem 1.2rem !important;
         font-size: 0.8rem !important;
     }
-    
+
     /* Fix full article page header being hidden behind navigation */
     .full-article-container {
         padding-top: 5rem !important;
     }
-    
+
     .article-header {
         margin-top: 0 !important;
         padding-top: 1rem !important;
     }
-    
+
     /* Fix profile page header being hidden behind navigation */
     .profile-card {
         margin-top: 5rem !important;
         padding-top: 1rem !important;
     }
-    
+
     /* Fix notes page header being hidden behind navigation */
     .notes-container {
         padding-top: 5rem !important;
     }
-    
+
     .notes-header {
         margin-top: 0 !important;
         padding-top: 1rem !important;
     }
-    
+
     /* Fix view page header being hidden behind navigation */
     .view-container {
         padding-top: 5rem !important;
     }
-    
+
     .view-header {
         margin-top: 0 !important;
         padding-top: 1rem !important;
@@ -1714,19 +1714,19 @@ main {
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
     }
-    
+
     /* Slightly compact styling for large tablets */
     .card {
         padding: 1.4rem;
         margin-bottom: 1.4rem;
         font-size: 0.95rem;
     }
-    
+
     .card h2, .card h3 {
         font-size: 1.15rem;
         margin-bottom: 0.9rem;
     }
-    
+
     /* Prevent overflow and ensure responsive behavior */
     .card, .habit-item, .medication-item, .todo-item, .workout-item {
         max-width: 100%;
@@ -4218,7 +4218,7 @@ main {
 }
 
 /* Mobile responsive overlay menu */
-@media (max-width: 768px) {
+@media (max-width: 739px) {
     .overlay-menu {
         padding: 0;
     }
@@ -4249,25 +4249,25 @@ main {
     }
 
     .overlay-links {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
         margin-bottom: 0.5rem;
     }
 
     .overlay-links li a {
-        flex-direction: row;
-        font-size: 1.25rem;
-        padding: 1rem 1.25rem;
+        flex-direction: column;
+        font-size: 1rem;
+        padding: 1rem 0.5rem;
         border-radius: 12px;
         min-height: auto;
-        text-align: left;
+        text-align: center;
     }
 
     .overlay-links li a img {
         width: 20px;
         height: 20px;
-        margin-right: 0.75rem;
-        margin-bottom: 0;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
     }
 
     .center {
@@ -7840,59 +7840,59 @@ main {
         padding: 0.75rem 1rem;
         border-radius: 16px;
     }
-    
+
     .header-controls {
         gap: 0.75rem;
     }
-    
+
     .header-controls h1 {
         font-size: 1.5rem;
     }
-    
+
     .back-btn-icon,
     .summary-toggle-btn-icon {
         width: 36px;
         height: 36px;
     }
-    
+
     .back-btn-icon img,
     .summary-toggle-btn-icon img {
         width: 18px;
         height: 18px;
     }
-    
+
     .season-selector-card,
     .season-header-card {
         padding: 0.75rem 1rem;
         border-radius: 12px;
     }
-    
+
     .season-selector {
         gap: 12px;
     }
-    
+
     .season-selector label {
         font-size: 14px;
     }
-    
+
     .season-selector select {
         padding: 10px 12px;
         font-size: 14px;
     }
-    
+
     .season-info h2 {
         font-size: 1.1rem;
     }
-    
+
     .season-info {
         gap: 8px;
     }
-    
+
     .episode-count {
         font-size: 11px;
         padding: 2px 6px;
     }
-    
+
     .season-icon img {
         width: 20px;
         height: 20px;
@@ -7903,58 +7903,58 @@ main {
     .episodes-header {
         margin-bottom: 1rem;
     }
-    
+
     .show-title-card {
         padding: 0.5rem 0.75rem;
     }
-    
+
     .header-controls {
         gap: 0.5rem;
     }
-    
+
     .header-controls h1 {
         font-size: 1.25rem;
     }
-    
+
     .back-btn-icon,
     .summary-toggle-btn-icon {
         width: 32px;
         height: 32px;
     }
-    
+
     .back-btn-icon img,
     .summary-toggle-btn-icon img {
         width: 16px;
         height: 16px;
     }
-    
+
     .season-selector {
         flex-direction: column;
         gap: 8px;
         align-items: stretch;
     }
-    
+
     .season-selector label {
         justify-content: center;
     }
-    
+
     .season-header-card {
         padding: 0.5rem 0.75rem;
     }
-    
+
     .season-info h2 {
         font-size: 1rem;
     }
-    
+
     .season-info {
         gap: 6px;
     }
-    
+
     .episode-count {
         font-size: 10px;
         padding: 2px 5px;
     }
-    
+
     .season-icon img {
         width: 18px;
         height: 18px;
@@ -8139,70 +8139,70 @@ main {
         padding: 10px;
         gap: 10px;
     }
-    
+
     .episode-thumbnail {
         width: 40px;
         height: 40px;
     }
-    
+
     .episode-thumbnail-placeholder {
         font-size: 10px;
     }
-    
+
     .episode-title {
         font-size: 14px;
         line-height: 1.3;
         margin: 0 0 2px 0;
     }
-    
+
     .episode-meta-inline {
         gap: 8px;
         font-size: 11px;
     }
-    
+
     .episode-number {
         padding: 1px 6px;
         font-size: 10px;
     }
-    
+
     .episode-actions-compact {
         gap: 6px;
     }
-    
+
     .watch-btn-compact,
     .details-btn-compact {
         width: 30px;
         height: 30px;
     }
-    
+
     .watch-btn-compact img,
     .details-btn-compact img {
         width: 14px;
         height: 14px;
     }
-    
+
     .episode-user-data {
         padding: 8px 10px 10px;
         gap: 10px;
     }
-    
+
     .user-rating {
         padding: 2px 8px;
         font-size: 11px;
     }
-    
+
     .rating-label {
         font-size: 12px;
     }
-    
+
     .rating-value {
         font-size: 11px;
     }
-    
+
     .user-notes {
         min-width: auto;
     }
-    
+
     .user-notes p {
         font-size: 12px;
         padding: 6px 8px;
@@ -8213,67 +8213,67 @@ main {
     .episode-item-compact {
         margin-bottom: 8px;
     }
-    
+
     .episode-row {
         padding: 8px;
         gap: 8px;
     }
-    
+
     .episode-thumbnail {
         width: 35px;
         height: 35px;
     }
-    
+
     .episode-title {
         font-size: 13px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    
+
     .episode-meta-inline {
         gap: 6px;
         font-size: 10px;
     }
-    
+
     .episode-number {
         font-size: 9px;
         padding: 1px 4px;
     }
-    
+
     .episode-actions-compact {
         gap: 4px;
     }
-    
+
     .watch-btn-compact,
     .details-btn-compact {
         width: 28px;
         height: 28px;
     }
-    
+
     .watch-btn-compact img,
     .details-btn-compact img {
         width: 12px;
         height: 12px;
     }
-    
+
     .episode-user-data {
         padding: 6px 8px 8px;
         gap: 8px;
     }
-    
+
     .user-rating {
         padding: 2px 6px;
     }
-    
+
     .rating-label {
         font-size: 11px;
     }
-    
+
     .rating-value {
         font-size: 10px;
     }
-    
+
     .user-notes p {
         font-size: 11px;
         padding: 4px 6px;
@@ -8286,16 +8286,16 @@ main {
     .modal-overlay {
         padding: 10px;
     }
-    
+
     .modal-content {
         max-height: 95vh;
     }
-    
+
     .modal-header,
     .modal-body {
         padding: 16px;
     }
-    
+
     .episode-meta {
         flex-wrap: wrap;
         gap: 8px;
@@ -8387,7 +8387,7 @@ main {
         left: 10px;
         max-width: none;
     }
-    
+
     .toast {
         margin-bottom: 8px;
         padding: 12px 16px;
@@ -8531,7 +8531,7 @@ main {
     .show-summary {
         margin: 0 10px 20px 10px;
     }
-    
+
     .show-summary-content {
         flex-direction: column;
         gap: 16px;
@@ -8539,21 +8539,21 @@ main {
         align-items: center;
         text-align: center;
     }
-    
+
     .show-summary-image {
         width: 100px;
         height: 150px;
     }
-    
+
     .show-summary-text {
         align-items: center;
     }
-    
+
     .show-summary-actions {
         justify-content: center;
         width: 100%;
     }
-    
+
     .btn-mark-all-watched {
         width: 100%;
         max-width: 200px;
@@ -8566,104 +8566,104 @@ main {
     .shows-section {
         margin-bottom: 30px;
     }
-    
+
     .section-header {
         padding: 12px 16px;
         margin-bottom: 12px;
         border-radius: 12px;
     }
-    
+
     .section-title {
         flex-direction: row;
         align-items: center;
         gap: 8px;
     }
-    
+
     .section-title h2 {
         font-size: 18px;
         gap: 6px;
         flex: 1;
         min-width: 0;
     }
-    
+
     .section-count {
         font-size: 11px;
         padding: 3px 8px;
         flex-shrink: 0;
     }
-    
+
     .shows-grid {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-    
+
     /* Legacy support for old structure */
     #my-shows-list {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-    
+
     .show-item {
         padding: 12px;
         gap: 12px;
     }
-    
+
     .show-poster,
     .show-poster-placeholder {
         width: 60px;
         height: 90px;
     }
-    
+
     .show-info h3 {
         font-size: 15px;
         margin: 0 0 6px 0;
     }
-    
+
     .show-meta {
         gap: 8px;
         margin: 2px 0 6px 0;
     }
-    
+
     .show-network {
         font-size: 13px;
         margin: 0;
     }
-    
+
     .show-status {
         font-size: 11px;
         padding: 1px 6px;
     }
-    
+
     .episode-progress {
         margin: 6px 0 8px 0;
     }
-    
+
     .episode-count {
         font-size: 12px;
         margin-bottom: 3px;
     }
-    
+
     .progress-bar {
         height: 5px;
     }
-    
+
     .show-actions {
         gap: 4px;
         margin-top: 6px;
         flex-wrap: nowrap;
     }
-    
+
     .btn-primary,
     .btn-sync,
     .btn-danger {
         padding: 4px 8px;
         font-size: 10px;
     }
-    
+
     .btn-primary {
         flex: 1;
     }
-    
+
     .btn-sync img,
     .btn-danger img {
         width: 14px;
@@ -8675,56 +8675,56 @@ main {
     .shows-section {
         margin-bottom: 25px;
     }
-    
+
     .section-header {
         padding: 12px 16px;
         margin-bottom: 12px;
         border-radius: 10px;
     }
-    
+
     .section-title h2 {
         font-size: 16px;
         gap: 5px;
     }
-    
+
     .section-count {
         font-size: 10px;
         padding: 2px 6px;
     }
-    
+
     .show-item {
         padding: 10px;
         gap: 10px;
     }
-    
+
     .show-poster,
     .show-poster-placeholder {
         width: 50px;
         height: 75px;
     }
-    
+
     .show-info h3 {
         font-size: 14px;
         line-height: 1.3;
     }
-    
+
     .show-actions {
         flex-direction: row;
         gap: 3px;
         flex-wrap: nowrap;
     }
-    
+
     .btn-primary,
     .btn-sync,
     .btn-danger {
         padding: 6px 8px;
         font-size: 10px;
     }
-    
+
     .btn-primary {
         flex: 1;
     }
-    
+
     .btn-sync,
     .btn-danger {
         min-width: 24px;
@@ -9144,7 +9144,6 @@ main {
 
 .search-container {
     position: relative;
-    max-width: 400px;
 }
 
 #news-search {
@@ -9180,21 +9179,21 @@ main {
         padding: 15px;
         border-radius: 15px;
     }
-    
+
     .news-title {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .title-content h1 {
         font-size: 1.5rem;
     }
-    
+
     .header-actions {
         gap: 8px;
     }
-    
+
     .header-btn {
         width: 40px;
         height: 40px;
@@ -9202,55 +9201,55 @@ main {
         min-height: 40px;
         padding: 8px;
     }
-    
+
     .header-btn img {
         width: 18px;
         height: 18px;
     }
-    
+
     .section-buttons {
         gap: 8px;
     }
-    
+
     .section-btn {
         padding: 10px 14px;
         font-size: 0.9rem;
     }
-    
+
     .source-toggles {
         gap: 6px;
     }
-    
+
     .source-toggle {
         padding: 5px 10px;
         font-size: 0.8rem;
         min-height: 28px;
     }
-    
+
     /* Reddit mobile styles */
     .reddit-meta {
         gap: 8px;
     }
-    
+
     .reddit-flair {
         font-size: 0.65rem;
         padding: 1px 6px;
         min-width: 20px;
         height: 18px;
     }
-    
+
     .reddit-post-with-image {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .reddit-post-image {
         width: 100%;
         height: 200px;
         max-width: 300px;
         align-self: center;
     }
-    
+
     .reddit-author-info {
         flex-wrap: wrap;
         gap: 8px;
@@ -9262,19 +9261,19 @@ main {
         margin: 5px;
         padding: 12px;
     }
-    
+
     .title-content h1 {
         font-size: 1.25rem;
     }
-    
+
     .news-subtitle {
         font-size: 0.9rem;
     }
-    
+
     .header-actions {
         gap: 6px;
     }
-    
+
     .header-btn {
         width: 36px;
         height: 36px;
@@ -9282,38 +9281,38 @@ main {
         min-height: 36px;
         padding: 6px;
     }
-    
+
     .header-btn img {
         width: 16px;
         height: 16px;
     }
-    
+
     .section-btn {
         padding: 8px 12px;
         font-size: 0.85rem;
         gap: 6px;
     }
-    
+
     .section-btn img {
         width: 16px;
         height: 16px;
     }
-    
+
     .source-toggle {
         padding: 4px 8px;
         font-size: 0.75rem;
         min-height: 26px;
     }
-    
+
     .search-container {
         max-width: 100%;
     }
-    
+
     #news-search {
         padding: 10px 40px 10px 12px;
         font-size: 0.9rem;
     }
-    
+
     /* Reddit mobile styles for smaller screens */
     .reddit-flair {
         font-size: 0.6rem;
@@ -9321,15 +9320,15 @@ main {
         min-width: 18px;
         height: 16px;
     }
-    
+
     .reddit-title {
         font-size: 1rem;
     }
-    
+
     .reddit-author-info {
         font-size: 0.75rem;
     }
-    
+
     .reddit-post-image {
         height: 150px;
     }
@@ -9711,51 +9710,51 @@ body .news-container .header-actions .header-btn.refresh-btn:hover {
         margin: 16px 0;
         grid-template-columns: 1fr !important;
     }
-    
+
     .article-image {
         height: 140px;
     }
-    
+
     .reddit-layout .article-image {
         height: 150px;
     }
-    
+
     .article-content {
         padding: 14px 16px 18px 16px;
     }
-    
+
     .article-title {
         font-size: 1rem;
         margin-bottom: 10px;
     }
-    
+
     .article-summary {
         font-size: 0.9rem;
         margin-bottom: 14px;
     }
-    
+
     .article-actions {
         flex-direction: column;
         gap: 10px;
         align-items: stretch;
     }
-    
+
     .read-more-btn, .external-link-btn {
         justify-content: center;
         text-align: center;
     }
-    
+
     .news-stats {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
         padding: 10px 14px;
     }
-    
+
     .reddit-meta {
         gap: 6px;
     }
-    
+
     .reddit-author-info {
         gap: 8px;
         font-size: 0.8rem;
@@ -9766,49 +9765,1320 @@ body .news-container .header-actions .header-btn.refresh-btn:hover {
     .article-image {
         height: 120px;
     }
-    
+
     .reddit-layout .article-image {
         height: 130px;
     }
-    
+
     .article-content {
         padding: 12px 14px 16px 14px;
     }
-    
+
     .article-title {
         font-size: 0.95rem;
         line-height: 1.3;
     }
-    
+
     .article-summary {
         font-size: 0.85rem;
     }
-    
+
     .read-more-btn {
         padding: 10px 14px;
         font-size: 0.85rem;
     }
-    
+
     .external-link-btn {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
-    
+
     .news-stats {
         padding: 8px 12px;
         margin-bottom: 16px;
     }
-    
+
     .article-count {
         font-size: 0.9rem;
     }
-    
+
     .source-info {
         font-size: 0.85rem;
     }
-    
+
     .reddit-flair {
         font-size: 0.7rem;
         padding: 2px 6px;
+    }
+}
+
+/* ==================== MARKDOWN NOTES STYLES ==================== */
+
+/* Notes List Page */
+.markdown-notes-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 2rem;
+}
+
+.notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notes-header h1 {
+    color: #2d3748;
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.create-note-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 16px;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.create-note-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.5);
+    color: white;
+}
+
+.create-note-btn img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+}
+
+.search-container {
+    position: relative;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 500px;
+    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    font-size: 1rem;
+    box-shadow: 0 8px 20px rgba(31, 38, 135, 0.1);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.search-input::placeholder {
+    color: rgba(45, 55, 72, 0.6);
+    font-style: italic;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 10px rgba(31, 38, 135, 0.1);
+}
+
+.clear-search-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.clear-search-btn img {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+}
+
+.notes-list {
+    min-height: 300px;
+}
+
+/* 2-column grid layout for fold/tablet/desktop (above 740px) */
+@media (min-width: 740px) {
+    .notes-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Safety constraints for note actions on medium-small screens */
+@media (max-width: 900px) and (min-width: 481px) {
+    .note-actions {
+        flex-wrap: wrap;
+        max-width: 100%;
+        gap: 6px;
+    }
+    
+    .note-item {
+        min-width: 0;
+        overflow: hidden;
+    }
+}
+
+.note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(31, 38, 135, 0.1);
+    position: relative;
+    overflow: hidden;
+    min-width: 0; /* Allow flex items to shrink below their content size */
+}
+
+.note-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.note-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(31, 38, 135, 0.15);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.note-item:hover::before {
+    opacity: 1;
+}
+
+.note-content {
+    flex: 1 1 0%;
+    margin-right: 1.5rem;
+    min-width: 0; /* Allow content to shrink and wrap text */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.note-title {
+    color: #2d3748;
+    margin: 0 0 0.75rem 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    line-height: 1.3;
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.note-preview {
+    color: rgba(113, 128, 150, 0.9);
+    margin: 0.75rem 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.note-meta {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.note-date {
+    color: rgba(160, 174, 192, 0.8);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.note-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    flex-shrink: 0; /* Prevent actions from shrinking */
+    flex-wrap: nowrap; /* Keep actions in one line initially */
+    min-width: fit-content; /* Ensure actions maintain their minimum size */
+}
+
+.view-btn, .edit-btn, .delete-btn, .copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 10px rgba(31, 38, 135, 0.1);
+}
+
+.view-btn:hover {
+    background: rgba(66, 153, 225, 0.1);
+    border-color: rgba(66, 153, 225, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(66, 153, 225, 0.2);
+}
+
+.edit-btn:hover {
+    background: rgba(214, 158, 46, 0.1);
+    border-color: rgba(214, 158, 46, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(214, 158, 46, 0.2);
+}
+
+.delete-btn:hover {
+    background: rgba(197, 48, 48, 0.1);
+    border-color: rgba(197, 48, 48, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(197, 48, 48, 0.2);
+}
+
+.copy-btn:hover {
+    background: rgba(49, 151, 149, 0.1);
+    border-color: rgba(49, 151, 149, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(49, 151, 149, 0.2);
+}
+
+.view-btn img, .edit-btn img, .delete-btn img, .copy-btn img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.8;
+}
+
+.pagination {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pagination-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.pagination-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.pagination-info {
+    color: rgba(113, 128, 150, 0.9);
+    font-weight: 600;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.no-results, .no-notes {
+    text-align: center;
+    color: rgba(113, 128, 150, 0.9);
+    font-size: 1.1rem;
+    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.no-notes a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.no-notes a:hover {
+    text-decoration: underline;
+}
+
+.error {
+    text-align: center;
+    color: #e53e3e;
+    font-size: 1.1rem;
+    padding: 2rem;
+    background: rgba(254, 215, 215, 0.5);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(254, 215, 215, 0.3);
+}
+
+/* Note Editor Styles */
+.markdown-note-editor {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-height: 80vh;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.editor-title h1 {
+    color: #2d3748;
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.save-btn, .cancel-btn, .auto-save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-btn {
+    background: #48bb78;
+    color: white;
+}
+
+.save-btn:hover:not(:disabled) {
+    background: #38a169;
+}
+
+.save-btn:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.cancel-btn:hover {
+    background: #feb2b2;
+    color: #c53030;
+}
+
+.auto-save-indicator {
+    background: #bee3f8;
+    color: #2b6cb0;
+    cursor: default;
+}
+
+.save-btn img, .cancel-btn img, .auto-save-indicator img {
+    width: 16px;
+    height: 16px;
+}
+
+.editor-container {
+    display: flex;
+    gap: 30px;
+    min-height: max(calc(100vh - 250px), 600px);
+}
+
+.editor-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.editor-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #718096;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    color: #4299e1;
+    border-bottom-color: #4299e1;
+}
+
+.tab-btn:hover {
+    color: #4299e1;
+}
+
+.markdown-help {
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.markdown-help h4 {
+    margin: 0 0 16px 0;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.help-item {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.help-item code {
+    background: #edf2f7;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.editor-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.editor-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.title-input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.title-input:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* RTL/LTR Toggle Styles */
+.rtl-toggle-container {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.rtl-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.toggle-text {
+    font-size: 0.9rem;
+    color: #2d3748;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 80px;
+    height: 32px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px;
+    box-shadow: 0 4px 12px rgba(31, 38, 135, 0.1);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 36px;
+    left: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.toggle-option {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #718096;
+    z-index: 1;
+    padding: 0 8px;
+    transition: color 0.3s ease;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(42px);
+}
+
+input:checked + .toggle-slider .toggle-option.right {
+    color: white;
+}
+
+input:not(:checked) + .toggle-slider .toggle-option.left {
+    color: white;
+}
+
+/* RTL toggle mobile responsive styles */
+@media (max-width: 480px) {
+    .rtl-toggle-container {
+        margin-bottom: 1rem;
+    }
+    
+    .rtl-toggle-label {
+        gap: 8px;
+    }
+    
+    .toggle-text {
+        font-size: 0.8rem;
+    }
+    
+    .toggle-switch {
+        width: 70px;
+        height: 28px;
+    }
+    
+    .toggle-slider:before {
+        height: 22px;
+        width: 32px;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(36px);
+    }
+}
+
+.editor-helpers {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.helper-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #4a5568;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.helper-btn:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e0;
+}
+
+.helper-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+.edit-view, .preview-view {
+    flex: 1;
+    display: none;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.edit-view.active, .preview-view.active {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.content-textarea {
+    flex: 1;
+    width: 100%;
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.content-textarea:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.preview-content {
+    flex: 1;
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fafafa;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.empty-preview {
+    color: #a0aec0;
+    font-style: italic;
+    text-align: center;
+    margin-top: 100px;
+}
+
+/* Note View Styles */
+.markdown-note-view {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    flex-wrap: wrap;
+    gap: 1rem;
+    min-height: 60px; /* Ensure minimum height for better layout */
+}
+
+.note-title-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.note-title-section .note-title {
+    color: #2d3748;
+    margin: 0 0 12px 0;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.note-header .note-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-shrink: 0;
+    flex-wrap: nowrap; /* Prevent actions from wrapping unless absolutely necessary */
+    white-space: nowrap;
+}
+
+.edit-btn, .delete-btn, .copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px;
+    max-width: 40px;
+    padding: 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.edit-btn img, .delete-btn img, .copy-btn img {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.edit-btn {
+    background: #fef5e7;
+    color: #d69e2e;
+}
+
+.edit-btn:hover {
+    background: #fed7aa;
+    color: #d69e2e;
+}
+
+.delete-btn {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.delete-btn:hover {
+    background: #feb2b2;
+}
+
+.back-btn {
+    background: #edf2f7;
+    color: #4a5568;
+}
+
+.back-btn:hover {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.copy-btn {
+    background: #e6fffa;
+    color: #319795;
+}
+
+.copy-btn:hover {
+    background: #b2f5ea;
+}
+
+.edit-btn img, .delete-btn img, .back-btn img, .copy-btn img {
+    width: 14px;
+    height: 14px;
+}
+
+.markdown-content {
+    line-height: 1.7;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    color: #1a202c;
+    margin: 1.5em 0 1em 0;
+    font-weight: 600;
+}
+
+.markdown-content h1 {
+    font-size: 1.875rem;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+}
+
+.markdown-content h2 {
+    font-size: 1.5rem;
+}
+
+.markdown-content h3 {
+    font-size: 1.25rem;
+}
+
+.markdown-content p {
+    margin: 1em 0;
+}
+
+.markdown-content strong {
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.markdown-content em {
+    font-style: italic;
+}
+
+.markdown-content code {
+    background: #f7fafc;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #d53f8c;
+}
+
+.markdown-content a {
+    color: #4299e1;
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+
+.markdown-content ul, .markdown-content ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.markdown-content li {
+    margin: 0.5em 0;
+}
+
+.responsive-image {
+    max-width: 300px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 1em 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.responsive-image:hover {
+    transform: scale(1.02);
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.markdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.markdown-table th, .markdown-table td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.markdown-table th {
+    background: #f7fafc;
+    font-weight: 600;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .editor-container {
+        gap: 20px;
+    }
+
+    .editor-sidebar {
+        width: 250px;
+    }
+}
+
+@media (max-width: 992px) {
+    .editor-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .editor-sidebar {
+        width: 100%;
+        order: 2;
+    }
+
+    .editor-main {
+        order: 1;
+    }
+
+    .content-textarea {
+        min-height: 400px;
+    }
+
+    .preview-content {
+        min-height: 400px;
+    }
+}
+
+/* Tablet responsive design for markdown notes */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .markdown-note-view {
+        margin: 20px;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .note-header {
+        gap: 0.75rem;
+    }
+
+    .note-header .note-actions {
+        gap: 6px;
+    }
+
+    .edit-btn, .delete-btn, .copy-btn {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px;
+        max-width: 36px;
+        padding: 6px;
+    }
+
+    .edit-btn img, .delete-btn img, .copy-btn img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .back-btn {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Fold phones and small tablets (740-999px) */
+@media (max-width: 999px) and (min-width: 740px) {
+    .markdown-note-view, .markdown-notes-container {
+        margin: 5em 16px 20px 16px !important; /* Add 5em top margin to avoid header overlap */
+        padding: 20px !important;
+        border-radius: 12px;
+    }
+
+    /* Make create-note-btn more compact in fold view */
+    .create-note-btn {
+        padding: 10px 16px !important;
+        font-size: 0.9rem !important;
+        gap: 6px !important;
+    }
+
+    .create-note-btn img {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .notes-header h1 {
+        font-size: 1.8rem !important;
+    }
+    
+    .markdown-note-editor {
+        margin: 5em 16px 20px 16px !important; /* Add 5em top margin for editor */
+        padding: 20px !important;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .markdown-notes-container, .markdown-note-editor, .markdown-note-view {
+        margin: 10px;
+        padding: 16px;
+        border-radius: 8px;
+    }
+
+    /* Keep notes-header as row but make it more compact */
+    .notes-header {
+        flex-direction: row !important;
+        gap: 8px !important;
+        align-items: center !important;
+        padding: 0.75rem !important;
+    }
+    .notes-header h1 {
+        font-size: 1.4rem !important;
+        margin: 0 !important;
+        flex-shrink: 0;
+    }
+    .create-note-btn {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+        gap: 4px !important;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .create-note-btn img {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    
+    .editor-header, .note-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    .note-header .note-actions {
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap; /* Allow wrapping on mobile only */
+    }
+
+    .edit-btn, .delete-btn, .copy-btn {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px;
+        max-width: 44px;
+        padding: 10px;
+    }
+
+    .edit-btn img, .delete-btn img, .copy-btn img {
+        width: 22px;
+        height: 22px;
+    }
+
+    .back-btn {
+        min-width: 120px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+
+    .notes-header h1, .editor-title h1, .note-title-section .note-title {
+        font-size: 1.5rem;
+    }
+
+    .editor-actions, .note-header .note-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .note-item {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .note-content {
+        margin-right: 0;
+    }
+
+    .note-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .title-input {
+        font-size: 1.25rem;
+        padding: 12px;
+    }
+
+    .content-textarea, .preview-content {
+        padding: 16px;
+        min-height: 300px;
+    }
+
+    .editor-tabs {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+
+    .markdown-help {
+        padding: 16px;
+    }
+}
+
+/* Specific override for fold phones (740-768px) to ensure 5em top margin */
+@media (max-width: 768px) and (min-width: 740px) {
+    .markdown-note-view {
+        margin: 5em 16px 20px 16px !important;
+        padding: 20px !important;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .markdown-notes-container, .markdown-note-editor, .markdown-note-view {
+        margin: 5px;
+        padding: 12px;
+    }
+
+    .notes-header h1, .editor-title h1, .note-title-section .note-title {
+        font-size: 1.25rem;
+    }
+
+    .create-note-btn, .save-btn, .cancel-btn {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .edit-btn, .delete-btn, .back-btn, .copy-btn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    
+    /* Additional constraint for note actions on very small screens */
+    .note-actions {
+        gap: 6px !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+    }
+    
+    .note-item {
+        padding: 8px !important;
+        gap: 12px !important;
+    }
+
+    .title-input {
+        font-size: 1.1rem;
+        padding: 10px;
+    }
+
+    .content-textarea, .preview-content {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    .note-title {
+        font-size: 1.1rem;
+    }
+
+    .note-preview {
+        font-size: 0.9rem;
+    }
+
+    .markdown-content {
+        font-size: 0.95rem;
+    }
+
+    .markdown-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .markdown-content h2 {
+        font-size: 1.25rem;
+    }
+
+    .markdown-content h3 {
+        font-size: 1.1rem;
+    }
+
+    .responsive-image {
+        max-width: 250px;
     }
 }

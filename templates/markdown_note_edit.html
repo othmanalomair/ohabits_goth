@@ -1,0 +1,653 @@
+{{ define "markdown_note_edit" }}
+<div class="markdown-note-editor">
+    <div class="editor-header">
+        <div class="editor-title">
+            <h1>{{ if .IsEdit }}Edit Note{{ else }}New Note{{ end }}</h1>
+        </div>
+        <div class="editor-actions">
+            <button id="save-btn" class="save-btn" disabled>
+                <img src="/static/images/svg/check-green.svg" alt="Save" />
+                Save
+            </button>
+            <button id="auto-save-indicator" class="auto-save-indicator" style="display: none;">
+                <img src="/static/images/svg/save.svg" alt="Auto-saving" />
+                Auto-saving...
+            </button>
+            <a href="/markdown_notes" hx-get="/markdown_notes" hx-target="main" hx-swap="innerHTML" class="cancel-btn">
+                <img src="/static/images/svg/x-red.svg" alt="Cancel" />
+                Cancel
+            </a>
+        </div>
+    </div>
+    
+    <div class="editor-container">
+        <div class="editor-sidebar">
+            <div class="editor-tabs">
+                <button id="edit-tab" class="tab-btn active">Edit</button>
+                <button id="preview-tab" class="tab-btn">Preview</button>
+            </div>
+            
+            <div class="markdown-help">
+                <h4>Markdown Quick Guide</h4>
+                <div class="help-item">
+                    <code>**bold**</code> → <strong>bold</strong>
+                </div>
+                <div class="help-item">
+                    <code>*italic*</code> → <em>italic</em>
+                </div>
+                <div class="help-item">
+                    <code># Heading 1</code>
+                </div>
+                <div class="help-item">
+                    <code>## Heading 2</code>
+                </div>
+                <div class="help-item">
+                    <code>- List item</code>
+                </div>
+                <div class="help-item">
+                    <code>[Link](url)</code>
+                </div>
+                <div class="help-item">
+                    <code>![Image](url)</code>
+                </div>
+                <div class="help-item">
+                    <code>`code`</code> → <code>code</code>
+                </div>
+            </div>
+        </div>
+        
+        <div class="editor-main">
+            <div class="editor-form">
+                <input 
+                    type="text" 
+                    id="note-title" 
+                    placeholder="Enter note title..." 
+                    value="{{ if .Note }}{{ .Note.Title }}{{ end }}"
+                    class="title-input"
+                />
+                
+                <div class="rtl-toggle-container">
+                    <label for="rtl-toggle" class="rtl-toggle-label">
+                        <span class="toggle-text">Text Direction:</span>
+                        <div class="toggle-switch">
+                            <input 
+                                type="checkbox" 
+                                id="rtl-toggle" 
+                                {{ if and .Note .Note.IsRTL }}checked{{ end }}
+                            />
+                            <span class="toggle-slider">
+                                <span class="toggle-option left">LTR</span>
+                                <span class="toggle-option right">RTL</span>
+                            </span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="editor-helpers">
+                    <button type="button" id="link-btn" class="helper-btn" title="Insert Link">
+                        <img src="/static/images/svg/external-link.svg" alt="Link" />
+                        Link
+                    </button>
+                    <button type="button" id="image-btn" class="helper-btn" title="Insert Image">
+                        <img src="/static/images/svg/note.svg" alt="Image" />
+                        Image
+                    </button>
+                </div>
+                
+                <div id="edit-view" class="edit-view active">
+                    <textarea 
+                        id="note-content" 
+                        placeholder="Write your note in Markdown format..."
+                        class="content-textarea"
+                        dir="{{ if and .Note .Note.IsRTL }}rtl{{ else }}ltr{{ end }}"
+                    >{{ if .Note }}{{ .Note.Content }}{{ end }}</textarea>
+                </div>
+                
+                <div id="preview-view" class="preview-view">
+                    <div id="preview-content" class="preview-content">
+                        <!-- Markdown preview will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Prevent variable conflicts when loaded via HTMX
+        let currentNoteId = {{ if and .Note .Note.ID }}'{{ .Note.ID }}'{{ else }}null{{ end }};
+        let isEdit = {{ .IsEdit }};
+        let hasUnsavedChanges = false;
+        let autoSaveTimeout;
+        let originalTitle = {{ if .Note }}'{{ .Note.Title }}'{{ else }}''{{ end }};
+        let originalContent = {{ if .Note }}`{{ .Note.Content }}`{{ else }}''{{ end }};
+        let originalIsRTL = {{ if and .Note .Note.IsRTL }}true{{ else }}false{{ end }};
+
+        // Simple toast function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                ${type === 'success' ? 'background: #48bb78;' : type === 'error' ? 'background: #e53e3e;' : 'background: #4299e1;'}
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.style.opacity = '1', 10);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+    
+    const titleInput = document.getElementById('note-title');
+    const contentTextarea = document.getElementById('note-content');
+    const saveBtn = document.getElementById('save-btn');
+    const autoSaveIndicator = document.getElementById('auto-save-indicator');
+    const rtlToggle = document.getElementById('rtl-toggle');
+    
+    // Track changes
+    function trackChanges() {
+        const currentTitle = titleInput.value.trim();
+        const currentContent = contentTextarea.value;
+        const currentIsRTL = rtlToggle.checked;
+        
+        hasUnsavedChanges = (currentTitle !== originalTitle) || 
+                           (currentContent !== originalContent) || 
+                           (currentIsRTL !== originalIsRTL);
+        
+        saveBtn.disabled = !hasUnsavedChanges || !currentTitle;
+        
+        // Schedule auto-save
+        if (hasUnsavedChanges && currentTitle) {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(autoSave, 3000); // Auto-save after 3 seconds of inactivity
+        }
+    }
+    
+    // Auto-save function
+    async function autoSave() {
+        if (!hasUnsavedChanges || !titleInput.value.trim()) return;
+        
+        // Store original button content
+        const originalHTML = saveBtn.innerHTML;
+        
+        // Change save button text to "Saving" while preserving image
+        const img = saveBtn.querySelector('img');
+        if (img) {
+            saveBtn.innerHTML = '';
+            saveBtn.appendChild(img.cloneNode(true));
+            saveBtn.appendChild(document.createTextNode(' Saving'));
+        } else {
+            saveBtn.textContent = 'Saving';
+        }
+        saveBtn.disabled = true;
+        
+        try {
+            await saveNote(true); // Silent save
+            
+            // Show success briefly
+            if (img) {
+                saveBtn.innerHTML = '';
+                saveBtn.appendChild(img.cloneNode(true));
+                saveBtn.appendChild(document.createTextNode(' Saved'));
+            } else {
+                saveBtn.textContent = 'Saved';
+            }
+            saveBtn.style.background = '#48bb78';
+            saveBtn.style.color = 'white';
+            
+            // Reset after 1 second
+            setTimeout(() => {
+                saveBtn.innerHTML = originalHTML;
+                saveBtn.style.background = '';
+                saveBtn.style.color = '';
+                saveBtn.disabled = !hasUnsavedChanges || !titleInput.value.trim();
+            }, 1000);
+            
+        } catch (error) {
+            // Reset on error
+            saveBtn.innerHTML = originalHTML;
+            saveBtn.disabled = !hasUnsavedChanges || !titleInput.value.trim();
+            console.error('Auto-save failed:', error);
+        }
+    }
+    
+    // Save note function
+    async function saveNote(silent = false) {
+        const title = titleInput.value.trim();
+        const content = contentTextarea.value;
+        
+        if (!title) {
+            if (!silent) showToast('Please enter a title', 'error');
+            return;
+        }
+        
+        const rtlToggle = document.getElementById('rtl-toggle');
+        const noteData = {
+            title: title,
+            content: content,
+            is_rtl: rtlToggle.checked
+        };
+        
+        try {
+            let response;
+            if (isEdit && currentNoteId && currentNoteId !== 'null' && currentNoteId !== null) {
+                response = await fetch(`/api/markdown_notes/${currentNoteId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(noteData)
+                });
+            } else {
+                response = await fetch('/api/markdown_notes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(noteData)
+                });
+            }
+            
+            if (response.ok) {
+                const savedNote = await response.json();
+                
+                // Update the current note ID for future saves
+                if (!isEdit) {
+                    currentNoteId = savedNote.id;
+                    isEdit = true;
+                    // Keep URL as /markdown_notes/new - don't change it
+                    // Keep title as "New Note" - don't change it
+                }
+                
+                // Update original values
+                originalTitle = title;
+                originalContent = content;
+                originalIsRTL = rtlToggle.checked;
+                hasUnsavedChanges = false;
+                saveBtn.disabled = true;
+                
+                if (!silent) {
+                    showToast('Note saved successfully', 'success');
+                }
+            } else {
+                if (!silent) showToast('Failed to save note', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving note:', error);
+            if (!silent) showToast('Failed to save note', 'error');
+        }
+    }
+    
+    // Tab switching
+    function switchTab(tab) {
+        const editTab = document.getElementById('edit-tab');
+        const previewTab = document.getElementById('preview-tab');
+        const editView = document.getElementById('edit-view');
+        const previewView = document.getElementById('preview-view');
+        
+        if (tab === 'edit') {
+            editTab.classList.add('active');
+            previewTab.classList.remove('active');
+            editView.classList.add('active');
+            previewView.classList.remove('active');
+        } else {
+            editTab.classList.remove('active');
+            previewTab.classList.add('active');
+            editView.classList.remove('active');
+            previewView.classList.add('active');
+            updatePreview();
+        }
+    }
+    
+    // Update preview - matches server-side renderMarkdown function
+    function updatePreview() {
+        const content = contentTextarea.value;
+        const previewContent = document.getElementById('preview-content');
+        
+        if (!content.trim()) {
+            previewContent.innerHTML = '<p class="empty-preview">Nothing to preview. Start writing to see the rendered markdown.</p>';
+            return;
+        }
+        
+        // Process content line by line for proper markdown parsing (same as server)
+        const lines = content.split('\n');
+        let processedLines = [];
+        let inList = false;
+        let listItems = [];
+        
+        for (let line of lines) {
+            line = line.trim();
+            
+            // Handle headers (must be on their own line)
+            if (line.startsWith('### ')) {
+                // Close any open list
+                if (inList) {
+                    processedLines.push('<ul>' + listItems.join('') + '</ul>');
+                    listItems = [];
+                    inList = false;
+                }
+                processedLines.push('<h3>' + line.substring(4).trim() + '</h3>');
+                continue;
+            } else if (line.startsWith('## ')) {
+                if (inList) {
+                    processedLines.push('<ul>' + listItems.join('') + '</ul>');
+                    listItems = [];
+                    inList = false;
+                }
+                processedLines.push('<h2>' + line.substring(3).trim() + '</h2>');
+                continue;
+            } else if (line.startsWith('# ')) {
+                if (inList) {
+                    processedLines.push('<ul>' + listItems.join('') + '</ul>');
+                    listItems = [];
+                    inList = false;
+                }
+                processedLines.push('<h1>' + line.substring(2).trim() + '</h1>');
+                continue;
+            }
+            
+            // Handle list items
+            if (line.startsWith('- ')) {
+                listItems.push('<li>' + line.substring(2).trim() + '</li>');
+                inList = true;
+                continue;
+            } else if (line.startsWith('* ')) {
+                listItems.push('<li>' + line.substring(2).trim() + '</li>');
+                inList = true;
+                continue;
+            } else {
+                // Close list if we encounter non-list content
+                if (inList) {
+                    processedLines.push('<ul>' + listItems.join('') + '</ul>');
+                    listItems = [];
+                    inList = false;
+                }
+            }
+            
+            // Handle empty lines
+            if (line === '') {
+                if (processedLines.length > 0 && processedLines[processedLines.length - 1] !== '<br>') {
+                    processedLines.push('<br>');
+                }
+                continue;
+            }
+            
+            // Regular content
+            processedLines.push(line);
+        }
+        
+        // Close any remaining open list
+        if (inList) {
+            processedLines.push('<ul>' + listItems.join('') + '</ul>');
+        }
+        
+        let html = processedLines.join('\n');
+        
+        // Process images BEFORE links to avoid conflicts
+        while (html.includes('![') && html.includes('](')) {
+            const start = html.indexOf('![');
+            if (start === -1) break;
+            
+            const linkStart = html.indexOf('](', start);
+            if (linkStart === -1) break;
+            
+            const end = html.indexOf(')', linkStart);
+            if (end === -1) break;
+            
+            const before = html.substring(0, start);
+            const altText = html.substring(start + 2, linkStart);
+            const imageUrl = html.substring(linkStart + 2, end);
+            const after = html.substring(end + 1);
+            
+            html = before + `<img src="${imageUrl}" alt="${altText}" class="responsive-image" style="max-width: 300px; height: auto; border-radius: 8px; margin: 1em 0; cursor: pointer;" onclick="openImageModal('${imageUrl}', '${altText}')" />` + after;
+        }
+        
+        // Bold **text**
+        while (html.includes('**')) {
+            const firstPos = html.indexOf('**');
+            if (firstPos === -1) break;
+            const secondPos = html.indexOf('**', firstPos + 2);
+            if (secondPos === -1) break;
+            
+            const before = html.substring(0, firstPos);
+            const boldText = html.substring(firstPos + 2, secondPos);
+            const after = html.substring(secondPos + 2);
+            html = before + '<strong>' + boldText + '</strong>' + after;
+        }
+        
+        // Italic *text*
+        while (html.includes('*') && !html.includes('**')) {
+            const firstPos = html.indexOf('*');
+            if (firstPos === -1) break;
+            const secondPos = html.indexOf('*', firstPos + 1);
+            if (secondPos === -1) break;
+            
+            const before = html.substring(0, firstPos);
+            const italicText = html.substring(firstPos + 1, secondPos);
+            const after = html.substring(secondPos + 1);
+            html = before + '<em>' + italicText + '</em>' + after;
+        }
+        
+        // Code `text`
+        while (html.includes('`')) {
+            const firstPos = html.indexOf('`');
+            if (firstPos === -1) break;
+            const secondPos = html.indexOf('`', firstPos + 1);
+            if (secondPos === -1) break;
+            
+            const before = html.substring(0, firstPos);
+            const codeText = html.substring(firstPos + 1, secondPos);
+            const after = html.substring(secondPos + 1);
+            html = before + '<code>' + codeText + '</code>' + after;
+        }
+        
+        // Links [text](url) - Process AFTER images
+        while (html.includes('](')) {
+            const closeBracket = html.indexOf('](');
+            const openBracket = html.lastIndexOf('[', closeBracket);
+            if (openBracket === -1) break;
+            
+            const closeParen = html.indexOf(')', closeBracket);
+            if (closeParen === -1) break;
+            
+            const before = html.substring(0, openBracket);
+            const linkText = html.substring(openBracket + 1, closeBracket);
+            const linkUrl = html.substring(closeBracket + 2, closeParen);
+            const after = html.substring(closeParen + 1);
+            
+            html = before + `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>` + after;
+        }
+        
+        // Wrap non-header, non-list content in paragraphs
+        const finalLines = html.split('\n');
+        const wrappedLines = [];
+        for (let line of finalLines) {
+            line = line.trim();
+            if (line === '' || line === '<br>') {
+                continue;
+            }
+            
+            // Don't wrap headers, lists, or already wrapped content
+            if (!line.startsWith('<h') && !line.startsWith('<ul') && 
+                !line.startsWith('<li') && !line.startsWith('<p')) {
+                wrappedLines.push('<p>' + line + '</p>');
+            } else {
+                wrappedLines.push(line);
+            }
+        }
+        
+        previewContent.innerHTML = wrappedLines.join('\n');
+        
+        // Set preview direction based on RTL toggle
+        const isRTL = rtlToggle.checked;
+        previewContent.dir = isRTL ? 'rtl' : 'ltr';
+        previewContent.style.direction = isRTL ? 'rtl' : 'ltr';
+        previewContent.style.textAlign = isRTL ? 'right' : 'left';
+    }
+    
+    // RTL toggle handler
+    function handleRTLToggle() {
+        const isRTL = rtlToggle.checked;
+        
+        // Force direction change with style attribute to override CSS
+        contentTextarea.dir = isRTL ? 'rtl' : 'ltr';
+        contentTextarea.style.direction = isRTL ? 'rtl' : 'ltr';
+        contentTextarea.style.textAlign = isRTL ? 'right' : 'left';
+        
+        // Update preview if it's currently active
+        const previewContent = document.getElementById('preview-content');
+        if (previewContent) {
+            previewContent.dir = isRTL ? 'rtl' : 'ltr';
+            previewContent.style.direction = isRTL ? 'rtl' : 'ltr';
+            previewContent.style.textAlign = isRTL ? 'right' : 'left';
+        }
+        
+        // Trigger change tracking for auto-save
+        trackChanges();
+    }
+    
+    // Event listeners
+    titleInput.addEventListener('input', trackChanges);
+    contentTextarea.addEventListener('input', trackChanges);
+    rtlToggle.addEventListener('change', handleRTLToggle);
+    saveBtn.addEventListener('click', function() {
+        saveNote();
+    });
+    
+    // Helper button event listeners
+    const linkBtn = document.getElementById('link-btn');
+    const imageBtn = document.getElementById('image-btn');
+    
+    linkBtn.addEventListener('click', insertLink);
+    imageBtn.addEventListener('click', insertImage);
+    
+    // Tab button event listeners
+    const editTab = document.getElementById('edit-tab');
+    const previewTab = document.getElementById('preview-tab');
+    
+    editTab.addEventListener('click', function() {
+        switchTab('edit');
+    });
+    previewTab.addEventListener('click', function() {
+        switchTab('preview');
+    });
+    
+    // Helper functions for inserting markdown
+    function insertLink() {
+        const url = prompt('Enter the URL:');
+        if (url) {
+            const text = prompt('Enter the link text:') || 'Link';
+            const markdown = `[${text}](${url})`;
+            insertAtCursor(markdown);
+        }
+    }
+    
+    function insertImage() {
+        const url = prompt('Enter the image URL:');
+        if (url) {
+            const alt = prompt('Enter the image description:') || 'Image';
+            const markdown = `![${alt}](${url})`;
+            insertAtCursor(markdown);
+        }
+    }
+    
+    function insertAtCursor(text) {
+        const textarea = contentTextarea;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        
+        textarea.value = before + text + after;
+        textarea.focus();
+        textarea.setSelectionRange(start + text.length, start + text.length);
+        
+        // Trigger change event to update auto-save
+        trackChanges();
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S or Cmd+S to save
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (!saveBtn.disabled) {
+                saveNote();
+            }
+        }
+        
+        // Ctrl+P or Cmd+P to toggle preview
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            const isPreviewActive = document.getElementById('preview-tab').classList.contains('active');
+            switchTab(isPreviewActive ? 'edit' : 'preview');
+        }
+    });
+    
+    // Warn about unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Auto-resize textarea
+    function autoResize() {
+        contentTextarea.style.height = 'auto';
+        contentTextarea.style.height = contentTextarea.scrollHeight + 'px';
+    }
+    
+    contentTextarea.addEventListener('input', autoResize);
+    
+    // Initialize RTL/LTR direction
+    function initializeDirection() {
+        const isRTL = rtlToggle.checked;
+        
+        // Force direction change with style attribute to override CSS
+        contentTextarea.dir = isRTL ? 'rtl' : 'ltr';
+        contentTextarea.style.direction = isRTL ? 'rtl' : 'ltr';
+        contentTextarea.style.textAlign = isRTL ? 'right' : 'left';
+        
+        // Set preview direction if it exists
+        const previewContent = document.getElementById('preview-content');
+        if (previewContent) {
+            previewContent.dir = isRTL ? 'rtl' : 'ltr';
+            previewContent.style.direction = isRTL ? 'rtl' : 'ltr';
+            previewContent.style.textAlign = isRTL ? 'right' : 'left';
+        }
+    }
+    
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', function() {
+        autoResize();
+        initializeDirection();
+        titleInput.focus();
+    });
+    
+        // Setup when loaded via HTMX
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                autoResize();
+                initializeDirection();
+                titleInput.focus();
+            });
+        } else {
+            autoResize();
+            initializeDirection();
+            titleInput.focus();
+        }
+    })(); // Close the IIFE
+</script>
+{{ end }}
