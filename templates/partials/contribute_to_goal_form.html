@@ -1,0 +1,205 @@
+{{ define "contribute_to_goal_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Add to Savings Goal</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+
+        <div
+            class="goal-info"
+            style="
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background: rgba(72, 187, 120, 0.05);
+                border-radius: 12px;
+            "
+        >
+            <h4 style="margin: 0 0 0.5rem 0; color: #2d3748">
+                {{ .Goal.Name }}
+            </h4>
+            <div
+                class="progress-info"
+                style="font-size: 0.9rem; color: #718096"
+            >
+                <div>Current: {{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.CurrentAmount }}</div>
+                <div>Target: {{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.TargetAmount }}</div>
+                <div>Remaining: {{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.RemainingAmount }}</div>
+            </div>
+        </div>
+
+        <form
+            hx-post="/finance/goals/{{ .Goal.ID }}/contribute"
+            hx-target="main"
+            hx-swap="innerHTML"
+            hx-on::after-request="if(event.detail.successful) { closeModal(); htmx.ajax('GET', '/finance', {target: 'main', swap: 'innerHTML'}); }"
+            class="contribution-form"
+        >
+            <div class="form-row">
+                <label for="contribution_amount">Contribution Amount *</label>
+                <input
+                    type="number"
+                    name="amount"
+                    id="contribution_amount"
+                    class="profile-input"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                    required
+                />
+            </div>
+
+            <div class="form-row">
+                <label for="contribution_date">Date</label>
+                <input
+                    type="date"
+                    name="date"
+                    id="contribution_date"
+                    class="profile-input"
+                    value="{{ .CurrentDate }}"
+                />
+            </div>
+
+            <div class="form-row">
+                <label for="contribution_method">Payment Method</label>
+                <select name="method" id="contribution_method" class="profile-input">
+                    <option value="">Select Method</option>
+                    <option value="manual">Manual</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="cash">Cash</option>
+                    <option value="automatic">Automatic</option>
+                    <option value="bonus">Bonus</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="contribution_notes">Notes (Optional)</label>
+                <textarea
+                    name="notes"
+                    id="contribution_notes"
+                    class="profile-input"
+                    rows="3"
+                    placeholder="Optional notes about this contribution"
+                ></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal()"
+                >
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Add Contribution
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 6px;
+        transition: background-color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .modal-close img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .modal-actions .btn {
+        flex: 1;
+    }
+
+    .goal-info {
+        background: rgba(72, 187, 120, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-info {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: #718096;
+    }
+
+    .progress-info > div {
+        flex: 1;
+    }
+</style>
+
+<script>
+    function closeModal() {
+        const modal = document.getElementById("modal-container");
+        if (modal) {
+            modal.innerHTML = "";
+        }
+    }
+</script>
+{{ end }}

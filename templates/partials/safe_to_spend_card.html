@@ -1,0 +1,33 @@
+{{ define "safe_to_spend_card" }}
+<div class="safe-amount">
+    <h2>Safe to Spend</h2>
+    <div class="amount-display {{ if lt .SafeToSpend 0.0 }}negative{{ end }}">
+        <span class="currency">{{ .UserFinance.Currency }}</span>
+        <span class="amount">{{ printf "%.2f" .SafeToSpend }}</span>
+    </div>
+    {{ if lt .SafeToSpend 0.0 }}
+    <p class="warning">⚠️ You're over budget this month</p>
+    {{ else }}
+    <p class="info">Available for discretionary spending</p>
+    {{ end }}
+</div>
+
+<div class="financial-breakdown">
+    <div class="breakdown-item">
+        <span class="label">Monthly Income</span>
+        <span class="value">{{ .UserFinance.Currency }} {{ printf "%.2f" .UserFinance.MonthlyIncome }}</span>
+    </div>
+    <div class="breakdown-item">
+        <span class="label">Fixed Payments</span>
+        <span class="value negative">{{ .UserFinance.Currency }} {{ printf "%.2f" .MonthlyCommitments }}</span>
+    </div>
+    <div class="breakdown-item">
+        <span class="label">Savings Goals</span>
+        <span class="value negative">{{ .UserFinance.Currency }} {{ printf "%.2f" .TotalSavingsContrib }}</span>
+    </div>
+    <div class="breakdown-item">
+        <span class="label">Emergency Buffer</span>
+        <span class="value negative">{{ .UserFinance.Currency }} {{ printf "%.2f" .UserFinance.EmergencyBufferAmount }}</span>
+    </div>
+</div>
+{{ end }}

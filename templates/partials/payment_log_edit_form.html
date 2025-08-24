@@ -1,0 +1,138 @@
+{{ define "payment_log_edit_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Edit Payment Log</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <form hx-put="/finance/payment-logs/{{ .PaymentLog.ID }}"
+                  hx-target="this"
+                  hx-swap="none"
+                  hx-on::after-request="
+                    if(event.detail.successful) {
+                      closeModal();
+                      // Refresh the payment history modal content if it's open
+                      const historyModal = document.querySelector('[hx-get*=\'/finance/payments/\'][hx-get*=\'/history\']');
+                      if (historyModal) {
+                        htmx.trigger(historyModal, 'click');
+                      }
+                    } else {
+                      console.log('Update failed:', event.detail.xhr.responseText);
+                    }">
+                
+                <!-- Hidden field for recurring payment ID -->
+                {{ if .PaymentLog.RecurringPaymentID }}
+                <input type="hidden" name="recurring_payment_id" value="{{ .PaymentLog.RecurringPaymentID }}" />
+                {{ end }}
+                
+                <div class="form-row">
+                    <label for="amount">Amount *</label>
+                    <input type="number" 
+                           name="amount" 
+                           id="amount"
+                           class="profile-input"
+                           step="0.01" 
+                           min="0"
+                           value="{{ printf "%.2f" .PaymentLog.Amount }}"
+                           required />
+                </div>
+                
+                <div class="form-row">
+                    <label for="payment_date">Payment Date *</label>
+                    <input type="date" 
+                           name="payment_date" 
+                           id="payment_date"
+                           class="profile-input"
+                           value="{{ formatDate .PaymentLog.PaymentDate }}"
+                           required />
+                </div>
+                
+                <div class="form-row">
+                    <label for="due_date">Due Date *</label>
+                    <input type="date" 
+                           name="due_date" 
+                           id="due_date"
+                           class="profile-input"
+                           value="{{ formatDate .PaymentLog.DueDate }}"
+                           required />
+                </div>
+                
+                <div class="form-row">
+                    <label for="method">Payment Method</label>
+                    <select name="method" id="method" class="profile-input">
+                        <option value="">Select method (optional)</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="debit_card">Debit Card</option>
+                        <option value="cash">Cash</option>
+                        <option value="check">Check</option>
+                        <option value="online">Online Payment</option>
+                        <option value="auto_pay">Auto Pay</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label for="notes">Notes</label>
+                    <textarea name="notes" 
+                              id="notes"
+                              class="profile-input"
+                              rows="3"
+                              placeholder="Optional notes about this payment">{{ .PaymentLog.Notes }}</textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" 
+                            class="btn btn-secondary"
+                            onclick="closeModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Update Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set the payment method value from the data
+    const methodSelect = document.getElementById('method');
+    const paymentMethodValue = '{{ .PaymentLog.PaymentMethod }}';
+    
+    if (methodSelect && paymentMethodValue) {
+        methodSelect.value = paymentMethodValue;
+    }
+    
+    // Ensure all form elements are visible and functional
+    const form = document.querySelector('form[hx-put]');
+    if (form) {
+        // Make sure the submit button is visible
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.style.display = 'block';
+            submitBtn.style.visibility = 'visible';
+        }
+        
+        // Make sure all form elements are properly rendered
+        const formElements = form.querySelectorAll('input, select, textarea, button');
+        formElements.forEach(element => {
+            element.style.visibility = 'visible';
+        });
+    }
+});
+</script>
+{{ end }}

@@ -20,6 +20,11 @@ go build -o app .
 docker build -t ohabits .
 ```
 
+### to use Database in the CLI
+```bash
+psql ohabits
+```
+
 ### Database Setup
 - PostgreSQL database required
 - Schema defined in `schema.sql`

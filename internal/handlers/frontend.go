@@ -160,6 +160,12 @@ func init() {
 			}
 			return *p
 		},
+		"deref": func(p *float64) float64 {
+			if p == nil {
+				return 0.0
+			}
+			return *p
+		},
 		"isMedicationActiveDay": isMedicationActiveDay,
 		"isMedicationScheduledToday": isMedicationScheduledToday,
 		"iterate": iterate,

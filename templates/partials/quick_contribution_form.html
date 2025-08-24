@@ -1,0 +1,261 @@
+{{ define "quick_contribution_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Add Savings Contribution</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <form id="contribution-form"
+              hx-post="/finance/contribution/add"
+              hx-target="main"
+              hx-swap="innerHTML"
+              hx-on::after-success="showToast('Contribution added successfully!', 'success'); closeModal();"
+              hx-on::after-error="alert('Failed to add contribution. Please try again.');">
+            
+            <div class="form-row">
+                <label for="savings_goal_select">Select Savings Goal *</label>
+                <select name="goal_id" id="savings_goal_select" class="profile-input" required>
+                    <option value="">Choose a savings goal</option>
+                    {{ range .SavingsGoals }}
+                    <option value="{{ .ID }}" data-current="{{ printf "%.2f" .CurrentAmount }}" data-target="{{ printf "%.2f" .TargetAmount }}">
+                        {{ .Name }} - {{ .Currency }} {{ printf "%.2f" .CurrentAmount }}/{{ printf "%.2f" .TargetAmount }}
+                    </option>
+                    {{ end }}
+                </select>
+            </div>
+            
+            <div id="goal-progress" style="display: none; margin: 1rem 0; padding: 1rem; background: rgba(72, 187, 120, 0.05); border-radius: 8px; border: 1px solid rgba(72, 187, 120, 0.1);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; color: #2d3748;">Current Progress</span>
+                    <span id="progress-percentage" style="font-weight: 600; color: #48bb78;"></span>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.8); border-radius: 8px; height: 8px; overflow: hidden;">
+                    <div id="progress-bar" style="background: linear-gradient(90deg, #48bb78, #38a169); height: 100%; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.85rem; color: #4a5568;">
+                    <span id="current-amount"></span>
+                    <span id="target-amount"></span>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="contribution_date">Contribution Date *</label>
+                <input type="date" 
+                       name="contribution_date" 
+                       id="contribution_date"
+                       class="profile-input"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="contribution_amount">Amount *</label>
+                <input type="number" 
+                       name="amount" 
+                       id="contribution_amount"
+                       class="profile-input"
+                       step="0.01" 
+                       min="0"
+                       placeholder="0.00"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="contribution_source">Source</label>
+                <select name="source" id="contribution_source" class="profile-input">
+                    <option value="">Select source (optional)</option>
+                    <option value="salary">Salary</option>
+                    <option value="bonus">Bonus</option>
+                    <option value="gift">Gift</option>
+                    <option value="refund">Refund</option>
+                    <option value="investment">Investment Return</option>
+                    <option value="freelance">Freelance Work</option>
+                    <option value="side_hustle">Side Hustle</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="contribution_notes">Notes</label>
+                <textarea name="notes" 
+                          id="contribution_notes"
+                          class="profile-input"
+                          rows="3"
+                          placeholder="Optional notes about this contribution"></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" 
+                        class="btn btn-secondary"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Add Contribution
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+textarea.profile-input {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+
+// Set default date to today and show progress when goal is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('contribution_date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    // Show progress when savings goal is selected and update form action
+    const goalSelect = document.getElementById('savings_goal_select');
+    const progressDiv = document.getElementById('goal-progress');
+    const form = document.getElementById('contribution-form');
+    
+    console.log('Form elements found:', {goalSelect, progressDiv, form});
+    
+    if (goalSelect && progressDiv && form) {
+        console.log('Adding change listener to goal select');
+        goalSelect.addEventListener('change', function() {
+            console.log('Goal selection changed');
+            const selectedOption = this.options[this.selectedIndex];
+            console.log('Selected option value:', selectedOption.value);
+            
+            if (selectedOption.value) {
+                console.log('Goal selected, showing progress');
+                const current = parseFloat(selectedOption.dataset.current) || 0;
+                const target = parseFloat(selectedOption.dataset.target) || 1;
+                const percentage = Math.min((current / target) * 100, 100);
+                
+                document.getElementById('progress-percentage').textContent = percentage.toFixed(1) + '%';
+                document.getElementById('progress-bar').style.width = percentage + '%';
+                document.getElementById('current-amount').textContent = '$' + current.toFixed(2);
+                document.getElementById('target-amount').textContent = '$' + target.toFixed(2);
+                
+                progressDiv.style.display = 'block';
+            } else {
+                progressDiv.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+{{ end }}

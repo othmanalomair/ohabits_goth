@@ -1,0 +1,635 @@
+{{ define "content" }}
+<div class="finance-container">
+    <div class="finance-header">
+        <h1>Financial Analytics</h1>
+        <div class="finance-actions">
+            <a
+                hx-get="/finance"
+                hx-target="main"
+                hx-swap="innerHTML"
+                class="btn btn-secondary"
+            >
+                <img src="/static/images/svg/arrow-left.svg" alt="Back" />
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Financial Overview Cards -->
+    <div class="analytics-overview">
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3>Monthly Income</h3>
+                <img src="/static/images/svg/plus.svg" alt="Income" />
+            </div>
+            <div class="card-value">
+                <span class="currency"
+                    >{{ .Dashboard.UserFinance.Currency }}</span
+                >
+                <span class="amount"
+                    >{{ printf "%.2f" .Dashboard.UserFinance.MonthlyIncome
+                    }}</span
+                >
+            </div>
+            <div class="card-subtitle">Total monthly income</div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3>Fixed Expenses</h3>
+            </div>
+            <div class="card-value">
+                <span class="currency"
+                    >{{ .Dashboard.UserFinance.Currency }}</span
+                >
+                <span class="amount"
+                    >{{ printf "%.2f" .Dashboard.MonthlyCommitments }}</span
+                >
+            </div>
+            <div class="card-subtitle">Monthly commitments</div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3>Savings Rate</h3>
+            </div>
+            <div class="card-value">
+                {{ if .Analytics.SavingsRatePercent }}
+                <span class="amount">{{ printf "%.1f%%" .Analytics.SavingsRatePercent }}</span>
+                {{ else }}
+                <span class="amount">N/A</span>
+                {{ end }}
+            </div>
+            <div class="card-subtitle">Of monthly income</div>
+        </div>
+
+        <div
+            class="analytics-card {{ if lt .Dashboard.SafeToSpend 0.0 }}negative{{ end }}"
+        >
+            <div class="card-header">
+                <h3>Safe to Spend</h3>
+                <img src="/static/images/svg/check.svg" alt="Safe to Spend" />
+            </div>
+            <div class="card-value">
+                <span class="currency"
+                    >{{ .Dashboard.UserFinance.Currency }}</span
+                >
+                <span class="amount"
+                    >{{ printf "%.2f" .Dashboard.SafeToSpend }}</span
+                >
+            </div>
+            <div class="card-subtitle">Available this month</div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="analytics-grid">
+        <!-- Expense Breakdown Chart -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h3>Monthly Expense Breakdown</h3>
+            </div>
+            <div class="chart-container">
+                <div class="expense-breakdown">
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div
+                                class="expense-color"
+                                style="background: #667eea"
+                            ></div>
+                            <span class="expense-label">Fixed Payments</span>
+                        </div>
+                        <div class="expense-amount">
+                            <span
+                                >{{ .Dashboard.UserFinance.Currency }} {{ printf
+                                "%.2f" .Dashboard.MonthlyCommitments }}</span
+                            >
+                            {{ if .Analytics.FixedPaymentsPercent }}
+                            <span class="expense-percentage">{{ printf "%.1f%%" .Analytics.FixedPaymentsPercent }}</span>
+                            {{ else }}
+                            <span class="expense-percentage">N/A</span>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div
+                                class="expense-color"
+                                style="background: #48bb78"
+                            ></div>
+                            <span class="expense-label">Savings Goals</span>
+                        </div>
+                        <div class="expense-amount">
+                            <span
+                                >{{ .Dashboard.UserFinance.Currency }} {{ printf
+                                "%.2f" .Dashboard.TotalSavingsContrib }}</span
+                            >
+                            {{ if .Analytics.SavingsGoalsPercent }}
+                            <span class="expense-percentage">{{ printf "%.1f%%" .Analytics.SavingsGoalsPercent }}</span>
+                            {{ else }}
+                            <span class="expense-percentage">N/A</span>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div
+                                class="expense-color"
+                                style="background: #f59e0b"
+                            ></div>
+                            <span class="expense-label">Emergency Buffer</span>
+                        </div>
+                        <div class="expense-amount">
+                            <span
+                                >{{ .Dashboard.UserFinance.Currency }} {{ printf
+                                "%.2f"
+                                .Dashboard.CalculatedEmergencyBuffer
+                                }}</span
+                            >
+                            {{ if .Analytics.EmergencyBufferPercent }}
+                            <span class="expense-percentage">{{ printf "%.1f%%" .Analytics.EmergencyBufferPercent }}</span>
+                            {{ else }}
+                            <span class="expense-percentage">N/A</span>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div
+                                class="expense-color"
+                                style="background: #10b981"
+                            ></div>
+                            <span class="expense-label">Safe to Spend</span>
+                        </div>
+                        <div class="expense-amount">
+                            <span
+                                >{{ .Dashboard.UserFinance.Currency }} {{ printf
+                                "%.2f" .Dashboard.SafeToSpend }}</span
+                            >
+                            {{ if .Analytics.SafeToSpendPercent }}
+                            <span class="expense-percentage">{{ printf "%.1f%%" .Analytics.SafeToSpendPercent }}</span>
+                            {{ else }}
+                            <span class="expense-percentage">N/A</span>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Goals Progress -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h3>Savings Goals Progress</h3>
+            </div>
+            <div class="savings-progress">
+                {{ if .Dashboard.ActiveSavingsGoals }} {{ range
+                .Dashboard.ActiveSavingsGoals }}
+                <div class="goal-progress-item">
+                    <div class="goal-info">
+                        <h4>{{ .Name }}</h4>
+                        <div class="goal-amounts">
+                            <span class="current"
+                                >{{ .Currency }} {{ printf "%.2f" .CurrentAmount
+                                }}</span
+                            >
+                            <span class="separator">/</span>
+                            <span class="target"
+                                >{{ .Currency }} {{ printf "%.2f" .TargetAmount
+                                }}</span
+                            >
+                        </div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 50%"></div>
+                        </div>
+                        <span class="progress-percentage">50%</span>
+                    </div>
+                </div>
+                {{ end }} {{ else }}
+                <div class="empty-state">
+                    <p>No active savings goals</p>
+                    <button class="btn btn-primary" onclick="addSavingsGoal()">
+                        Create your first goal
+                    </button>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+
+        <!-- Financial Health Score -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h3>Financial Health Score</h3>
+            </div>
+            <div class="health-score">
+                <div class="score-circle">
+                    <div class="score-number">75</div>
+                    <div class="score-label">/ 100</div>
+                </div>
+
+                <div class="score-breakdown">
+                    <div class="score-item">
+                        <span class="score-category">Expense Control</span>
+                        <span class="score-value">25/30</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-category">Savings Rate</span>
+                        <span class="score-value">20/30</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-category">Emergency Fund</span>
+                        <span class="score-value">15/25</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-category">Active Planning</span>
+                        <span class="score-value">15/15</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h3>Personalized Recommendations</h3>
+            </div>
+            <div class="recommendations">
+                <div class="recommendation info">
+                    <div class="rec-icon">💡</div>
+                    <div class="rec-content">
+                        <h4>Track Your Spending</h4>
+                        <p>
+                            Keep logging your payments and contributions to
+                            maintain accurate financial insights and achieve
+                            your goals.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="recommendation success">
+                    <div class="rec-icon">📊</div>
+                    <div class="rec-content">
+                        <h4>Review Monthly Progress</h4>
+                        <p>
+                            Check this analytics page regularly to monitor your
+                            financial health and adjust your strategy as needed.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .analytics-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .analytics-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .analytics-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .analytics-card.negative {
+        background: rgba(239, 68, 68, 0.05);
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .card-header img {
+        width: 20px;
+        height: 20px;
+        opacity: 0.7;
+    }
+
+    .card-value {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-value .currency {
+        font-size: 0.9rem;
+        color: #667eea;
+        font-weight: 600;
+    }
+
+    .card-value .amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .card-subtitle {
+        font-size: 0.8rem;
+        color: #718096;
+    }
+
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+    }
+
+    .analytics-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .expense-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .expense-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+    }
+
+    .expense-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .expense-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .expense-label {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .expense-amount {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+    }
+
+    .expense-percentage {
+        font-size: 0.8rem;
+        color: #718096;
+    }
+
+    .savings-progress {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .goal-progress-item {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+    }
+
+    .goal-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .goal-info h4 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .goal-amounts {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+    }
+
+    .goal-amounts .current {
+        color: #48bb78;
+        font-weight: 600;
+    }
+
+    .goal-amounts .separator {
+        color: #718096;
+    }
+
+    .goal-amounts .target {
+        color: #4a5568;
+    }
+
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #48bb78, #38a169);
+        transition: width 0.3s ease;
+    }
+
+    .progress-percentage {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #48bb78;
+        min-width: 3rem;
+        text-align: right;
+    }
+
+    .health-score {
+        text-align: center;
+    }
+
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        color: white;
+    }
+
+    .score-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .score-label {
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+
+    .score-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .score-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 6px;
+    }
+
+    .score-category {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+    }
+
+    .score-value {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 0.85rem;
+    }
+
+    .recommendations {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .recommendation {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid;
+    }
+
+    .recommendation.warning {
+        background: rgba(245, 158, 11, 0.05);
+        border-left-color: #f59e0b;
+    }
+
+    .recommendation.info {
+        background: rgba(102, 126, 234, 0.05);
+        border-left-color: #667eea;
+    }
+
+    .recommendation.urgent {
+        background: rgba(239, 68, 68, 0.05);
+        border-left-color: #ef4444;
+    }
+
+    .recommendation.success {
+        background: rgba(72, 187, 120, 0.05);
+        border-left-color: #48bb78;
+    }
+
+    .rec-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .rec-content h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .rec-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #4a5568;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+        .analytics-overview {
+            grid-template-columns: 1fr;
+        }
+
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .expense-item,
+        .goal-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+        }
+
+        .score-number {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+    function addSavingsGoal() {
+        htmx.ajax("GET", "/finance/goals/new", {
+            target: "#modal-container",
+            swap: "innerHTML",
+        });
+    }
+</script>
+{{ end }}

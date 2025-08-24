@@ -1,0 +1,228 @@
+{{ define "quick_payment_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Log Payment</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <form hx-post="/api/finance/payments/log"
+              hx-target="#modal-container"
+              hx-swap="innerHTML"
+              hx-on::after-success="closeModal(); htmx.ajax('GET', '/finance', {target: 'main', swap: 'innerHTML'});"
+              hx-on::after-error="alert('Failed to log payment. Please try again.');">
+            
+            <div class="form-row">
+                <label for="payment_select">Select Payment *</label>
+                <select name="recurring_payment_id" id="payment_select" class="profile-input" required>
+                    <option value="">Choose a recurring payment</option>
+                    {{ range .Payments }}
+                    <option value="{{ .ID }}">{{ .Name }} - {{ .Currency }} {{ printf "%.2f" .Amount }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_date">Payment Date *</label>
+                <input type="date" 
+                       name="payment_date" 
+                       id="payment_date"
+                       class="profile-input"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_amount_paid">Amount Paid *</label>
+                <input type="number" 
+                       name="amount_paid" 
+                       id="payment_amount_paid"
+                       class="profile-input"
+                       step="0.01" 
+                       min="0"
+                       placeholder="0.00"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_method">Payment Method</label>
+                <select name="payment_method" id="payment_method" class="profile-input">
+                    <option value="">Select method (optional)</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="debit_card">Debit Card</option>
+                    <option value="cash">Cash</option>
+                    <option value="check">Check</option>
+                    <option value="online">Online Payment</option>
+                    <option value="auto_pay">Auto Pay</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_notes">Notes</label>
+                <textarea name="notes" 
+                          id="payment_notes"
+                          class="profile-input"
+                          rows="3"
+                          placeholder="Optional notes about this payment"></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" 
+                        class="btn btn-secondary"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Log Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+textarea.profile-input {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+// Set default date to today and auto-fill amount when payment is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('payment_date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    // Auto-fill amount when payment is selected
+    const paymentSelect = document.getElementById('payment_select');
+    const amountInput = document.getElementById('payment_amount_paid');
+    
+    if (paymentSelect && amountInput) {
+        paymentSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.text && selectedOption.text.includes(' - ')) {
+                const amountText = selectedOption.text.split(' - ')[1];
+                const amount = amountText.replace(/[^\d.]/g, '');
+                if (amount) {
+                    amountInput.value = amount;
+                }
+            }
+        });
+    }
+});
+</script>
+{{ end }}

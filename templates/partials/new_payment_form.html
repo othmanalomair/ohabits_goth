@@ -1,0 +1,346 @@
+{{ define "new_payment_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Add New Recurring Payment</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <form hx-post="/api/finance/payments"
+              hx-target="this"
+              hx-swap="none"
+              hx-on::after-request="
+                if(event.detail.successful) {
+                  closeModal();
+                  htmx.ajax('GET', '/finance', {target: 'main', swap: 'innerHTML'});
+                } else {
+                  console.log('Create failed:', event.detail.xhr.responseText);
+                }">
+            
+            <div class="form-row">
+                <label for="payment_name">Payment Name *</label>
+                <input type="text" 
+                       name="name" 
+                       id="payment_name"
+                       class="profile-input"
+                       placeholder="e.g., Mortgage, Netflix, Car Loan"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_amount">Amount *</label>
+                <input type="number" 
+                       name="amount" 
+                       id="payment_amount"
+                       class="profile-input"
+                       step="0.01" 
+                       min="0"
+                       placeholder="0.00"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_category">Category *</label>
+                <select name="category" id="payment_category" class="profile-input" required>
+                    <option value="">Select a category</option>
+                    <option value="loan">Loan</option>
+                    <option value="subscription">Subscription</option>
+                    <option value="bill">Bill & Utilities</option>
+                    <option value="medical">Medical</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_frequency">Frequency *</label>
+                <select name="frequency" id="payment_frequency" class="profile-input" required>
+                    <option value="">Select frequency</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="quarterly">Quarterly</option>
+                </select>
+            </div>
+            
+            <!-- Date Configuration Section -->
+            <div class="dates-section" style="border: 1px solid rgba(102, 126, 234, 0.2); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; background: rgba(102, 126, 234, 0.02);">
+                <h4 style="margin: 0 0 1rem 0; color: #2d3748; font-size: 1rem; font-weight: 600;">📅 Payment Schedule</h4>
+                
+                <div class="form-row">
+                    <label for="start_date">Start Date *</label>
+                    <input type="date" 
+                           name="start_date" 
+                           id="start_date"
+                           class="profile-input"
+                           required />
+                    <small style="color: #6b7280; font-size: 0.85rem;">When this payment schedule begins</small>
+                </div>
+                
+                <div class="form-row">
+                    <label for="due_day">Due Day of Month *</label>
+                    <input type="number" 
+                           name="due_day" 
+                           id="due_day"
+                           class="profile-input"
+                           min="1"
+                           max="31"
+                           required />
+                    <small style="color: #6b7280; font-size: 0.85rem;">Day of the month when payment is due (1-31)</small>
+                </div>
+                
+                <div class="form-row">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.5rem;">
+                        <input type="checkbox" 
+                               name="has_end_date" 
+                               id="has_end_date"
+                               style="accent-color: #667eea;"
+                               onchange="toggleEndDate()" />
+                        <span>This payment has an end date</span>
+                    </label>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Check this for loans, subscriptions with fixed terms, etc.</small>
+                </div>
+                
+                <div class="form-row" id="end_date_row" style="display: none;">
+                    <label for="end_date">End Date</label>
+                    <input type="date" 
+                           name="end_date" 
+                           id="end_date"
+                           class="profile-input" />
+                    <small style="color: #6b7280; font-size: 0.85rem;">When this payment schedule ends</small>
+                </div>
+                
+                <div class="form-row" id="total_payments_row" style="display: none;">
+                    <label for="remaining_payments">Total Number of Payments</label>
+                    <input type="number" 
+                           name="remaining_payments" 
+                           id="remaining_payments"
+                           class="profile-input"
+                           min="1"
+                           placeholder="e.g., 36 for 3-year loan" />
+                    <small style="color: #6b7280; font-size: 0.85rem;">Optional: Total payments (useful for loans)</small>
+                </div>
+            </div>
+            
+            <!-- Loan/Financial Details Section -->
+            <div class="loan-section" style="border: 1px solid rgba(72, 187, 120, 0.2); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; background: rgba(72, 187, 120, 0.02);">
+                <h4 style="margin: 0 0 1rem 0; color: #2d3748; font-size: 1rem; font-weight: 600;">💰 Payment Details</h4>
+                
+                <div class="form-row">
+                    <label for="total_amount">Total Amount (for loans)</label>
+                    <input type="number" 
+                           name="total_amount" 
+                           id="total_amount"
+                           class="profile-input"
+                           step="0.01"
+                           min="0"
+                           placeholder="Original loan amount (optional)" />
+                    <small style="color: #6b7280; font-size: 0.85rem;">Original loan amount to track progress</small>
+                </div>
+                
+                <div class="form-row">
+                    <label for="provider">Provider/Institution</label>
+                    <input type="text" 
+                           name="provider" 
+                           id="provider"
+                           class="profile-input"
+                           placeholder="e.g., Bank Name, Netflix, etc." />
+                </div>
+                
+                <div class="form-row">
+                    <label for="account_number">Account/Reference Number</label>
+                    <input type="text" 
+                           name="account_number" 
+                           id="account_number"
+                           class="profile-input"
+                           placeholder="Account or reference number" />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_description">Description</label>
+                <textarea name="description" 
+                          id="payment_description"
+                          class="profile-input"
+                          rows="3"
+                          placeholder="Optional description or notes"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" 
+                           name="auto_pay" 
+                           id="auto_pay"
+                           style="accent-color: #667eea;" />
+                    <span>Auto-pay enabled</span>
+                </label>
+                <small style="color: #6b7280; font-size: 0.85rem; margin-left: 1.5rem;">Automatically mark as paid on due date</small>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" 
+                        class="btn btn-secondary"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Add Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+textarea.profile-input {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+function toggleEndDate() {
+    const checkbox = document.getElementById('has_end_date');
+    const endDateRow = document.getElementById('end_date_row');
+    const totalPaymentsRow = document.getElementById('total_payments_row');
+    
+    if (checkbox.checked) {
+        endDateRow.style.display = 'block';
+        totalPaymentsRow.style.display = 'block';
+    } else {
+        endDateRow.style.display = 'none';
+        totalPaymentsRow.style.display = 'none';
+        // Clear the values when hiding
+        document.getElementById('end_date').value = '';
+        document.getElementById('remaining_payments').value = '';
+    }
+}
+
+// Set default dates
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Set start date to today
+    const startDateInput = document.getElementById('start_date');
+    if (startDateInput) {
+        startDateInput.value = today;
+    }
+    
+    // Set due day to today's day of month (user can adjust)
+    const todayDay = new Date().getDate();
+    const dueDayInput = document.getElementById('due_day');
+    if (dueDayInput) {
+        dueDayInput.value = todayDay;
+    }
+});
+</script>
+{{ end }}

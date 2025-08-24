@@ -1,0 +1,268 @@
+{{ define "finance_dashboard" }}
+<div class="finance-container">
+    <!-- Financial Overview Header -->
+    <div class="finance-header">
+        <h1>Finance Management</h1>
+        <div class="finance-actions">
+            <a hx-get="/finance/setup" hx-target="main" hx-swap="innerHTML" class="btn btn-secondary">
+                <img src="/static/images/svg/settings.svg" alt="Settings" />
+                Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Safe to Spend Card (Prominent Display) -->
+    <div class="safe-to-spend-card" id="safe-to-spend-card">
+        <div class="safe-amount">
+            <h2>Safe to Spend</h2>
+            <div class="amount-display {{ if lt .SafeToSpend 0.0 }}negative{{ end }}">
+                <span class="currency">{{ .UserFinance.Currency }}</span>
+                <span class="amount">{{ printf "%.2f" .SafeToSpend }}</span>
+            </div>
+            {{ if lt .SafeToSpend 0.0 }}
+            <p class="warning">⚠️ You're over budget this month</p>
+            {{ else }}
+            <p class="info">Available for discretionary spending</p>
+            {{ end }}
+        </div>
+        
+        <div class="financial-breakdown">
+            <div class="breakdown-item">
+                <span class="label">Monthly Income</span>
+                <span class="value">{{ .UserFinance.Currency }} {{ printf "%.2f" .UserFinance.MonthlyIncome }}</span>
+            </div>
+            <div class="breakdown-item">
+                <span class="label">Fixed Payments</span>
+                <span class="value negative">{{ .UserFinance.Currency }} {{ printf "%.2f" .MonthlyCommitments }}</span>
+            </div>
+            <div class="breakdown-item">
+                <span class="label">Savings Goals</span>
+                <span class="value negative">{{ .UserFinance.Currency }} {{ printf "%.2f" .TotalSavingsContrib }}</span>
+            </div>
+            <div class="breakdown-item">
+                <span class="label">Emergency Buffer</span>
+                <span class="value negative">{{ .UserFinance.Currency }} {{ printf "%.2f" .CalculatedEmergencyBuffer }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-container">
+        <div class="section-header">
+            <h3>Quick Actions</h3>
+        </div>
+        <div class="quick-actions">
+            <button class="action-btn" onclick="quickLogPayment()">
+                <img src="/static/images/svg/payment-check-dark.svg" alt="Log Payment" />
+                <span>Log Payment</span>
+            </button>
+            <button class="action-btn" onclick="quickAddContribution()">
+                <img src="/static/images/svg/savings-dark.svg" alt="Add to Savings" />
+                <span>Add to Savings</span>
+            </button>
+            <button class="action-btn" onclick="addRecurringPayment()">
+                <img src="/static/images/svg/credit-card-dark.svg" alt="New Payment" />
+                <span>New Payment</span>
+            </button>
+            <button class="action-btn" onclick="viewAnalytics()">
+                <img src="/static/images/svg/analytics-dark.svg" alt="Analytics" />
+                <span>Analytics</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="finance-grid">
+        <!-- This Month's Payments -->
+        <div class="finance-section">
+            <div class="section-header">
+                <h3>This Month's Payments</h3>
+                <div class="header-actions">
+                    <button class="btn btn-small btn-secondary" 
+                            hx-get="/finance/payments/all"
+                            hx-target="#modal-container">
+                        <img src="/static/images/svg/list.svg" alt="View All" />
+                    </button>
+                    <button class="btn btn-small" onclick="toggleSection('payments')">
+                        <img src="/static/images/svg/plus.svg" alt="Add Payment" />
+                    </button>
+                </div>
+            </div>
+            <div class="payments-container" id="payments-container">
+                {{ if .ThisMonthPayments }}
+                    {{ range .ThisMonthPayments }}
+                        {{ template "payment_item" . }}
+                    {{ end }}
+                {{ else }}
+                    <div class="empty-state">
+                        <p>No payments due this month</p>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+
+        <!-- Upcoming Payments -->
+        <div class="finance-section">
+            <div class="section-header">
+                <h3>Upcoming Payments</h3>
+                <span class="count">{{ len .UpcomingPayments }}</span>
+            </div>
+            <div class="upcoming-payments">
+                {{ if .UpcomingPayments }}
+                    {{ range $index, $payment := .UpcomingPayments }}
+                        {{ $isUrgent := or .IsOverdue (and .DaysUntilDue (le (value .DaysUntilDue) 3)) }}
+                        <div class="upcoming-item {{ if $isUrgent }}urgent{{ end }} {{ if .IsOverdue }}overdue{{ end }}">
+                            <!-- Line 1: Icon + Name + Price -->
+                            <div class="upcoming-item-line1">
+                                <div class="payment-status-indicator">
+                                    {{ if .IsOverdue }}
+                                        <img src="/static/images/svg/alert-circle.svg" alt="Overdue" class="status-icon overdue" />
+                                    {{ else if and .DaysUntilDue (le (value .DaysUntilDue) 3) }}
+                                        <img src="/static/images/svg/bell.svg" alt="Due Soon" class="status-icon urgent" />
+                                    {{ else }}
+                                        <img src="/static/images/svg/calendar.svg" alt="Scheduled" class="status-icon normal" />
+                                    {{ end }}
+                                </div>
+                                <div class="payment-details">
+                                    <div class="payment-info">
+                                        <span class="payment-name">{{ .Name }}</span>
+                                        <span class="payment-amount">{{ $.UserFinance.Currency }} {{ printf "%.2f" .Amount }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Line 2: Due Date + Days + Actions -->
+                            <div class="upcoming-item-line2">
+                                <div class="payment-timing">
+                                    {{ if .NextDueDate }}
+                                        <span class="due-date">{{ .NextDueDate.Format "Jan 2" }}</span>
+                                        <span class="days-until {{ if .IsOverdue }}overdue{{ else if and .DaysUntilDue (le (value .DaysUntilDue) 3) }}urgent{{ end }}">
+                                            {{ if .IsOverdue }}Overdue{{ else if .DaysUntilDue }}{{ if eq (value .DaysUntilDue) 0 }}Due Today{{ else }}{{ value .DaysUntilDue }} days{{ end }}{{ end }}
+                                        </span>
+                                    {{ end }}
+                                </div>
+                                <div class="payment-actions">
+                                    {{ if .IsPaidForNextDueDate }}
+                                        <span class="paid-indicator">
+                                            <img src="/static/images/svg/check.svg" alt="Paid" />
+                                            Paid
+                                        </span>
+                                    {{ else if and (not .IsPaidForNextDueDate) (or .IsOverdue (and .DaysUntilDue (le (value .DaysUntilDue) 7))) }}
+                                        <button class="btn btn-primary btn-small" onclick="quickPayment('{{ .ID }}')">
+                                            {{ if .IsOverdue }}Pay Now{{ else }}Pay{{ end }}
+                                        </button>
+                                    {{ end }}
+                                    <button class="btn-icon" 
+                                            hx-get="/finance/payments/{{ .ID }}/history"
+                                            hx-target="#modal-container"
+                                            title="View history">
+                                        <img src="/static/images/svg/history.svg" alt="History" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {{ end }}
+                {{ else }}
+                    <div class="empty-state">
+                        <p>No upcoming payments</p>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+
+        <!-- Active Savings Goals -->
+        <div class="finance-section">
+            <div class="section-header">
+                <h3>Savings Goals</h3>
+                <div class="header-actions">
+                    <button class="btn btn-small btn-secondary" 
+                            hx-get="/finance/goals/archived"
+                            hx-target="#modal-container"
+                            hx-swap="innerHTML"
+                            title="View Archived Goals">
+                        <img src="/static/images/svg/archive.svg" alt="Archived" />
+                    </button>
+                    <button class="btn btn-small" onclick="addSavingsGoal()">
+                        <img src="/static/images/svg/plus.svg" alt="Add Goal" />
+                    </button>
+                </div>
+            </div>
+            <div class="savings-container" id="savings-container">
+                {{ if .ActiveSavingsGoals }}
+                    {{ range .ActiveSavingsGoals }}
+                        {{ template "savings_goal_item" . }}
+                    {{ end }}
+                {{ else }}
+                    <div class="empty-state">
+                        <p>No active savings goals</p>
+                        <button class="btn btn-primary" onclick="addSavingsGoal()">Create your first goal</button>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Modal/Form containers will be inserted here via HTMX -->
+<div id="modal-container"></div>
+
+<script>
+// Finance Management JavaScript
+function toggleSection(section) {
+    if (section === 'payments') {
+        // Open new payment form
+        addRecurringPayment();
+    }
+}
+
+function quickLogPayment() {
+    // Show quick payment logging form
+    htmx.ajax('GET', '/finance/quick/payment-form', {
+        target: '#modal-container',
+        swap: 'innerHTML'
+    });
+}
+
+function quickAddContribution() {
+    // Show quick savings contribution form
+    htmx.ajax('GET', '/finance/quick/contribution-form', {
+        target: '#modal-container',
+        swap: 'innerHTML'
+    });
+}
+
+function addRecurringPayment() {
+    // Show new recurring payment form
+    htmx.ajax('GET', '/finance/payments/new', {
+        target: '#modal-container',
+        swap: 'innerHTML'
+    });
+}
+
+function addSavingsGoal() {
+    // Show new savings goal form
+    htmx.ajax('GET', '/finance/goals/new', {
+        target: '#modal-container',
+        swap: 'innerHTML'
+    });
+}
+
+function viewAnalytics() {
+    // Navigate to analytics page
+    htmx.ajax('GET', '/finance/analytics', {
+        target: 'main',
+        swap: 'innerHTML'
+    });
+}
+
+function quickPayment(paymentId) {
+    // Quick payment for specific recurring payment
+    htmx.ajax('GET', '/finance/payments/' + paymentId + '/pay', {
+        target: '#modal-container',
+        swap: 'innerHTML'
+    });
+}
+</script>
+{{ end }}

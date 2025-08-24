@@ -1,0 +1,230 @@
+{{ define "quick_pay_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Pay {{ .Payment.Name }}</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(102, 126, 234, 0.05); border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: 600; color: #2d3748;">Payment Details</span>
+                <span style="font-weight: 600; color: #667eea;">{{ .Payment.Currency }} {{ printf "%.2f" .Payment.Amount }}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #4a5568;">
+                <div>Category: {{ .Payment.Category }}</div>
+                <div>Frequency: {{ .Payment.Frequency }}</div>
+                {{ if .Payment.IsOverdueForCurrentMonth }}
+                <div style="color: #e53e3e; font-weight: 600;">Overdue: {{ .Payment.CurrentMonthDueDate.Format "January 2, 2006" }}</div>
+                <div style="color: #718096;">Next Due: {{ .Payment.NextDueDate.Format "January 2, 2006" }}</div>
+                {{ else if .Payment.NextDueDate }}
+                <div>Due: {{ .Payment.NextDueDate.Format "January 2, 2006" }}</div>
+                {{ end }}
+            </div>
+        </div>
+        
+        <form hx-post="/finance/payments/log"
+              hx-target="this"
+              hx-swap="none"
+              hx-on::after-request="
+                if(event.detail.successful) {
+                  closeModal();
+                  htmx.ajax('GET', '/finance', {target: 'main', swap: 'innerHTML'});
+                } else {
+                  console.log('Payment failed:', event.detail.xhr.responseText);
+                }">
+            
+            <input type="hidden" name="recurring_payment_id" value="{{ .Payment.ID }}" />
+            {{ if .Payment.IsOverdueForCurrentMonth }}
+            <input type="hidden" name="due_date" value="{{ .Payment.CurrentMonthDueDate.Format "2006-01-02" }}" />
+            {{ else if .Payment.NextDueDate }}
+            <input type="hidden" name="due_date" value="{{ .Payment.NextDueDate.Format "2006-01-02" }}" />
+            {{ end }}
+            
+            <div class="form-row">
+                <label for="payment_date">Payment Date *</label>
+                <input type="date" 
+                       name="payment_date" 
+                       id="payment_date"
+                       class="profile-input"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_amount_paid">Amount Paid *</label>
+                <input type="number" 
+                       name="amount" 
+                       id="payment_amount_paid"
+                       class="profile-input"
+                       step="0.01" 
+                       min="0"
+                       value="{{ printf "%.2f" .Payment.Amount }}"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_method">Payment Method</label>
+                <select name="method" id="payment_method" class="profile-input">
+                    <option value="">Select method (optional)</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="debit_card">Debit Card</option>
+                    <option value="cash">Cash</option>
+                    <option value="check">Check</option>
+                    <option value="online">Online Payment</option>
+                    <option value="auto_pay" {{ if .Payment.AutoPay }}selected{{ end }}>Auto Pay</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_notes">Notes</label>
+                <textarea name="notes" 
+                          id="payment_notes"
+                          class="profile-input"
+                          rows="3"
+                          placeholder="Optional notes about this payment"></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" 
+                        class="btn btn-secondary"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Mark as Paid
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+textarea.profile-input {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+// Set default date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('payment_date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+});
+</script>
+{{ end }}

@@ -1,0 +1,24 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Piggy bank body -->
+  <ellipse cx="12" cy="14" rx="8" ry="5" fill="#2D3748" stroke="#2D3748" stroke-width="1"/>
+  <!-- Piggy bank head -->
+  <circle cx="12" cy="10" r="4" fill="#2D3748" stroke="#2D3748" stroke-width="1"/>
+  <!-- Eye -->
+  <circle cx="11" cy="9" r="0.5" fill="#ffffff"/>
+  <!-- Snout -->
+  <ellipse cx="9.5" cy="10.5" rx="1" ry="0.7" fill="#4A5568"/>
+  <!-- Nostril -->
+  <circle cx="9.2" cy="10.3" r="0.2" fill="#2D3748"/>
+  <!-- Coin slot -->
+  <rect x="11" y="7" width="2" height="0.8" rx="0.4" fill="#ffffff"/>
+  <!-- Legs -->
+  <rect x="7" y="17.5" width="1.5" height="2" rx="0.7" fill="#2D3748"/>
+  <rect x="9.5" y="17.5" width="1.5" height="2" rx="0.7" fill="#2D3748"/>
+  <rect x="13" y="17.5" width="1.5" height="2" rx="0.7" fill="#2D3748"/>
+  <rect x="15.5" y="17.5" width="1.5" height="2" rx="0.7" fill="#2D3748"/>
+  <!-- Tail -->
+  <path d="M19 12C19.5 11.5 20 11.5 20.5 12C20 12.5 19.5 12.5 19 12Z" fill="#2D3748"/>
+  <!-- Plus sign for adding -->
+  <circle cx="18" cy="6" r="3" fill="#10B981"/>
+  <path d="M17 6h2M18 5v2" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

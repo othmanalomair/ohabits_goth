@@ -1,0 +1,330 @@
+{{ define "edit_savings_goal_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Edit Savings Goal</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+
+        <form hx-put="/finance/goals/{{ .Goal.ID }}"
+              hx-target="main"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) { closeModal(); htmx.ajax('GET', '/finance', {target: 'main', swap: 'innerHTML'}); }"
+              class="savings-goal-form">
+
+            <div class="form-row">
+                <label for="edit_goal_name">Goal Name *</label>
+                <input type="text"
+                       name="name"
+                       id="edit_goal_name"
+                       class="profile-input"
+                       value="{{ .Goal.Name }}"
+                       required />
+            </div>
+
+            <div class="form-row">
+                <label for="edit_target_amount">Target Amount *</label>
+                <input type="number"
+                       name="target_amount"
+                       id="edit_target_amount"
+                       class="profile-input"
+                       step="0.01"
+                       min="0"
+                       value="{{ printf "%.2f" .Goal.TargetAmount }}"
+                       required />
+            </div>
+
+
+            <div class="form-row">
+                <label for="edit_monthly_contribution">Monthly Contribution</label>
+                <input type="number"
+                       name="monthly_contribution"
+                       id="edit_monthly_contribution"
+                       class="profile-input"
+                       step="0.01"
+                       min="0"
+                       value="{{ printf "%.2f" .Goal.MonthlyContribution }}" />
+            </div>
+
+            <div class="form-row">
+                <label for="edit_priority">Priority</label>
+                <select name="priority" id="edit_priority" class="profile-input">
+                    <option value="nice-to-have" {{ if eq .Goal.Priority "nice-to-have" }}selected{{ end }}>Nice to Have</option>
+                    <option value="important" {{ if eq .Goal.Priority "important" }}selected{{ end }}>Important</option>
+                    <option value="essential" {{ if eq .Goal.Priority "essential" }}selected{{ end }}>Essential</option>
+                </select>
+            </div>
+
+            <!-- Smart Goal Calculator Section -->
+            <div class="calculation-section" style="padding: 1.5rem; background: rgba(72, 187, 120, 0.05); border-radius: 12px; margin: 1.5rem 0;">
+                <h4 style="margin: 0 0 1rem 0; color: #2d3748; font-weight: 600; font-size: 1rem;">🎯 Smart Goal Calculator</h4>
+                
+                <div class="form-row">
+                    <label for="edit_target_months">Target Timeline (Months) *</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="range" 
+                               name="target_months" 
+                               id="edit_target_months"
+                               min="1" 
+                               max="120" 
+                               value="{{ if .Goal.MonthsToTarget }}{{ .Goal.MonthsToTarget }}{{ else }}12{{ end }}"
+                               style="flex: 1; height: 8px; border-radius: 5px; outline: none; -webkit-appearance: none; background: linear-gradient(to right, #48bb78 0%, #48bb78 50%, #e2e8f0 50%, #e2e8f0 100%);">
+                        <span id="edit_months_display" style="min-width: 80px; font-weight: 600; color: #2d3748;">{{ if .Goal.MonthsToTarget }}{{ .Goal.MonthsToTarget }}{{ else }}12{{ end }} months</span>
+                    </div>
+                </div>
+                
+                <!-- Real-time Calculation Display -->
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(72, 187, 120, 0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: #2d3748;">Calculation:</span>
+                        <span id="edit_calculation_text" style="color: #48bb78; font-weight: 600;">Perfect match! 🎉</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #4a5568; margin-top: 0.5rem;" id="edit_calculation_details">
+                        {{ if .Goal.MonthsToTarget }}{{ .Goal.MonthsToTarget }}{{ else }}12{{ end }} months × {{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.MonthlyContribution }} = {{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.TargetAmount }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="edit_goal_description">Description (Optional)</label>
+                <textarea name="description"
+                          id="edit_goal_description"
+                          class="profile-input"
+                          rows="3"
+                          placeholder="Optional description or notes about this goal">{{ if .Goal.Description }}{{ .Goal.Description }}{{ end }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <label for="edit_product_link">Product Link (Optional)</label>
+                <input type="url"
+                       name="product_link"
+                       id="edit_product_link"
+                       class="profile-input"
+                       value="{{ if .Goal.ProductURL }}{{ .Goal.ProductURL }}{{ end }}"
+                       placeholder="https://example.com/product" />
+            </div>
+
+            <div class="form-row">
+                <label for="edit_image_url">Image URL (Optional)</label>
+                <input type="url"
+                       name="image_url"
+                       id="edit_image_url"
+                       class="profile-input"
+                       value="{{ if .Goal.ImageURL }}{{ .Goal.ImageURL }}{{ end }}"
+                       placeholder="https://example.com/image.jpg" />
+            </div>
+
+            <div class="modal-actions">
+                <button type="button"
+                        class="btn btn-secondary"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Update Goal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions .btn {
+    flex: 1;
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+// Smart goal calculator functionality for edit form
+(function() {
+    const userCurrency = '{{ .UserFinance.Currency }}';
+    const targetAmountInput = document.getElementById('edit_target_amount');
+    const targetMonthsSlider = document.getElementById('edit_target_months');
+    const monthlyContributionInput = document.getElementById('edit_monthly_contribution');
+    const monthsDisplay = document.getElementById('edit_months_display');
+    const calculationText = document.getElementById('edit_calculation_text');
+    const calculationDetails = document.getElementById('edit_calculation_details');
+    
+    // Check if all elements exist
+    if (!targetAmountInput || !targetMonthsSlider || !monthlyContributionInput || !monthsDisplay) {
+        console.error('Some form elements not found for edit savings goal calculator');
+        return;
+    }
+    
+    let isUpdating = false; // Prevent infinite loops
+    
+    function updateCalculation() {
+        if (isUpdating) return;
+        isUpdating = true;
+        
+        const targetAmount = parseFloat(targetAmountInput.value) || 0;
+        const targetMonths = parseInt(targetMonthsSlider.value) || 1;
+        const monthlyContribution = parseFloat(monthlyContributionInput.value) || 0;
+        
+        // Update months display
+        monthsDisplay.textContent = targetMonths === 1 ? '1 month' : `${targetMonths} months`;
+        
+        if (targetAmount > 0) {
+            // If target amount exists, calculate the other values
+            const requiredMonthly = targetAmount / targetMonths;
+            const totalFromContribution = monthlyContribution * targetMonths;
+            
+            // Update calculation display
+            if (monthlyContribution > 0) {
+                const difference = Math.abs(totalFromContribution - targetAmount);
+                const percentDiff = (difference / targetAmount) * 100;
+                
+                calculationDetails.textContent = `${targetMonths} months × ${userCurrency} ${monthlyContribution.toFixed(2)} = ${userCurrency} ${totalFromContribution.toFixed(2)}`;
+                
+                if (percentDiff < 1) {
+                    calculationText.textContent = 'Perfect match! 🎉';
+                    calculationText.style.color = '#48bb78';
+                } else if (totalFromContribution < targetAmount) {
+                    const shortfall = targetAmount - totalFromContribution;
+                    calculationText.textContent = `${userCurrency} ${shortfall.toFixed(2)} short ⚠️`;
+                    calculationText.style.color = '#f59e0b';
+                    calculationDetails.textContent += ` (Need ${userCurrency} ${requiredMonthly.toFixed(2)}/month)`;
+                } else {
+                    const excess = totalFromContribution - targetAmount;
+                    calculationText.textContent = `${userCurrency} ${excess.toFixed(2)} extra! 💰`;
+                    calculationText.style.color = '#10b981';
+                    calculationDetails.textContent += ` (Could reduce to ${userCurrency} ${requiredMonthly.toFixed(2)}/month)`;
+                }
+            } else {
+                calculationText.textContent = `Need ${userCurrency} ${requiredMonthly.toFixed(2)}/month`;
+                calculationText.style.color = '#667eea';
+                calculationDetails.textContent = `${targetMonths} months × ${userCurrency} ${requiredMonthly.toFixed(2)} = ${userCurrency} ${targetAmount.toFixed(2)}`;
+            }
+        } else {
+            calculationText.textContent = 'Enter target amount';
+            calculationText.style.color = '#718096';
+            calculationDetails.textContent = 'Set your savings goal amount first';
+        }
+        
+        isUpdating = false;
+    }
+    
+    function autoCalculateMonthly() {
+        if (isUpdating) return;
+        const targetAmount = parseFloat(targetAmountInput.value) || 0;
+        const targetMonths = parseInt(targetMonthsSlider.value) || 1;
+        
+        if (targetAmount > 0) {
+            const requiredMonthly = targetAmount / targetMonths;
+            monthlyContributionInput.value = requiredMonthly.toFixed(2);
+        }
+    }
+    
+    function autoCalculateMonths() {
+        if (isUpdating) return;
+        const targetAmount = parseFloat(targetAmountInput.value) || 0;
+        const monthlyContribution = parseFloat(monthlyContributionInput.value) || 0;
+        
+        if (targetAmount > 0 && monthlyContribution > 0) {
+            const requiredMonths = Math.ceil(targetAmount / monthlyContribution);
+            const clampedMonths = Math.max(1, Math.min(120, requiredMonths));
+            targetMonthsSlider.value = clampedMonths;
+        }
+    }
+    
+    // Event listeners
+    targetAmountInput.addEventListener('input', function() {
+        // Auto-calculate monthly contribution when target amount or months change
+        setTimeout(autoCalculateMonthly, 100);
+        setTimeout(updateCalculation, 200);
+    });
+    
+    targetMonthsSlider.addEventListener('input', function() {
+        // Auto-calculate monthly contribution when months change
+        setTimeout(autoCalculateMonthly, 100);
+        setTimeout(updateCalculation, 200);
+    });
+    
+    monthlyContributionInput.addEventListener('input', function() {
+        // Auto-calculate months when monthly contribution changes
+        setTimeout(autoCalculateMonths, 100);
+        setTimeout(updateCalculation, 200);
+    });
+    
+    // Initial calculation
+    setTimeout(updateCalculation, 300);
+})();
+</script>
+{{ end }}

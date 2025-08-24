@@ -359,6 +359,16 @@
                     </li>
                     <li>
                         <a
+                            hx-get="/finance"
+                            hx-target="main"
+                            hx-swap="innerHTML"
+                        >
+                            <img src="/static/images/svg/layers.svg" alt="Finance" />
+                            Finance Management
+                        </a>
+                    </li>
+                    <li>
+                        <a
                             hx-get="/profile"
                             hx-target="main"
                             hx-swap="innerHTML"
@@ -564,20 +574,50 @@
                 setTimeout(updateBellIcon, 500);
             });
 
-            document.addEventListener("DOMContentLoaded", function () {
+            // Function to initialize menu functionality
+            function initializeMenu() {
+                console.log("Initializing menu...");
                 var menuBtn = document.querySelector(".menu-btn");
                 var overlayMenu = document.getElementById("overlay-menu");
                 var overlayClose = document.getElementById("overlay-close");
-                var overlayMenuItems =
-                    document.querySelectorAll("#overlay-menu li");
+                var overlayMenuItems = document.querySelectorAll("#overlay-menu li");
+
+                console.log("Menu elements found:", {
+                    menuBtn: !!menuBtn,
+                    overlayMenu: !!overlayMenu, 
+                    overlayClose: !!overlayClose,
+                    menuItems: overlayMenuItems.length
+                });
+
+                if (!menuBtn || !overlayMenu || !overlayClose) {
+                    console.log("Missing menu elements, aborting initialization");
+                    return;
+                }
+
+                // Remove existing event listeners to prevent duplicates
+                var newMenuBtn = menuBtn.cloneNode(true);
+                var newOverlayClose = overlayClose.cloneNode(true);
+                
+                menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
+                overlayClose.parentNode.replaceChild(newOverlayClose, overlayClose);
+                
+                // Get the new elements after replacement
+                menuBtn = document.querySelector(".menu-btn");
+                overlayClose = document.getElementById("overlay-close");
+
+                console.log("Adding event listeners...");
 
                 // Open the overlay menu
-                menuBtn.addEventListener("click", function () {
+                menuBtn.addEventListener("click", function (e) {
+                    console.log("Menu button clicked!");
+                    e.preventDefault();
                     overlayMenu.style.display = "flex";
                 });
 
                 // Close the overlay menu
-                overlayClose.addEventListener("click", function () {
+                overlayClose.addEventListener("click", function (e) {
+                    console.log("Close button clicked!");
+                    e.preventDefault();
                     overlayMenu.style.display = "none";
                 });
 
@@ -587,6 +627,73 @@
                         overlayMenu.style.display = "none";
                     });
                 });
+                
+                console.log("Menu initialization completed");
+            }
+
+            // Initialize menu on page load
+            document.addEventListener("DOMContentLoaded", initializeMenu);
+            
+            // Re-initialize menu after HTMX navigation
+            document.addEventListener("htmx:afterSwap", function(event) {
+                console.log("HTMX afterSwap event:", event.target?.tagName);
+                // Only re-initialize if main content was swapped (page navigation)
+                if (event.target && event.target.tagName === "MAIN") {
+                    console.log("Main content swapped, re-initializing menu in 50ms...");
+                    setTimeout(function() {
+                        initializeMenu();
+                        // Backup initialization in case the first one fails
+                        setTimeout(setupMenuBackup, 100);
+                    }, 50);
+                }
+            });
+            
+            // Backup menu initialization using event delegation (more robust)
+            function setupMenuBackup() {
+                console.log("Setting up backup menu handlers...");
+                
+                // Remove any existing delegated listeners first
+                document.removeEventListener("click", handleMenuClick);
+                document.removeEventListener("click", handleCloseClick);
+                
+                // Add delegated event listeners
+                document.addEventListener("click", handleMenuClick);
+                document.addEventListener("click", handleCloseClick);
+            }
+            
+            function handleMenuClick(e) {
+                if (e.target.closest(".menu-btn")) {
+                    console.log("Backup: Menu button clicked!");
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var overlayMenu = document.getElementById("overlay-menu");
+                    if (overlayMenu) {
+                        overlayMenu.style.display = "flex";
+                    }
+                }
+            }
+            
+            function handleCloseClick(e) {
+                if (e.target.closest("#overlay-close")) {
+                    console.log("Backup: Close button clicked!");
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var overlayMenu = document.getElementById("overlay-menu");
+                    if (overlayMenu) {
+                        overlayMenu.style.display = "none";
+                    }
+                } else if (e.target.closest("#overlay-menu li a")) {
+                    console.log("Backup: Menu item clicked!");
+                    var overlayMenu = document.getElementById("overlay-menu");
+                    if (overlayMenu) {
+                        overlayMenu.style.display = "none";
+                    }
+                }
+            }
+            
+            // Setup backup handlers on initial load too
+            document.addEventListener("DOMContentLoaded", function() {
+                setTimeout(setupMenuBackup, 200);
             });
         </script>
     </body>

@@ -1,0 +1,260 @@
+{{ define "archived_goals_modal" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 900px;">
+        <div class="modal-header">
+            <h3>Archived Savings Goals</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+
+        {{ if .SuccessMessage }}
+        <div class="success-message" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; color: #16a34a; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
+            <img src="/static/images/svg/check-green.svg" alt="Success" style="width: 16px; height: 16px; flex-shrink: 0;" />
+            <span>{{ .SuccessMessage }}</span>
+        </div>
+        <script>
+        // Trigger refresh of the savings container and safe-to-spend card when there's a success message
+        htmx.ajax('GET', '/finance/goals-container', {
+            target: '#savings-container',
+            swap: 'innerHTML'
+        });
+        htmx.ajax('GET', '/finance/safe-to-spend-card', {
+            target: '#safe-to-spend-card',
+            swap: 'innerHTML'
+        });
+        </script>
+        {{ end }}
+
+        {{ if .ArchivedGoals }}
+            <div class="archived-goals-list">
+                <p style="margin-bottom: 1.5rem; color: #4a5568; font-size: 0.9rem;">
+                    These are your completed savings goals that have been archived. Click "Restore" to move them back to your active goals list.
+                </p>
+                
+                <div class="goals-grid" style="display: grid; gap: 1.5rem;">
+                    {{ range .ArchivedGoals }}
+                    <div class="archived-goal-item" id="archived-goal-{{ .ID }}" style="background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid rgba(34, 197, 94, 0.2);">
+                        
+                        <!-- Goal Header -->
+                        <div class="goal-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div class="goal-info">
+                                <h4 style="margin: 0 0 0.25rem 0; color: #1f2937; font-size: 1.1rem; font-weight: 600;">{{ .Name }}</h4>
+                                <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; color: #6b7280;">
+                                    <span class="priority-badge priority-{{ .Priority }}" style="padding: 0.125rem 0.5rem; border-radius: 12px; font-weight: 500; background: rgba(34, 197, 94, 0.1); color: #16a34a;">{{ .Priority }}</span>
+                                    {{ if .AchievedDate }}
+                                    <span>Achieved: {{ .AchievedDate.Format "Jan 2, 2006" }}</span>
+                                    {{ end }}
+                                </div>
+                            </div>
+                            
+                            <div class="goal-actions" style="display: flex; gap: 0.5rem;">
+                                <button class="btn-icon btn-small"
+                                        hx-post="/finance/goals/{{ .ID }}/unarchive"
+                                        hx-target="#modal-container"
+                                        hx-swap="innerHTML"
+                                        hx-confirm="Are you sure you want to restore this goal to active status?"
+                                        title="Restore Goal to Active Status"
+                                        style="background: rgba(59, 130, 246, 0.1); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2);">
+                                    <img src="/static/images/svg/archive.svg" alt="Unarchive" style="width: 14px; height: 14px;" />
+                                    Restore
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Achievement Badge -->
+                        <div class="achievement-badge" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-radius: 12px;">
+                            <img src="/static/images/svg/check-green.svg" alt="Achieved" style="width: 20px; height: 20px; flex-shrink: 0;" />
+                            <div>
+                                <div style="font-weight: 600; color: #16a34a; font-size: 0.9rem;">Goal Completed! 🎉</div>
+                                <div style="font-size: 0.8rem; color: #16a34a; opacity: 0.8;">{{ .Currency }} {{ printf "%.2f" .TargetAmount }} saved successfully</div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar (100% completed) -->
+                        <div class="progress-section" style="margin-bottom: 1rem;">
+                            <div class="progress-bar" style="height: 8px; background: rgba(34, 197, 94, 0.2); border-radius: 4px; overflow: hidden;">
+                                <div class="progress-fill" style="width: 100%; height: 100%; background: linear-gradient(135deg, #10b981 0%, #16a34a 100%);"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.9rem;">
+                                <span style="color: #16a34a; font-weight: 600;">{{ .Currency }} {{ printf "%.2f" .CurrentAmount }}</span>
+                                <span style="color: #16a34a; font-weight: 600;">100% Complete</span>
+                            </div>
+                        </div>
+
+                        <!-- Goal Details -->
+                        <div class="goal-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div class="stat-item">
+                                <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">Target Amount</div>
+                                <div style="font-weight: 600; color: #1f2937;">{{ .Currency }} {{ printf "%.2f" .TargetAmount }}</div>
+                            </div>
+                            
+                            {{ if .MonthlyContribution }}
+                            <div class="stat-item">
+                                <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">Monthly Goal</div>
+                                <div style="font-weight: 600; color: #1f2937;">{{ .Currency }} {{ printf "%.2f" .MonthlyContribution }}</div>
+                            </div>
+                            {{ end }}
+
+                            {{ if .TargetDate }}
+                            <div class="stat-item">
+                                <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">Target Date</div>
+                                <div style="font-weight: 600; color: #1f2937;">{{ .TargetDate.Format "Jan 2, 2006" }}</div>
+                            </div>
+                            {{ end }}
+                        </div>
+
+                        <!-- Description (if available) -->
+                        {{ if .Description }}
+                        <div class="goal-description" style="margin-top: 1rem; padding: 0.75rem; background: rgba(156, 163, 175, 0.1); border-radius: 8px;">
+                            <p style="margin: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.4;">{{ .Description }}</p>
+                        </div>
+                        {{ end }}
+
+                        <!-- Product Info (if available) -->
+                        {{ if or .ProductURL .ImageURL }}
+                        <div class="goal-product" style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                            {{ if .ImageURL }}
+                            <div class="product-image" style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                                <img src="{{ .ImageURL }}" alt="{{ .Name }}" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                            {{ end }}
+                            
+                            {{ if .ProductURL }}
+                            <a href="{{ .ProductURL }}" target="_blank" class="product-link" style="display: flex; align-items: center; gap: 0.5rem; color: #2563eb; text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                                <img src="/static/images/svg/external-link.svg" alt="View Product" style="width: 16px; height: 16px;" />
+                                View Product
+                            </a>
+                            {{ end }}
+                        </div>
+                        {{ end }}
+                    </div>
+                    {{ end }}
+                </div>
+            </div>
+        {{ else }}
+            <div class="empty-state" style="text-align: center; padding: 3rem; color: #6b7280;">
+                <img src="/static/images/svg/archive.svg" alt="No archived goals" style="width: 64px; height: 64px; opacity: 0.5; margin-bottom: 1rem;" />
+                <h4 style="margin: 0 0 0.5rem 0; color: #374151;">No Archived Goals</h4>
+                <p style="margin: 0; font-size: 0.9rem;">You haven't archived any completed savings goals yet.</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem; opacity: 0.7;">Complete and archive goals to see them here.</p>
+            </div>
+        {{ end }}
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-icon.btn-small {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+}
+
+.btn-icon.btn-small:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+@media (max-width: 640px) {
+    .modal-content {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .goal-stats {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+// Auto-hide success message after 4 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const successMessage = document.querySelector('.success-message');
+    if (successMessage) {
+        setTimeout(function() {
+            successMessage.style.transition = 'opacity 0.5s ease-out';
+            successMessage.style.opacity = '0';
+            setTimeout(function() {
+                successMessage.style.display = 'none';
+            }, 500);
+        }, 4000);
+    }
+});
+</script>
+{{ end }}

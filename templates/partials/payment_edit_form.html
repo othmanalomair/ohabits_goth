@@ -1,0 +1,227 @@
+{{ define "payment_edit_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Edit Recurring Payment</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <div class="modal-body">
+        
+        <form hx-put="/api/finance/payments/{{ .Payment.ID }}"
+              hx-target="this"
+              hx-swap="none"
+              hx-on::after-request="
+                if(event.detail.successful) {
+                  closeModal();
+                  htmx.ajax('GET', '/finance', {target: 'main', swap: 'innerHTML'});
+                } else {
+                  console.log('Update failed:', event.detail.xhr.responseText);
+                }">
+            
+            <div class="form-row">
+                <label for="payment_name">Payment Name *</label>
+                <input type="text" 
+                       name="name" 
+                       id="payment_name"
+                       class="profile-input"
+                       value="{{ .Payment.Name }}"
+                       placeholder="e.g., Mortgage, Netflix, Car Loan"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_amount">Amount *</label>
+                <input type="number" 
+                       name="amount" 
+                       id="payment_amount"
+                       class="profile-input"
+                       value="{{ printf "%.2f" .Payment.Amount }}"
+                       step="0.01" 
+                       min="0"
+                       placeholder="0.00"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_category">Category *</label>
+                <select name="category" id="payment_category" class="profile-input" required>
+                    <option value="">Select a category</option>
+                    <option value="loan" {{ if eq .Payment.Category "loan" }}selected{{ end }}>Loan</option>
+                    <option value="subscription" {{ if eq .Payment.Category "subscription" }}selected{{ end }}>Subscription</option>
+                    <option value="bill" {{ if eq .Payment.Category "bill" }}selected{{ end }}>Bill & Utilities</option>
+                    <option value="medical" {{ if eq .Payment.Category "medical" }}selected{{ end }}>Medical</option>
+                    <option value="other" {{ if eq .Payment.Category "other" }}selected{{ end }}>Other</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="payment_frequency">Frequency *</label>
+                <select name="frequency" id="payment_frequency" class="profile-input" required>
+                    <option value="">How often?</option>
+                    <option value="monthly" {{ if eq .Payment.Frequency "monthly" }}selected{{ end }}>Monthly</option>
+                    <option value="quarterly" {{ if eq .Payment.Frequency "quarterly" }}selected{{ end }}>Quarterly</option>
+                    <option value="yearly" {{ if eq .Payment.Frequency "yearly" }}selected{{ end }}>Yearly</option>
+                    <option value="weekly" {{ if eq .Payment.Frequency "weekly" }}selected{{ end }}>Weekly</option>
+                </select>
+            </div>
+            
+            <!-- Payment Schedule Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Payment Schedule</h4>
+                
+                <div class="form-row">
+                    <label for="due_date">Due Date *</label>
+                    <input type="number" 
+                           name="due_date" 
+                           id="due_date"
+                           class="profile-input"
+                           value="{{ .Payment.DueDate }}"
+                           min="1" 
+                           max="31"
+                           placeholder="Day of month (1-31)"
+                           required />
+                    <small class="form-help">Day of the month when payment is due</small>
+                </div>
+                
+                <div class="form-row">
+                    <label for="start_date">Start Date *</label>
+                    <input type="date" 
+                           name="start_date" 
+                           id="start_date"
+                           class="profile-input"
+                           value="{{ .Payment.StartDate.Format "2006-01-02" }}"
+                           required />
+                    <small class="form-help">When did this payment start?</small>
+                </div>
+                
+                <div class="form-row">
+                    <label for="end_date">End Date (Optional)</label>
+                    <input type="date" 
+                           name="end_date" 
+                           id="end_date"
+                           class="profile-input"
+                           {{ if .Payment.EndDate }}value="{{ .Payment.EndDate.Format "2006-01-02" }}"{{ end }} />
+                    <small class="form-help">Leave empty for ongoing payments</small>
+                </div>
+            </div>
+            
+            <!-- Payment Details Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Payment Details</h4>
+                
+                <div class="form-row">
+                    <label for="description">Description</label>
+                    <textarea name="description" 
+                              id="description"
+                              class="profile-input"
+                              rows="2"
+                              placeholder="Additional notes about this payment">{{ if .Payment.Description }}{{ .Payment.Description }}{{ end }}</textarea>
+                </div>
+                
+                <!-- Loan-specific fields -->
+                <div id="loan_fields" style="{{ if ne .Payment.Category "loan" }}display: none;{{ end }}">
+                    <div class="form-row">
+                        <label for="total_amount">Total Loan Amount</label>
+                        <input type="number" 
+                               name="total_amount" 
+                               id="total_amount"
+                               class="profile-input"
+                               {{ if .Payment.TotalAmount }}value="{{ printf "%.2f" (deref .Payment.TotalAmount) }}"{{ end }}
+                               step="0.01" 
+                               min="0"
+                               placeholder="0.00" />
+                        <small class="form-help">Original loan amount (for tracking progress)</small>
+                    </div>
+                    
+                    <div class="form-row">
+                        <label for="remaining_payments">Remaining Payments</label>
+                        <input type="number" 
+                               name="remaining_payments" 
+                               id="remaining_payments"
+                               class="profile-input"
+                               {{ if .Payment.RemainingPayments }}value="{{ value .Payment.RemainingPayments }}"{{ end }}
+                               min="0"
+                               placeholder="0" />
+                        <small class="form-help">How many payments are left?</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <label for="provider">Provider/Company</label>
+                    <input type="text" 
+                           name="provider" 
+                           id="provider"
+                           class="profile-input"
+                           value="{{ if .Payment.Provider }}{{ .Payment.Provider }}{{ end }}"
+                           placeholder="e.g., Bank Name, Company" />
+                </div>
+                
+                <div class="form-row">
+                    <label for="account_number">Account Reference</label>
+                    <input type="text" 
+                           name="account_number" 
+                           id="account_number"
+                           class="profile-input"
+                           value="{{ if .Payment.AccountNumber }}{{ .Payment.AccountNumber }}{{ end }}"
+                           placeholder="Account number or reference" />
+                    <small class="form-help">For your reference only</small>
+                </div>
+            </div>
+            
+            <!-- Auto Pay Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Auto Pay Settings</h4>
+                
+                <div class="form-row checkbox-row">
+                    <input type="checkbox" 
+                           name="auto_pay" 
+                           id="auto_pay"
+                           value="true"
+                           {{ if .Payment.AutoPay }}checked{{ end }} />
+                    <label for="auto_pay">Enable Auto Pay</label>
+                    <small class="form-help">Automatically mark as paid on due date</small>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Update Payment
+                </button>
+            </div>
+        </form>
+        
+        </div> <!-- Close modal-body -->
+    </div>
+</div>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('payment_category');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const loanFields = document.getElementById('loan_fields');
+            if (loanFields) {
+                if (this.value === 'loan') {
+                    loanFields.style.display = 'block';
+                } else {
+                    loanFields.style.display = 'none';
+                }
+            }
+        });
+    }
+});
+</script>
+{{ end }}

@@ -1,0 +1,164 @@
+{{ define "edit_contribution_form" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Edit Payment</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+
+        <div class="contribution-info" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(72, 187, 120, 0.05); border-radius: 12px;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #2d3748;">{{ .Contribution.GoalName }}</h4>
+            <div style="font-size: 0.9rem; color: #718096;">
+                <div>Original Amount: {{ .UserFinance.Currency }} {{ printf "%.2f" .Contribution.Amount }}</div>
+                <div>Original Date: {{ .Contribution.ContributionDate.Format "Jan 2, 2006" }}</div>
+            </div>
+        </div>
+
+        <form hx-put="/finance/contributions/{{ .Contribution.ID }}"
+              hx-target="#modal-container"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) { htmx.ajax('GET', '/finance/goals/{{ .Contribution.SavingsGoalID }}/payments', {target: '#modal-container', swap: 'innerHTML'}); }"
+              class="edit-contribution-form">
+            
+            <div class="form-row">
+                <label for="edit_amount">Amount *</label>
+                <input type="number" 
+                       name="amount" 
+                       id="edit_amount"
+                       class="profile-input"
+                       step="0.01"
+                       min="0.01"
+                       value="{{ printf "%.2f" .Contribution.Amount }}"
+                       required />
+            </div>
+            
+            <div class="form-row">
+                <label for="edit_date">Date</label>
+                <input type="date" 
+                       name="date" 
+                       id="edit_date"
+                       class="profile-input"
+                       value="{{ .CurrentDate }}" />
+            </div>
+            
+            <div class="form-row">
+                <label for="edit_method">Payment Method</label>
+                <select name="method" id="edit_method" class="profile-input">
+                    <option value="">Select Method</option>
+                    <option value="manual"{{if eq .MethodValue "manual"}} selected{{end}}>Manual</option>
+                    <option value="bank_transfer"{{if eq .MethodValue "bank_transfer"}} selected{{end}}>Bank Transfer</option>
+                    <option value="credit_card"{{if eq .MethodValue "credit_card"}} selected{{end}}>Credit Card</option>
+                    <option value="cash"{{if eq .MethodValue "cash"}} selected{{end}}>Cash</option>
+                    <option value="automatic"{{if eq .MethodValue "automatic"}} selected{{end}}>Automatic</option>
+                    <option value="bonus"{{if eq .MethodValue "bonus"}} selected{{end}}>Bonus</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="edit_notes">Notes (Optional)</label>
+                <textarea name="notes" 
+                          id="edit_notes"
+                          class="profile-input"
+                          rows="3"
+                          placeholder="Optional notes about this payment">{{ .NotesValue }}</textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" 
+                        class="btn btn-secondary"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Update Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions .btn {
+    flex: 1;
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+</script>
+{{ end }}

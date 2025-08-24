@@ -1,0 +1,8 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dollar sign -->
+  <path d="M12 2V22" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17 5H9.5A3.5 3.5 0 0 0 9.5 12H14.5A3.5 3.5 0 0 1 14.5 19H6" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+  <!-- Checkmark circle -->
+  <circle cx="18" cy="6" r="5" fill="#10B981" stroke="#ffffff" stroke-width="1"/>
+  <path d="M16 6L17.5 7.5L20.5 4.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

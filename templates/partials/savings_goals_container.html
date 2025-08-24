@@ -1,0 +1,12 @@
+{{ define "savings_goals_container" }}
+{{ if .ActiveSavingsGoals }}
+    {{ range .ActiveSavingsGoals }}
+        {{ template "savings_goal_item" . }}
+    {{ end }}
+{{ else }}
+    <div class="empty-state">
+        <p>No active savings goals</p>
+        <button class="btn btn-primary" onclick="addSavingsGoal()">Create your first goal</button>
+    </div>
+{{ end }}
+{{ end }}

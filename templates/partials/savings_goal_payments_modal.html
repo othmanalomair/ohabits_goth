@@ -1,0 +1,211 @@
+{{ define "savings_goal_payments_modal" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3>Payments for {{ .Goal.Name }}</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+
+        <!-- Goal Summary -->
+        <div class="goal-summary" style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(72, 187, 120, 0.05); border-radius: 12px;">
+            <div class="summary-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="margin: 0; color: #2d3748;">{{ .Goal.Name }}</h4>
+                <span class="goal-priority priority-{{ .Goal.Priority }}" style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(72, 187, 120, 0.1); color: #2d5016;">{{ .Goal.Priority }}</span>
+            </div>
+            <div class="summary-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                <div class="stat">
+                    <div style="font-size: 0.8rem; color: #718096;">Current Amount</div>
+                    <div style="font-size: 1.2rem; font-weight: 600; color: #2d3748;">{{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.CurrentAmount }}</div>
+                </div>
+                <div class="stat">
+                    <div style="font-size: 0.8rem; color: #718096;">Target Amount</div>
+                    <div style="font-size: 1.2rem; font-weight: 600; color: #2d3748;">{{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.TargetAmount }}</div>
+                </div>
+                <div class="stat">
+                    <div style="font-size: 0.8rem; color: #718096;">Remaining</div>
+                    <div style="font-size: 1.2rem; font-weight: 600; color: #2d3748;">{{ .UserFinance.Currency }} {{ printf "%.2f" .Goal.RemainingAmount }}</div>
+                </div>
+                <div class="stat">
+                    <div style="font-size: 0.8rem; color: #718096;">Progress</div>
+                    <div style="font-size: 1.2rem; font-weight: 600; color: #48bb78;">{{ printf "%.1f" .Goal.ProgressPercentage }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Payment Button -->
+        <div style="margin-bottom: 1.5rem; text-align: right;">
+            <button class="btn btn-primary btn-small"
+                    hx-get="/finance/goals/{{ .Goal.ID }}/contribute-form"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML">
+                <img src="/static/images/svg/plus.svg" alt="Add" style="width: 14px; height: 14px; margin-right: 0.5rem;" />
+                Add Payment
+            </button>
+        </div>
+
+        <!-- Payments List -->
+        <div class="payments-list">
+            <h4 style="margin: 0 0 1rem 0; color: #2d3748;">Payment History ({{ len .Contributions }})</h4>
+            
+            {{ if .Contributions }}
+                <div class="payments-table" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    {{ range .Contributions }}
+                    <div class="payment-row" id="contribution-{{ .ID }}" style="display: grid; grid-template-columns: 120px 1fr 120px 100px 100px; gap: 1rem; align-items: center; padding: 1rem; border-bottom: 1px solid #e2e8f0;">
+                        <div class="payment-date" style="font-size: 0.9rem; color: #4a5568;">
+                            {{ .ContributionDate.Format "Jan 2, 2006" }}
+                        </div>
+                        <div class="payment-details">
+                            <div class="payment-amount" style="font-weight: 600; color: #2d3748; font-size: 1.1rem;">
+                                {{ $.UserFinance.Currency }} {{ printf "%.2f" .Amount }}
+                            </div>
+                            {{ if .Method }}
+                            <div class="payment-method" style="font-size: 0.8rem; color: #718096;">
+                                {{ .Method }}
+                            </div>
+                            {{ end }}
+                            {{ if .Notes }}
+                            <div class="payment-notes" style="font-size: 0.85rem; color: #4a5568; margin-top: 0.25rem; font-style: italic;">
+                                "{{ .Notes }}"
+                            </div>
+                            {{ end }}
+                        </div>
+                        <div class="payment-created" style="font-size: 0.8rem; color: #718096;">
+                            {{ .CreatedAt.Format "3:04 PM" }}
+                        </div>
+                        <div class="payment-actions" style="display: flex; gap: 0.5rem;">
+                            <button class="btn-icon btn-small"
+                                    hx-get="/finance/contributions/{{ .ID }}/edit"
+                                    hx-target="#modal-container"
+                                    hx-swap="innerHTML"
+                                    title="Edit Payment">
+                                <img src="/static/images/svg/edit.svg" alt="Edit" style="width: 14px; height: 14px;" />
+                            </button>
+                        </div>
+                        <div class="payment-delete">
+                            <button class="btn-icon btn-small delete-btn"
+                                    hx-delete="/finance/contributions/{{ .ID }}"
+                                    hx-target="#modal-container"
+                                    hx-swap="innerHTML"
+                                    hx-confirm="Are you sure you want to delete this payment? This will reduce your goal's current amount."
+                                    title="Delete Payment">
+                                <img src="/static/images/svg/trash-red.svg" alt="Delete" style="width: 14px; height: 14px;" />
+                            </button>
+                        </div>
+                    </div>
+                    {{ end }}
+                </div>
+            {{ else }}
+                <div class="empty-state" style="text-align: center; padding: 3rem; color: #718096;">
+                    <img src="/static/images/svg/info.svg" alt="No payments" style="width: 48px; height: 48px; opacity: 0.5; margin-bottom: 1rem;" />
+                    <p>No payments yet for this goal.</p>
+                    <button class="btn btn-primary"
+                            hx-get="/finance/goals/{{ .Goal.ID }}/contribute-form"
+                            hx-target="#modal-container"
+                            hx-swap="innerHTML">
+                        Add First Payment
+                    </button>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-close img {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-icon.btn-small {
+    padding: 0.5rem;
+    width: auto;
+    height: auto;
+}
+
+.payment-row:last-child {
+    border-bottom: none;
+}
+
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+@media (max-width: 640px) {
+    .payment-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .payment-actions,
+    .payment-delete {
+        justify-self: end;
+    }
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+</script>
+{{ end }}

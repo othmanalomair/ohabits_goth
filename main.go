@@ -34,6 +34,11 @@ func main() {
 	marketService.StartBackgroundFetching()
 	defer marketService.StopBackgroundFetching()
 
+	// Start the finance auto-payment service
+	financeService := services.NewFinanceService(db.DB)
+	financeService.StartBackgroundProcessing()
+	defer financeService.StopBackgroundProcessing()
+
 	srv := server.Server() // Now returns an *http.Server
 
 	// Graceful shutdown
@@ -51,6 +56,7 @@ func main() {
 	syncService.Stop()
 	newsService.StopBackgroundFetching()
 	marketService.StopBackgroundFetching()
+	financeService.StopBackgroundProcessing()
 	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Fatalf("Server Shutdown: %v", err)
 	}

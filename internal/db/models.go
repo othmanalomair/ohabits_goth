@@ -438,3 +438,150 @@ type MarketWatchlist struct {
 	Visible      bool      `json:"visible"`
 	CreatedAt    time.Time `json:"created_at"`
 }
+
+// Finance Management Models
+
+// UserFinance represents user's financial profile and settings
+type UserFinance struct {
+	ID                       uuid.UUID `json:"id"`
+	UserID                   uuid.UUID `json:"user_id"`
+	MonthlyIncome           float64   `json:"monthly_income"`
+	EmergencyBufferAmount   float64   `json:"emergency_buffer_amount"`
+	EmergencyBufferPercent  float64   `json:"emergency_buffer_percentage"`
+	Currency                string    `json:"currency"`
+	CreatedAt               time.Time `json:"created_at"`
+	UpdatedAt               time.Time `json:"updated_at"`
+}
+
+// RecurringPayment represents all types of recurring payments
+type RecurringPayment struct {
+	ID                  uuid.UUID       `json:"id"`
+	UserID              uuid.UUID       `json:"user_id"`
+	Name                string          `json:"name"`
+	Category            string          `json:"category"` // loan, subscription, bill, medical, other
+	Amount              float64         `json:"amount"`
+	Frequency           string          `json:"frequency"` // monthly, yearly, weekly, quarterly
+	DueDate             int             `json:"due_date"` // Day of month/week
+	StartDate           time.Time       `json:"start_date"`
+	EndDate             *time.Time      `json:"end_date"`
+	RemainingPayments   *int            `json:"remaining_payments"`
+	TotalAmount         *float64        `json:"total_amount"`
+	Description         *string         `json:"description"`
+	Provider            *string         `json:"provider"`
+	AccountNumber       *string         `json:"account_number"`
+	AutoPay             bool            `json:"auto_pay"`
+	RenewalNoticeDays   int             `json:"renewal_notice_days"`
+	PriceHistory        json.RawMessage `json:"price_history"`
+	Metadata            json.RawMessage `json:"metadata"`
+	IsActive            bool            `json:"is_active"`
+	CreatedAt           time.Time       `json:"created_at"`
+	UpdatedAt           time.Time       `json:"updated_at"`
+	
+	// Calculated fields (not stored in DB)
+	Currency                  string          `json:"currency"` // User's preferred currency
+	NextDueDate               *time.Time      `json:"next_due_date"`
+	DaysUntilDue              *int            `json:"days_until_due"`
+	IsOverdue                 bool            `json:"is_overdue"`
+	IsPaidThisMonth           bool            `json:"is_paid_this_month"`        // Paid for current month
+	IsPaidForNextDueDate      bool            `json:"is_paid_for_next_due_date"` // Paid for the NextDueDate month
+	IsOverdueForCurrentMonth  bool            `json:"is_overdue_for_current_month"`
+	CurrentMonthDueDate       *time.Time      `json:"current_month_due_date"`
+	DaysOverdue               int             `json:"days_overdue"`
+}
+
+// SavingsGoal represents financial savings targets
+type SavingsGoal struct {
+	ID                      uuid.UUID  `json:"id"`
+	UserID                  uuid.UUID  `json:"user_id"`
+	Name                    string     `json:"name"`
+	TargetAmount           float64    `json:"target_amount"`
+	CurrentAmount          float64    `json:"current_amount"`
+	TargetDate             *time.Time `json:"target_date"`
+	Priority               string     `json:"priority"` // essential, important, nice-to-have
+	MonthlyContribution    float64    `json:"monthly_contribution"`
+	AutoCalculateContrib   bool       `json:"auto_calculate_contribution"`
+	ProductURL             *string    `json:"product_url"`
+	ImageURL               *string    `json:"image_url"`
+	Description            *string    `json:"description"`
+	IsAchieved             bool       `json:"is_achieved"`
+	AchievedDate           *time.Time `json:"achieved_date"`
+	IsActive               bool       `json:"is_active"`
+	IsArchived             bool       `json:"is_archived"`
+	CreatedAt              time.Time  `json:"created_at"`
+	UpdatedAt              time.Time  `json:"updated_at"`
+	
+	// Calculated fields (not stored in DB)
+	ProgressPercentage     float64    `json:"progress_percentage"`
+	Currency               string     `json:"currency"` // User's preferred currency
+	RemainingAmount        float64    `json:"remaining_amount"`
+	MonthsToTarget         *int       `json:"months_to_target"`
+	WeeksToTarget          *int       `json:"weeks_to_target"`
+	DailyRequired          float64    `json:"daily_required"`
+	WeeklyRequired         float64    `json:"weekly_required"`
+	IsOnTrack              bool       `json:"is_on_track"`
+}
+
+// PaymentLog tracks when recurring payments are made
+type PaymentLog struct {
+	ID                  uuid.UUID  `json:"id"`
+	UserID              uuid.UUID  `json:"user_id"`
+	RecurringPaymentID  *uuid.UUID `json:"recurring_payment_id"`
+	Amount              float64    `json:"amount"`
+	PaymentDate         time.Time  `json:"payment_date"`
+	DueDate             time.Time  `json:"due_date"`
+	PaymentMethod       *string    `json:"payment_method"`
+	Notes               *string    `json:"notes"`
+	IsLate              bool       `json:"is_late"`
+	LateFee             float64    `json:"late_fee"`
+	CreatedAt           time.Time  `json:"created_at"`
+	
+	// Related data (not stored in DB)
+	PaymentName         string     `json:"payment_name"`
+}
+
+// SavingsContribution tracks deposits to savings goals
+type SavingsContribution struct {
+	ID               uuid.UUID `json:"id"`
+	UserID           uuid.UUID `json:"user_id"`
+	SavingsGoalID    uuid.UUID `json:"savings_goal_id"`
+	Amount           float64   `json:"amount"`
+	ContributionDate time.Time `json:"contribution_date"`
+	Method           *string   `json:"method"` // manual, automatic, bonus
+	Notes            *string   `json:"notes"`
+	CreatedAt        time.Time `json:"created_at"`
+	
+	// Related data (not stored in DB)
+	GoalName         string    `json:"goal_name"`
+}
+
+// FinanceAnalytics stores cached financial calculations for performance
+type FinanceAnalytics struct {
+	ID                        uuid.UUID `json:"id"`
+	UserID                    uuid.UUID `json:"user_id"`
+	MonthYear                 string    `json:"month_year"`
+	TotalIncome              float64   `json:"total_income"`
+	TotalFixedPayments       float64   `json:"total_fixed_payments"`
+	TotalSavingsContrib      float64   `json:"total_savings_contributions"`
+	TotalEmergencyBuffer     float64   `json:"total_emergency_buffer"`
+	SafeToSpend              float64   `json:"safe_to_spend"`
+	PaymentsCompleted        int       `json:"payments_completed"`
+	PaymentsRemaining        int       `json:"payments_remaining"`
+	GoalsAchieved            int       `json:"goals_achieved"`
+	CalculatedAt             time.Time `json:"calculated_at"`
+}
+
+// FinanceDashboard represents the complete financial overview for templates
+type FinanceDashboard struct {
+	UserFinance              *UserFinance        `json:"user_finance"`
+	SafeToSpend              float64             `json:"safe_to_spend"`
+	ThisMonthPayments        []RecurringPayment  `json:"this_month_payments"`
+	UpcomingPayments         []RecurringPayment  `json:"upcoming_payments"`
+	ActiveSavingsGoals       []SavingsGoal       `json:"active_savings_goals"`
+	RecentPaymentLogs        []PaymentLog        `json:"recent_payment_logs"`
+	MonthlyCommitments       float64             `json:"monthly_commitments"`
+	TotalSavingsProgress     float64             `json:"total_savings_progress"`
+	TotalSavingsContrib      float64             `json:"total_savings_contrib"`
+	NextPaymentDue           *RecurringPayment   `json:"next_payment_due"`
+	GoalsNearDeadline        []SavingsGoal       `json:"goals_near_deadline"`
+	CalculatedEmergencyBuffer float64            `json:"calculated_emergency_buffer"`
+}

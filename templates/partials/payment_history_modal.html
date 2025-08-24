@@ -1,0 +1,418 @@
+{{ define "payment_history_modal" }}
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Payment History - {{ .Payment.Name }}</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <img src="/static/images/svg/x-red.svg" alt="Close" />
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Payment Summary -->
+            <div class="payment-summary">
+                <div class="summary-item">
+                    <span class="label">Amount:</span>
+                    <span class="value">{{ .Payment.Currency }} {{ printf "%.2f" .Payment.Amount }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Frequency:</span>
+                    <span class="value">{{ .Payment.Frequency }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Category:</span>
+                    <span class="value">{{ .Payment.Category }}</span>
+                </div>
+                {{ if .Payment.Provider }}
+                <div class="summary-item">
+                    <span class="label">Provider:</span>
+                    <span class="value">{{ .Payment.Provider }}</span>
+                </div>
+                {{ end }}
+            </div>
+            
+            
+            <!-- Payment History -->
+            <div class="history-section">
+                <h4>Payment Logs ({{ len .PaymentLogs }} payments)</h4>
+                {{ if .PaymentLogs }}
+                <div class="payment-logs">
+                    {{ range .PaymentLogs }}
+                    <div class="payment-log-item" id="payment-log-{{ .ID }}">
+                        <div class="log-main">
+                            <div class="log-date">
+                                <span class="payment-date">{{ formatDate .PaymentDate }}</span>
+                                <span class="due-date">Due: {{ formatDate .DueDate }}</span>
+                            </div>
+                            <div class="log-amount">
+                                <span class="currency">{{ $.Payment.Currency }}</span>
+                                <span class="amount">{{ printf "%.2f" .Amount }}</span>
+                                {{ if .IsLate }}<span class="late-badge">LATE</span>{{ end }}
+                            </div>
+                            <div class="log-actions">
+                                <button class="btn-icon" 
+                                        hx-get="/finance/payment-logs/{{ .ID }}/edit"
+                                        hx-target="#modal-container"
+                                        hx-swap="innerHTML"
+                                        title="Edit Payment Log">
+                                    <img src="/static/images/svg/edit.svg" alt="Edit" />
+                                </button>
+                                <button class="btn-icon delete-btn" 
+                                        hx-delete="/finance/payment-logs/{{ .ID }}"
+                                        hx-target="#payment-log-{{ .ID }}"
+                                        hx-swap="outerHTML"
+                                        hx-confirm="Are you sure you want to delete this payment log?"
+                                        title="Delete Payment Log">
+                                    <img src="/static/images/svg/trash-red.svg" alt="Delete" />
+                                </button>
+                            </div>
+                        </div>
+                        <div class="log-details">
+                            {{ if .PaymentMethod }}
+                            <div class="detail-item">
+                                <span class="detail-label">Method:</span>
+                                <span class="detail-value">{{ .PaymentMethod }}</span>
+                            </div>
+                            {{ end }}
+                            {{ if .Notes }}
+                            <div class="detail-item">
+                                <span class="detail-label">Notes:</span>
+                                <span class="detail-value">{{ .Notes }}</span>
+                            </div>
+                            {{ end }}
+                            {{ if and .LateFee (gt .LateFee 0) }}
+                            <div class="detail-item">
+                                <span class="detail-label">Late Fee:</span>
+                                <span class="detail-value fee">{{ $.Payment.Currency }} {{ printf "%.2f" .LateFee }}</span>
+                            </div>
+                            {{ end }}
+                            <div class="detail-item">
+                                <span class="detail-label">Logged:</span>
+                                <span class="detail-value">{{ formatDate .CreatedAt }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{ end }}
+                </div>
+                {{ else }}
+                <div class="no-history">
+                    <img src="/static/images/svg/calendar.svg" alt="No History" />
+                    <p>No payment history yet</p>
+                    <small>Payments you log will appear here</small>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                Close
+            </button>
+            {{ if not .Payment.IsPaidThisMonth }}
+            <button class="btn btn-primary" 
+                    hx-get="/finance/payments/{{ .Payment.ID }}/pay"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML">
+                Log Payment
+            </button>
+            {{ end }}
+        </div>
+    </div>
+</div>
+
+<style>
+.modal-content {
+    max-width: 700px !important;
+    width: 95% !important;
+    max-height: 85vh !important;
+    overflow-y: auto;
+}
+
+.payment-summary {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-item .label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.summary-item .value {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.history-section h4 {
+    color: #2d3748;
+    margin-bottom: 1.25rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.payment-logs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.payment-log-item {
+    background: #fff;
+    border: 1px solid rgba(102, 126, 234, 0.15);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.05);
+    transition: all 0.2s ease;
+}
+
+.payment-log-item:hover {
+    border-color: rgba(102, 126, 234, 0.25);
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+.log-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.log-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+}
+
+.payment-date {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.due-date {
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.log-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    background: rgba(102, 126, 234, 0.05);
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.log-amount .currency {
+    font-size: 0.8rem;
+    color: #667eea;
+    font-weight: 500;
+}
+
+.log-amount .amount {
+    font-size: 0.9rem;
+    color: #2d3748;
+    font-weight: 700;
+}
+
+.log-actions {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+}
+
+.log-actions .btn-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(102, 126, 234, 0.15);
+    background: rgba(248, 250, 252, 0.8);
+    cursor: pointer;
+}
+
+.log-actions .btn-icon:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.log-actions .btn-icon.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.log-actions .btn-icon img {
+    width: 14px;
+    height: 14px;
+}
+
+.late-badge {
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(229, 62, 62, 0.3);
+    margin-left: 0.5rem;
+}
+
+.log-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(102, 126, 234, 0.08);
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    padding: 0.15rem 0;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+}
+
+.detail-label {
+    color: #718096;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.detail-value {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.detail-value.fee {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+.no-history {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #718096;
+}
+
+.no-history img {
+    width: 64px;
+    height: 64px;
+    opacity: 0.4;
+    margin-bottom: 1.5rem;
+}
+
+.no-history p {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.no-history small {
+    font-size: 1rem;
+}
+
+/* Custom scrollbar for payment logs */
+.payment-logs::-webkit-scrollbar {
+    width: 6px;
+}
+
+.payment-logs::-webkit-scrollbar-track {
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 3px;
+}
+
+.payment-logs::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 3px;
+}
+
+.payment-logs::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 98% !important;
+        max-height: 90vh !important;
+    }
+    
+    .payment-summary {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .log-main {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .log-amount {
+        align-self: flex-start;
+        margin-bottom: 0.25rem;
+    }
+    
+    .log-actions {
+        align-self: flex-end;
+        margin-top: 0.25rem;
+    }
+    
+    .log-details {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .payment-logs {
+        max-height: 350px;
+    }
+}
+</style>
+
+<script>
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.innerHTML = '';
+    }
+}
+</script>
+{{ end }}
